@@ -1,0 +1,114 @@
+export type WidgetType = 'ranking' | 'throne' | 'goal' | 'affinity' | 'battle' | 'team_battle';
+export type ThemeName = 'modern' | 'game' | 'girlcam';
+export type BattleStatus = 'recruiting' | 'active' | 'finished' | 'cancelled';
+
+export interface Streamer {
+  id: string;
+  display_name: string;
+  channel_url: string | null;
+  created_at: string;
+}
+
+export interface Widget {
+  id: string;
+  streamer_id: string;
+  type: WidgetType;
+  enabled: boolean;
+  config: Record<string, unknown>;
+  theme: ThemeName;
+  created_at: string;
+}
+
+export interface Donation {
+  id: string;
+  streamer_id: string;
+  fan_nickname: string;
+  amount: number;
+  created_at: string;
+}
+
+export interface FanProfile {
+  id: string;
+  streamer_id: string;
+  nickname: string;
+  total_donated: number;
+  affinity_level: number;
+  title: string;
+  updated_at: string;
+}
+
+export interface DonationGoal {
+  id: string;
+  streamer_id: string;
+  current_amount: number;
+  milestones: { amount: number; mission: string }[];
+  active: boolean;
+}
+
+export interface Battle {
+  id: string;
+  streamer_id: string;
+  status: BattleStatus;
+  benefit: string;
+  min_amount: number;
+  time_limit: number;
+  winner_nickname: string | null;
+  started_at: string | null;
+  finished_at: string | null;
+  created_at: string;
+}
+
+export interface BattleParticipant {
+  id: string;
+  battle_id: string;
+  nickname: string;
+  amount: number;
+  joined_at: string;
+}
+
+export interface TeamBattle {
+  id: string;
+  streamer_id: string;
+  status: BattleStatus;
+  team_count: number;
+  team_names: string[];
+  time_limit: number;
+  winning_team: number | null;
+  created_at: string;
+}
+
+export interface TeamBattleMember {
+  id: string;
+  team_battle_id: string;
+  team_index: number;
+  nickname: string;
+  amount: number;
+}
+
+export interface ServerToClientEvents {
+  'ranking:update': (data: { rankings: FanProfile[]; period: string }) => void;
+  'throne:change': (data: { previous: string; current: string; count: number }) => void;
+  'goal:update': (data: { current_amount: number; milestones: DonationGoal['milestones'] }) => void;
+  'affinity:levelup': (data: { nickname: string; level: number; title: string }) => void;
+  'battle:update': (data: { battle: Battle; participants: BattleParticipant[] }) => void;
+  'battle:finished': (data: { winner: string; benefit: string }) => void;
+  'team_battle:update': (data: { battle: TeamBattle; teams: Record<number, { total: number; members: TeamBattleMember[] }> }) => void;
+  'donation:new': (data: Donation) => void;
+}
+
+export interface ClientToServerEvents {
+  'widget:subscribe': (widgetId: string) => void;
+  'donation:add': (data: { streamer_id: string; fan_nickname: string; amount: number }) => void;
+  'battle:create': (data: { streamer_id: string; benefit: string; min_amount: number; time_limit: number }) => void;
+  'battle:join': (data: { battle_id: string; nickname: string; amount: number }) => void;
+  'battle:start': (battle_id: string) => void;
+  'battle:donate': (data: { battle_id: string; nickname: string; amount: number }) => void;
+}
+
+export const AFFINITY_LEVELS = [
+  { level: 0, title: '지나가는 팬', minAmount: 0 },
+  { level: 1, title: '단골', minAmount: 10000 },
+  { level: 2, title: '열혈팬', minAmount: 50000 },
+  { level: 3, title: '첫사랑', minAmount: 200000 },
+  { level: 4, title: '소울메이트', minAmount: 500000 },
+] as const;
