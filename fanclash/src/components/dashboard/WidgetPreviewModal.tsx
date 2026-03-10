@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { Widget, WidgetType } from '@/types';
 
 const PREVIEW_SIZES: Record<WidgetType, { w: number; h: number }> = {
+  alert: { w: 600, h: 400 },
   ranking: { w: 420, h: 380 },
   throne: { w: 600, h: 400 },
   goal: { w: 450, h: 350 },

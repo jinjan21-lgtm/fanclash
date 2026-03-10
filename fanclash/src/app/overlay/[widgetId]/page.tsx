@@ -11,6 +11,7 @@ import BattleArena from '@/components/overlay/BattleArena';
 import TeamBattle from '@/components/overlay/TeamBattle';
 import EventTimer from '@/components/overlay/EventTimer';
 import MessageBoard from '@/components/overlay/MessageBoard';
+import DonationAlert from '@/components/overlay/DonationAlert';
 
 export default function OverlayPage({ params }: { params: Promise<{ widgetId: string }> }) {
   const { widgetId } = use(params);
@@ -32,6 +33,7 @@ export default function OverlayPage({ params }: { params: Promise<{ widgetId: st
       case 'team_battle': return <TeamBattle {...props} />;
       case 'timer': return <EventTimer {...props} />;
       case 'messages': return <MessageBoard {...props} />;
+      case 'alert': return <DonationAlert {...props} />;
       default: return null;
     }
   };

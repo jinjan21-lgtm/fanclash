@@ -4,8 +4,10 @@ import type { Widget, WidgetType } from '@/types';
 import { createClient } from '@/lib/supabase/client';
 import WidgetSettingsModal from './WidgetSettingsModal';
 import WidgetPreviewModal from './WidgetPreviewModal';
+import OBSGuideModal from './OBSGuideModal';
 
 const WIDGET_LABELS: Record<WidgetType, { name: string; desc: string }> = {
+  alert: { name: '후원 알림', desc: '후원 시 풀스크린 알림 + TTS' },
   ranking: { name: '후원 랭킹 보드', desc: 'TOP 5 실시간 순위' },
   throne: { name: '왕좌 쟁탈전', desc: '1등 변경 시 풀스크린 알림' },
   goal: { name: '도네 목표 게이지', desc: '단계별 목표 프로그레스바' },
@@ -22,6 +24,7 @@ export default function WidgetCard({ widget, onUpdate }: { widget: Widget; onUpd
   const overlayUrl = typeof window !== 'undefined' ? `${window.location.origin}/overlay/${widget.id}` : '';
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showOBSGuide, setShowOBSGuide] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const toggleEnabled = async () => {
@@ -68,9 +71,9 @@ export default function WidgetCard({ widget, onUpdate }: { widget: Widget; onUpd
             className="flex-1 py-2 bg-indigo-600 rounded-lg text-sm hover:bg-indigo-700 font-medium">
             미리보기
           </button>
-          <button onClick={copyUrl}
+          <button onClick={() => setShowOBSGuide(true)}
             className="py-2 px-3 bg-gray-800 rounded-lg text-sm hover:bg-gray-700">
-            {copied ? '복사됨!' : 'OBS URL'}
+            OBS 연결
           </button>
           <select value={widget.theme}
             onChange={async (e) => {
@@ -104,6 +107,12 @@ export default function WidgetCard({ widget, onUpdate }: { widget: Widget; onUpd
           onClose={() => setShowPreview(false)}
         />
       )}
+      {showOBSGuide && (
+        <OBSGuideModal
+          overlayUrl={overlayUrl}
+          onClose={() => setShowOBSGuide(false)}
+        />
+      )}
     </>
   );
 }
@@ -117,6 +126,11 @@ function ConfigSummary({ widget }: { widget: Widget }) {
   const items: string[] = [];
 
   switch (widget.type) {
+    case 'alert':
+      if (config.alertDuration) items.push(`${config.alertDuration}초`);
+      if (config.minAmount) items.push(`${(config.minAmount as number).toLocaleString()}원 이상`);
+      if (config.ttsEnabled) items.push('TTS');
+      break;
     case 'ranking':
       if (config.maxDisplay) items.push(`TOP ${config.maxDisplay}`);
       if (config.period) {

@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/stats', label: '후원 통계', icon: '📈' },
   { href: '/dashboard/integrations', label: '연동 설정', icon: '🔗' },
   { href: '/dashboard/pricing', label: '요금제', icon: '💎' },
+  { href: '/dashboard/settings', label: '프로필 설정', icon: '⚙️' },
 ];
 
 export default function Sidebar() {
