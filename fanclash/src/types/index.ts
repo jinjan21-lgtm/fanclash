@@ -112,3 +112,28 @@ export const AFFINITY_LEVELS = [
   { level: 3, title: '첫사랑', minAmount: 200000 },
   { level: 4, title: '소울메이트', minAmount: 500000 },
 ] as const;
+
+// Integration types
+export type PlatformType = 'toonation' | 'tiktok' | 'streamlabs' | 'chzzk';
+
+export interface Integration {
+  id: string;
+  streamer_id: string;
+  platform: PlatformType;
+  config: Record<string, string>;
+  enabled: boolean;
+  connected: boolean;
+  created_at: string;
+}
+
+export interface ToonationConfig {
+  alertbox_key: string;
+}
+
+export interface TiktokConfig {
+  username: string;
+}
+
+export interface StreamlabsConfig {
+  socket_token: string;
+}

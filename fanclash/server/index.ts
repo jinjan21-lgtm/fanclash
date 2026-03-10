@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import { createClient } from '@supabase/supabase-js';
 import { handleDonation } from './handlers/donation';
 import { handleBattle } from './handlers/battle';
+import { IntegrationManager } from './connectors/manager';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -26,6 +27,14 @@ io.on('connection', (socket) => {
   handleDonation(io, socket, supabase);
   handleBattle(io, socket, supabase);
 
+  socket.on('integration:start' as any, async (data: { integration_id: string; streamer_id: string; platform: string; config: Record<string, string> }) => {
+    await integrationManager.startIntegration(data.integration_id, data.streamer_id, data.platform, data.config);
+  });
+
+  socket.on('integration:stop' as any, async (data: { integration_id: string }) => {
+    await integrationManager.stopIntegration(data.integration_id);
+  });
+
   socket.on('disconnect', () => {
     console.log('disconnected:', socket.id);
   });
@@ -34,3 +43,7 @@ io.on('connection', (socket) => {
 const PORT = process.env.SOCKET_PORT || 3001;
 io.listen(Number(PORT));
 console.log(`Socket.io server running on port ${PORT}`);
+
+// Integration manager for auto-donation
+const integrationManager = new IntegrationManager(io as any, supabase);
+integrationManager.loadAllIntegrations();
