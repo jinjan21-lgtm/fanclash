@@ -51,7 +51,11 @@ export default async function FanPage({ params }: { params: Promise<{ streamerId
 
         <FanLeaderboard fans={fans || []} />
 
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-center space-y-3">
+          <a href={`/donate/${streamer.id}`}
+            className="inline-block px-8 py-3 bg-purple-600 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors">
+            {streamer.display_name}님에게 후원하기
+          </a>
           <p className="text-gray-600 text-sm">Powered by FanClash</p>
         </div>
       </div>

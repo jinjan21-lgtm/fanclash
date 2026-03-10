@@ -101,16 +101,22 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Fan leaderboard share */}
-      <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-bold text-lg">팬 리더보드</h3>
-            <p className="text-gray-400 text-sm mt-1">시청자에게 공유하면 자기 순위를 확인할 수 있습니다</p>
-          </div>
+      {/* Fan pages */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+          <h3 className="font-bold text-lg">팬 리더보드</h3>
+          <p className="text-gray-400 text-sm mt-1">시청자에게 공유하면 자기 순위를 확인할 수 있습니다</p>
           <Link href={`/fan/${user!.id}`} target="_blank"
-            className="px-4 py-2 bg-purple-600 rounded-lg text-sm hover:bg-purple-700 whitespace-nowrap">
+            className="inline-block mt-3 px-4 py-2 bg-purple-600 rounded-lg text-sm hover:bg-purple-700">
             공유 페이지 열기
+          </Link>
+        </div>
+        <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+          <h3 className="font-bold text-lg">팬 후원 페이지</h3>
+          <p className="text-gray-400 text-sm mt-1">팬이 직접 후원할 수 있는 페이지를 공유하세요</p>
+          <Link href={`/donate/${user!.id}`} target="_blank"
+            className="inline-block mt-3 px-4 py-2 bg-yellow-600 rounded-lg text-sm hover:bg-yellow-700">
+            후원 페이지 열기
           </Link>
         </div>
       </div>
