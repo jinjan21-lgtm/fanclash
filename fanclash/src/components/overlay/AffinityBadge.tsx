@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSocket } from '@/hooks/useSocket';
 import { themes } from '@/lib/themes';
 import type { Widget } from '@/types';
+import { playSound } from '@/lib/sound';
 
 const LEVEL_EMOJIS = ['👤', '⭐', '🔥', '💕', '💎'];
 const LEVEL_COLORS = [
@@ -24,6 +25,7 @@ export default function AffinityBadge({ widget }: { widget: Widget }) {
     if (!socket) return;
     const handler = (data: any) => {
       setLevelUp(data);
+      playSound((widget.config as any)?.soundUrl);
       setTimeout(() => setLevelUp(null), 5000);
     };
     socket.on('affinity:levelup', handler);

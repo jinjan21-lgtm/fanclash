@@ -6,7 +6,8 @@ import { useToast } from '@/components/ui/Toast';
 export default function DonationForm({ streamerId }: { streamerId: string }) {
   const [nickname, setNickname] = useState('');
   const [amount, setAmount] = useState('');
-  const [history, setHistory] = useState<{ nickname: string; amount: number; time: string }[]>([]);
+  const [message, setMessage] = useState('');
+  const [history, setHistory] = useState<{ nickname: string; amount: number; message: string; time: string }[]>([]);
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -15,9 +16,10 @@ export default function DonationForm({ streamerId }: { streamerId: string }) {
     const amountNum = parseInt(amount);
     if (!nickname || !amountNum) return;
 
-    socket.emit('donation:add', { streamer_id: streamerId, fan_nickname: nickname, amount: amountNum });
-    setHistory(prev => [{ nickname, amount: amountNum, time: new Date().toLocaleTimeString() }, ...prev].slice(0, 20));
+    socket.emit('donation:add', { streamer_id: streamerId, fan_nickname: nickname, amount: amountNum, message });
+    setHistory(prev => [{ nickname, amount: amountNum, message, time: new Date().toLocaleTimeString() }, ...prev].slice(0, 20));
     setAmount('');
+    setMessage('');
     toast(`${nickname}님 ${amountNum.toLocaleString()}원 입력됨`);
   };
 
@@ -33,7 +35,9 @@ export default function DonationForm({ streamerId }: { streamerId: string }) {
             입력
           </button>
         </div>
-        <div className="flex gap-2">
+        <input type="text" placeholder="메시지 (선택)" value={message} onChange={e => setMessage(e.target.value)}
+          className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-purple-500 focus:outline-none" />
+        <div className="flex flex-wrap gap-2">
           {[1000, 5000, 10000, 50000].map(v => (
             <button key={v} type="button" onClick={() => setAmount(String(v))}
               className="px-3 py-1 bg-gray-800 rounded-lg text-sm hover:bg-gray-700">
@@ -47,10 +51,13 @@ export default function DonationForm({ streamerId }: { streamerId: string }) {
           <h3 className="font-bold mb-3">최근 입력</h3>
           <div className="space-y-2">
             {history.map((h, i) => (
-              <div key={i} className="flex justify-between text-sm text-gray-300">
-                <span>{h.nickname}</span>
-                <span>{h.amount.toLocaleString()}원</span>
-                <span className="text-gray-500">{h.time}</span>
+              <div key={i} className="flex flex-col sm:flex-row sm:justify-between gap-1 text-sm text-gray-300 py-1 border-b border-gray-800 last:border-0">
+                <div className="flex gap-3">
+                  <span className="font-medium">{h.nickname}</span>
+                  <span className="text-purple-400">{h.amount.toLocaleString()}원</span>
+                </div>
+                {h.message && <span className="text-gray-500 text-xs">"{h.message}"</span>}
+                <span className="text-gray-600 text-xs">{h.time}</span>
               </div>
             ))}
           </div>

@@ -3,12 +3,12 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { calculateAffinity } from '../services/affinity';
 
 export function handleDonation(io: Server, socket: Socket, supabase: SupabaseClient) {
-  socket.on('donation:add' as any, async (data: { streamer_id: string; fan_nickname: string; amount: number }) => {
-    const { streamer_id, fan_nickname, amount } = data;
+  socket.on('donation:add' as any, async (data: { streamer_id: string; fan_nickname: string; amount: number; message?: string }) => {
+    const { streamer_id, fan_nickname, amount, message } = data;
     const room = `streamer:${streamer_id}`;
 
     // 1. Save donation
-    await supabase.from('donations').insert({ streamer_id, fan_nickname, amount });
+    await supabase.from('donations').insert({ streamer_id, fan_nickname, amount, message: message || '' });
 
     // 2. Update fan profile
     const { data: existing } = await supabase
@@ -32,7 +32,7 @@ export function handleDonation(io: Server, socket: Socket, supabase: SupabaseCli
     }
 
     // 3. Emit new donation
-    io.to(room).emit('donation:new', { id: '', streamer_id, fan_nickname, amount, created_at: new Date().toISOString() });
+    io.to(room).emit('donation:new', { id: '', streamer_id, fan_nickname, amount, message: message || '', created_at: new Date().toISOString() });
 
     // 4. Get updated rankings
     const { data: allProfiles } = await supabase

@@ -9,6 +9,8 @@ const PREVIEW_SIZES: Record<WidgetType, { w: number; h: number }> = {
   affinity: { w: 400, h: 250 },
   battle: { w: 500, h: 400 },
   team_battle: { w: 500, h: 400 },
+  timer: { w: 400, h: 300 },
+  messages: { w: 400, h: 400 },
 };
 
 interface Props {

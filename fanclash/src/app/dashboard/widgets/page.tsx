@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client';
 import WidgetCard from '@/components/dashboard/WidgetCard';
 import type { Widget, WidgetType } from '@/types';
 
-const ALL_WIDGET_TYPES: WidgetType[] = ['ranking', 'throne', 'goal', 'affinity', 'battle', 'team_battle'];
+const ALL_WIDGET_TYPES: WidgetType[] = ['ranking', 'throne', 'goal', 'affinity', 'battle', 'team_battle', 'timer', 'messages'];
 
 export default function WidgetsPage() {
   const [widgets, setWidgets] = useState<Widget[]>([]);

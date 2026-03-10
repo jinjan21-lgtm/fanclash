@@ -103,6 +103,21 @@ export default function WidgetSettingsModal({ widget, onClose, onUpdate }: Props
             </div>
 
             {/* Type-specific settings */}
+            {/* Sound setting for alert-type widgets */}
+            {(['throne', 'affinity', 'battle'] as const).includes(widget.type as any) && (
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">알림 사운드 URL (선택)</label>
+                <input
+                  type="url"
+                  value={(config.soundUrl as string) || ''}
+                  onChange={e => setConfig({ ...config, soundUrl: e.target.value })}
+                  placeholder="https://example.com/sound.mp3"
+                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
+                />
+                <p className="text-xs text-gray-600 mt-1">MP3/WAV 파일 직접 링크. 비워두면 기본 효과음 사용</p>
+              </div>
+            )}
+
             {widget.type === 'ranking' && (
               <RankingSettings config={config} onChange={setConfig} />
             )}
@@ -130,6 +145,22 @@ export default function WidgetSettingsModal({ widget, onClose, onUpdate }: Props
             {widget.type === 'team_battle' && (
               <TeamBattleSettings config={config} onChange={setConfig} />
             )}
+            {widget.type === 'timer' && (
+              <TimerSettings config={config} onChange={setConfig} />
+            )}
+            {widget.type === 'messages' && (
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">표시 메시지 수</label>
+                <select
+                  value={(config.maxMessages as number) || 5}
+                  onChange={e => setConfig({ ...config, maxMessages: parseInt(e.target.value) })}
+                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm">
+                  <option value={3}>3개</option>
+                  <option value={5}>5개</option>
+                  <option value={10}>10개</option>
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 mt-6 pt-4 border-t border-gray-700">
@@ -156,6 +187,8 @@ function getDefaultTitle(type: WidgetType): string {
     affinity: '호감도',
     battle: '후원 배틀',
     team_battle: '팬 투표',
+    timer: '이벤트 타이머',
+    messages: '메시지 보드',
   };
   return defaults[type];
 }
@@ -350,6 +383,47 @@ function BattleSettings({ config, onChange }: { config: Record<string, unknown>;
           <option value={300}>5분</option>
           <option value={600}>10분</option>
         </select>
+      </div>
+    </>
+  );
+}
+
+function TimerSettings({ config, onChange }: { config: Record<string, unknown>; onChange: (c: Record<string, unknown>) => void }) {
+  return (
+    <>
+      <div>
+        <label className="block text-sm text-gray-400 mb-1">이벤트 제목</label>
+        <input
+          type="text"
+          value={(config.eventTitle as string) || ''}
+          onChange={e => onChange({ ...config, eventTitle: e.target.value })}
+          placeholder="예: 10분 안에 목표 달성!"
+          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
+        />
+      </div>
+      <div>
+        <label className="block text-sm text-gray-400 mb-1">제한 시간</label>
+        <select
+          value={(config.duration as number) || 600}
+          onChange={e => onChange({ ...config, duration: parseInt(e.target.value) })}
+          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm">
+          <option value={60}>1분</option>
+          <option value={180}>3분</option>
+          <option value={300}>5분</option>
+          <option value={600}>10분</option>
+          <option value={900}>15분</option>
+          <option value={1800}>30분</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-sm text-gray-400 mb-1">벌칙/미션 (선택)</label>
+        <input
+          type="text"
+          value={(config.penalty as string) || ''}
+          onChange={e => onChange({ ...config, penalty: e.target.value })}
+          placeholder="예: 노래 3곡 연속!"
+          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
+        />
       </div>
     </>
   );

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSocket } from '@/hooks/useSocket';
 import { themes } from '@/lib/themes';
 import type { Widget, Battle, BattleParticipant } from '@/types';
+import { playSound } from '@/lib/sound';
 
 export default function BattleArena({ widget }: { widget: Widget }) {
   const [battle, setBattle] = useState<Battle | null>(null);
@@ -36,6 +37,7 @@ export default function BattleArena({ widget }: { widget: Widget }) {
     };
     const finishHandler = (data: any) => {
       setWinner(data);
+      playSound((widget.config as any)?.soundUrl);
       setTimeout(() => { setWinner(null); setBattle(null); setParticipants([]); prevAmounts.current = {}; }, 8000);
     };
     socket.on('battle:update', updateHandler);

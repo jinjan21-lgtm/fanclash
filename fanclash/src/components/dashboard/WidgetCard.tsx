@@ -12,6 +12,8 @@ const WIDGET_LABELS: Record<WidgetType, { name: string; desc: string }> = {
   affinity: { name: '호감도/칭호', desc: '팬 레벨업 팝업 알림' },
   battle: { name: '후원 배틀', desc: '1:1 후원 대결 화면' },
   team_battle: { name: '팬 투표', desc: '팀별 투표 대결' },
+  timer: { name: '이벤트 타이머', desc: '카운트다운 + 벌칙/미션' },
+  messages: { name: '메시지 보드', desc: '후원 메시지 실시간 표시' },
 };
 
 export default function WidgetCard({ widget, onUpdate }: { widget: Widget; onUpdate: () => void }) {
@@ -136,6 +138,10 @@ function ConfigSummary({ widget }: { widget: Widget }) {
       break;
     case 'team_battle':
       if (config.defaultTeamCount) items.push(`${config.defaultTeamCount}팀`);
+      break;
+    case 'timer':
+      if (config.duration) items.push(`${(config.duration as number) / 60}분`);
+      if (config.penalty) items.push(config.penalty as string);
       break;
   }
 

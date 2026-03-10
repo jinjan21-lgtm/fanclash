@@ -1,4 +1,4 @@
-export type WidgetType = 'ranking' | 'throne' | 'goal' | 'affinity' | 'battle' | 'team_battle';
+export type WidgetType = 'ranking' | 'throne' | 'goal' | 'affinity' | 'battle' | 'team_battle' | 'timer' | 'messages';
 export type ThemeName = 'modern' | 'game' | 'girlcam';
 export type BattleStatus = 'recruiting' | 'active' | 'finished' | 'cancelled';
 
@@ -24,6 +24,7 @@ export interface Donation {
   streamer_id: string;
   fan_nickname: string;
   amount: number;
+  message?: string;
   created_at: string;
 }
 
@@ -98,7 +99,7 @@ export interface ServerToClientEvents {
 
 export interface ClientToServerEvents {
   'widget:subscribe': (widgetId: string) => void;
-  'donation:add': (data: { streamer_id: string; fan_nickname: string; amount: number }) => void;
+  'donation:add': (data: { streamer_id: string; fan_nickname: string; amount: number; message?: string }) => void;
   'battle:create': (data: { streamer_id: string; benefit: string; min_amount: number; time_limit: number }) => void;
   'battle:join': (data: { battle_id: string; nickname: string; amount: number }) => void;
   'battle:start': (battle_id: string) => void;

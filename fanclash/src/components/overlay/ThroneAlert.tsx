@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSocket } from '@/hooks/useSocket';
 import { themes } from '@/lib/themes';
 import type { Widget } from '@/types';
+import { playSound } from '@/lib/sound';
 
 export default function ThroneAlert({ widget }: { widget: Widget }) {
   const [alert, setAlert] = useState<{ previous: string; current: string } | null>(null);
@@ -18,6 +19,7 @@ export default function ThroneAlert({ widget }: { widget: Widget }) {
     const handler = (data: any) => {
       setAlert({ previous: data.previous, current: data.current });
       setThroneCount(prev => prev + 1);
+      playSound((widget.config as any)?.soundUrl);
       setTimeout(() => setAlert(null), duration * 1000);
     };
     socket.on('throne:change', handler);

@@ -3,8 +3,14 @@
 > 마지막 업데이트: 2026-03-10
 
 ## 긴급 (즉시 처리)
-- [ ] FanClash 구현 계획(implementation plan) 작성
-- [ ] FanClash Phase 1 MVP 개발
+- [ ] FanClash Phase 1 MVP 개발 (Task 2~N 진행 중)
+  - [x] Task 1: 프로젝트 스캐폴딩 완료
+  - [ ] Task 2: Supabase 스키마 & 인증
+  - [ ] Task 3: Socket.IO 서버
+  - [ ] Task 4: 핵심 UI 컴포넌트
+  - [ ] Task 5: 투표/예측 기능
+  - [ ] Task 6: 후원 배틀 기능
+  - [ ] Task 7: 통합 테스트 & 배포
 
 ## 보통
 - [ ] 숏폼 자동화 프로덕트 기획/디자인

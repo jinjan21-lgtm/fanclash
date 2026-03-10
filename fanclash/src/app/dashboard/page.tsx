@@ -101,6 +101,20 @@ export default async function DashboardPage() {
         </div>
       )}
 
+      {/* Fan leaderboard share */}
+      <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-bold text-lg">팬 리더보드</h3>
+            <p className="text-gray-400 text-sm mt-1">시청자에게 공유하면 자기 순위를 확인할 수 있습니다</p>
+          </div>
+          <Link href={`/fan/${user!.id}`} target="_blank"
+            className="px-4 py-2 bg-purple-600 rounded-lg text-sm hover:bg-purple-700 whitespace-nowrap">
+            공유 페이지 열기
+          </Link>
+        </div>
+      </div>
+
       {/* Quick actions */}
       <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
         <h3 className="font-bold text-lg mb-4">빠른 실행</h3>
