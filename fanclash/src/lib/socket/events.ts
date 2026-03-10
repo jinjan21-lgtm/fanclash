@@ -1,0 +1,16 @@
+export const EVENTS = {
+  DONATION_ADD: 'donation:add',
+  DONATION_NEW: 'donation:new',
+  RANKING_UPDATE: 'ranking:update',
+  THRONE_CHANGE: 'throne:change',
+  GOAL_UPDATE: 'goal:update',
+  AFFINITY_LEVELUP: 'affinity:levelup',
+  BATTLE_CREATE: 'battle:create',
+  BATTLE_JOIN: 'battle:join',
+  BATTLE_START: 'battle:start',
+  BATTLE_DONATE: 'battle:donate',
+  BATTLE_UPDATE: 'battle:update',
+  BATTLE_FINISHED: 'battle:finished',
+  TEAM_BATTLE_UPDATE: 'team_battle:update',
+  WIDGET_SUBSCRIBE: 'widget:subscribe',
+} as const;
