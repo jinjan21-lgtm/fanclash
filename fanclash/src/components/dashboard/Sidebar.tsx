@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/widgets', label: '위젯 관리', icon: '🎮' },
   { href: '/dashboard/donations', label: '후원 입력', icon: '💰' },
   { href: '/dashboard/battle', label: '배틀 관리', icon: '⚔️' },
+  { href: '/dashboard/integrations', label: '연동 설정', icon: '🔗' },
 ];
 
 export default function Sidebar() {
