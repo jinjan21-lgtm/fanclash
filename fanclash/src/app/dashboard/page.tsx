@@ -129,13 +129,17 @@ export default async function DashboardPage() {
             <span className="text-2xl block mb-1">🎮</span>
             <span className="text-sm">위젯 관리</span>
           </Link>
-          <Link href="/dashboard/donations" className="p-4 bg-gray-800 rounded-xl text-center hover:bg-gray-700 transition-colors">
-            <span className="text-2xl block mb-1">💰</span>
-            <span className="text-sm">후원 입력</span>
+          <Link href="/dashboard/stats" className="p-4 bg-gray-800 rounded-xl text-center hover:bg-gray-700 transition-colors">
+            <span className="text-2xl block mb-1">📈</span>
+            <span className="text-sm">후원 통계</span>
           </Link>
           <Link href="/dashboard/integrations" className="p-4 bg-gray-800 rounded-xl text-center hover:bg-gray-700 transition-colors">
             <span className="text-2xl block mb-1">🔗</span>
             <span className="text-sm">연동 설정</span>
+          </Link>
+          <Link href="/dashboard/donations" className="p-4 bg-gray-800 rounded-xl text-center hover:bg-gray-700 transition-colors">
+            <span className="text-2xl block mb-1">🧪</span>
+            <span className="text-sm">테스트 후원</span>
           </Link>
         </div>
       </div>
