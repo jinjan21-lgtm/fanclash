@@ -1,11 +1,13 @@
 'use client';
 import { useState } from 'react';
 import { getSocket } from '@/lib/socket/client';
+import { useToast } from '@/components/ui/Toast';
 
 export default function DonationForm({ streamerId }: { streamerId: string }) {
   const [nickname, setNickname] = useState('');
   const [amount, setAmount] = useState('');
   const [history, setHistory] = useState<{ nickname: string; amount: number; time: string }[]>([]);
+  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,16 +18,17 @@ export default function DonationForm({ streamerId }: { streamerId: string }) {
     socket.emit('donation:add', { streamer_id: streamerId, fan_nickname: nickname, amount: amountNum });
     setHistory(prev => [{ nickname, amount: amountNum, time: new Date().toLocaleTimeString() }, ...prev].slice(0, 20));
     setAmount('');
+    toast(`${nickname}님 ${amountNum.toLocaleString()}원 입력됨`);
   };
 
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit} className="bg-gray-900 rounded-xl p-6 space-y-4">
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3">
           <input type="text" placeholder="시청자 닉네임" value={nickname} onChange={e => setNickname(e.target.value)}
-            className="flex-1 p-3 rounded-lg bg-gray-800 text-white" required />
+            className="flex-1 p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-purple-500 focus:outline-none" required />
           <input type="number" placeholder="금액 (원)" value={amount} onChange={e => setAmount(e.target.value)}
-            className="w-40 p-3 rounded-lg bg-gray-800 text-white" required min={1} />
+            className="sm:w-40 p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-purple-500 focus:outline-none" required min={1} />
           <button type="submit" className="px-6 py-3 bg-purple-600 rounded-lg font-bold hover:bg-purple-700">
             입력
           </button>

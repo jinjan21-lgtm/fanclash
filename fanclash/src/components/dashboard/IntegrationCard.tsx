@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/components/ui/Toast';
 import type { Integration, PlatformType } from '@/types';
 
 const PLATFORM_INFO: Record<PlatformType, { label: string; icon: string; fields: { key: string; label: string; placeholder: string; type?: string }[] }> = {
@@ -45,6 +46,7 @@ interface Props {
 export default function IntegrationCard({ platform, integration, streamerId, onUpdate, onToggleConnection }: Props) {
   const info = PLATFORM_INFO[platform];
   const supabase = createClient();
+  const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [config, setConfig] = useState<Record<string, string>>(integration?.config || {});
   const [saving, setSaving] = useState(false);
@@ -59,6 +61,7 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
     }
     setSaving(false);
     setEditing(false);
+    toast(`${info.label} 설정이 저장되었습니다`);
     onUpdate();
   };
 
