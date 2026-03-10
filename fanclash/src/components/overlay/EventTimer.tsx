@@ -5,7 +5,7 @@ import { themes } from '@/lib/themes';
 import { playSound } from '@/lib/sound';
 import type { Widget } from '@/types';
 
-export default function EventTimer({ widget }: { widget: Widget }) {
+export default function EventTimer({ widget, preview }: { widget: Widget; preview?: boolean }) {
   const config = widget.config as Record<string, unknown>;
   const totalSeconds = (config.duration as number) || 600;
   const eventTitle = (config.eventTitle as string) || '이벤트';

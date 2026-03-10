@@ -127,10 +127,6 @@ export default async function DashboardPage() {
             <span className="text-2xl block mb-1">💰</span>
             <span className="text-sm">후원 입력</span>
           </Link>
-          <Link href="/dashboard/battle" className="p-4 bg-gray-800 rounded-xl text-center hover:bg-gray-700 transition-colors">
-            <span className="text-2xl block mb-1">⚔️</span>
-            <span className="text-sm">배틀 관리</span>
-          </Link>
           <Link href="/dashboard/integrations" className="p-4 bg-gray-800 rounded-xl text-center hover:bg-gray-700 transition-colors">
             <span className="text-2xl block mb-1">🔗</span>
             <span className="text-sm">연동 설정</span>

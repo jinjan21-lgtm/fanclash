@@ -6,7 +6,7 @@ import { themes } from '@/lib/themes';
 import type { Widget, Battle, BattleParticipant } from '@/types';
 import { playSound } from '@/lib/sound';
 
-export default function BattleArena({ widget }: { widget: Widget }) {
+export default function BattleArena({ widget, preview }: { widget: Widget; preview?: boolean }) {
   const [battle, setBattle] = useState<Battle | null>(null);
   const [participants, setParticipants] = useState<BattleParticipant[]>([]);
   const [winner, setWinner] = useState<{ winner: string; benefit: string } | null>(null);
@@ -50,6 +50,24 @@ export default function BattleArena({ widget }: { widget: Widget }) {
     const interval = setInterval(() => setTimeLeft(t => Math.max(0, t - 1)), 1000);
     return () => clearInterval(interval);
   }, [battle?.status, timeLeft]);
+
+  // Show demo data in preview mode
+  useEffect(() => {
+    if (preview && !battle) {
+      setBattle({
+        id: 'demo', streamer_id: 'demo', status: 'active',
+        benefit: '치킨 기프티콘', min_amount: 1000, time_limit: 180,
+        winner_nickname: null, started_at: new Date().toISOString(),
+        finished_at: null, created_at: new Date().toISOString(),
+      });
+      setParticipants([
+        { id: '1', battle_id: 'demo', nickname: '별빛소나기', amount: 25000, joined_at: '' },
+        { id: '2', battle_id: 'demo', nickname: '치즈덕후', amount: 18000, joined_at: '' },
+        { id: '3', battle_id: 'demo', nickname: '밤하늘구름', amount: 12000, joined_at: '' },
+      ]);
+      setTimeLeft(127);
+    }
+  }, [preview, battle]);
 
   // Winner screen
   if (winner) {

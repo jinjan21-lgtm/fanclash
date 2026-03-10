@@ -19,7 +19,7 @@ interface Props {
 }
 
 export default function WidgetPreviewModal({ widget, onClose }: Props) {
-  const overlayUrl = typeof window !== 'undefined' ? `${window.location.origin}/overlay/${widget.id}` : '';
+  const overlayUrl = typeof window !== 'undefined' ? `${window.location.origin}/overlay/${widget.id}?preview=true` : '';
   const size = PREVIEW_SIZES[widget.type];
   const [scale, setScale] = useState(1);
 

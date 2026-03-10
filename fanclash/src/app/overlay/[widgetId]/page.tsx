@@ -1,5 +1,6 @@
 'use client';
 import { use } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useWidget } from '@/hooks/useWidget';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import RankingBoard from '@/components/overlay/RankingBoard';
@@ -13,11 +14,13 @@ import MessageBoard from '@/components/overlay/MessageBoard';
 
 export default function OverlayPage({ params }: { params: Promise<{ widgetId: string }> }) {
   const { widgetId } = use(params);
+  const searchParams = useSearchParams();
+  const preview = searchParams.get('preview') === 'true';
   const widget = useWidget(widgetId);
 
   if (!widget) return <div className="bg-transparent" />;
 
-  const props = { widget };
+  const props = { widget, preview };
 
   const WidgetComponent = () => {
     switch (widget.type) {

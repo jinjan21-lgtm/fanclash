@@ -6,7 +6,7 @@ import { themes } from '@/lib/themes';
 import type { Widget } from '@/types';
 import { playSound } from '@/lib/sound';
 
-export default function ThroneAlert({ widget }: { widget: Widget }) {
+export default function ThroneAlert({ widget, preview }: { widget: Widget; preview?: boolean }) {
   const [alert, setAlert] = useState<{ previous: string; current: string } | null>(null);
   const [throneCount, setThroneCount] = useState(0);
   const socketRef = useSocket(widget.id);
@@ -25,6 +25,14 @@ export default function ThroneAlert({ widget }: { widget: Widget }) {
     socket.on('throne:change', handler);
     return () => { socket.off('throne:change', handler); };
   }, [socketRef.current, duration]);
+
+  // Show demo alert in preview mode
+  useEffect(() => {
+    if (preview) {
+      setAlert({ previous: '밤하늘구름', current: '별빛소나기' });
+      setThroneCount(3);
+    }
+  }, [preview]);
 
   return (
     <div className={`${theme.bg} ${theme.fontClass}`}>

@@ -9,12 +9,21 @@ interface RankEntry { nickname: string; total: number; }
 
 const RANK_MEDALS = ['👑', '🥈', '🥉'];
 
-export default function RankingBoard({ widget }: { widget: Widget }) {
+const DEMO_RANKINGS: RankEntry[] = [
+  { nickname: '별빛소나기', total: 152000 },
+  { nickname: '치즈덕후', total: 98000 },
+  { nickname: '밤하늘구름', total: 75000 },
+  { nickname: '해피바이러스', total: 42000 },
+  { nickname: '꿈꾸는고양이', total: 15000 },
+];
+
+export default function RankingBoard({ widget, preview }: { widget: Widget; preview?: boolean }) {
   const [rankings, setRankings] = useState<RankEntry[]>([]);
   const [flashNick, setFlashNick] = useState<string | null>(null);
   const prevRef = useRef<RankEntry[]>([]);
   const socketRef = useSocket(widget.id);
   const theme = themes[widget.theme];
+  const [hasData, setHasData] = useState(false);
 
   useEffect(() => {
     const socket = socketRef.current;
@@ -35,10 +44,18 @@ export default function RankingBoard({ widget }: { widget: Widget }) {
       }
       prevRef.current = newRankings;
       setRankings(newRankings);
+      setHasData(true);
     };
     socket.on('ranking:update', handler);
     return () => { socket.off('ranking:update', handler); };
   }, [socketRef.current]);
+
+  // Show demo data in preview mode when no real data
+  useEffect(() => {
+    if (preview && !hasData) {
+      setRankings(DEMO_RANKINGS);
+    }
+  }, [preview, hasData]);
 
   const maxDisplay = ((widget.config as any)?.maxDisplay as number) || 5;
   const topAmount = rankings[0]?.total || 1;

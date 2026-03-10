@@ -5,7 +5,13 @@ import { useSocket } from '@/hooks/useSocket';
 import { themes } from '@/lib/themes';
 import type { Widget } from '@/types';
 
-export default function DonationGoal({ widget }: { widget: Widget }) {
+const DEMO_MILESTONES = [
+  { amount: 50000, mission: '치킨 먹방' },
+  { amount: 100000, mission: '노래 3곡' },
+  { amount: 200000, mission: '코스프레' },
+];
+
+export default function DonationGoal({ widget, preview }: { widget: Widget; preview?: boolean }) {
   const [currentAmount, setCurrentAmount] = useState(0);
   const [milestones, setMilestones] = useState<{ amount: number; mission: string }[]>([]);
   const [justReached, setJustReached] = useState<{ amount: number; mission: string } | null>(null);
@@ -13,6 +19,7 @@ export default function DonationGoal({ widget }: { widget: Widget }) {
   const prevAmountRef = useRef(0);
   const socketRef = useSocket(widget.id);
   const theme = themes[widget.theme];
+  const [hasData, setHasData] = useState(false);
 
   useEffect(() => {
     const socket = socketRef.current;
@@ -22,6 +29,7 @@ export default function DonationGoal({ widget }: { widget: Widget }) {
       setCurrentAmount(data.current_amount);
       setMilestones(data.milestones);
       prevAmountRef.current = data.current_amount;
+      setHasData(true);
 
       // Amount changed — trigger bump
       if (data.current_amount > prev) {
@@ -40,6 +48,14 @@ export default function DonationGoal({ widget }: { widget: Widget }) {
     socket.on('goal:update', handler);
     return () => { socket.off('goal:update', handler); };
   }, [socketRef.current]);
+
+  // Show demo data in preview mode
+  useEffect(() => {
+    if (preview && !hasData) {
+      setCurrentAmount(73000);
+      setMilestones(DEMO_MILESTONES);
+    }
+  }, [preview, hasData]);
 
   const maxMilestone = milestones.length > 0 ? milestones[milestones.length - 1].amount : 100000;
   const percentage = Math.min((currentAmount / maxMilestone) * 100, 100);

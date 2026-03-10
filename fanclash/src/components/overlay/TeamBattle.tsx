@@ -14,11 +14,12 @@ const TEAM_COLORS = [
 
 const TEAM_EMOJIS = ['🔴', '🔵', '🟢', '🟡'];
 
-export default function TeamBattle({ widget }: { widget: Widget }) {
+export default function TeamBattle({ widget, preview }: { widget: Widget; preview?: boolean }) {
   const [teams, setTeams] = useState<Record<number, { total: number; members: any[] }>>({});
   const [teamNames, setTeamNames] = useState<string[]>([]);
   const [prevTotals, setPrevTotals] = useState<Record<number, number>>({});
   const [flashIdx, setFlashIdx] = useState<number | null>(null);
+  const [hasData, setHasData] = useState(false);
   const socketRef = useSocket(widget.id);
   const theme = themes[widget.theme];
 
@@ -42,10 +43,22 @@ export default function TeamBattle({ widget }: { widget: Widget }) {
       setPrevTotals(totals);
       setTeams(newTeams);
       setTeamNames(data.battle.team_names || []);
+      setHasData(true);
     };
     socket.on('team_battle:update', handler);
     return () => { socket.off('team_battle:update', handler); };
   }, [socketRef.current, prevTotals]);
+
+  // Show demo data in preview mode
+  useEffect(() => {
+    if (preview && !hasData) {
+      setTeams({
+        0: { total: 85000, members: [{}, {}, {}] },
+        1: { total: 62000, members: [{}, {}] },
+      });
+      setTeamNames((widget.config as any)?.teamNames || ['레드팀', '블루팀']);
+    }
+  }, [preview, hasData, widget.config]);
 
   const maxTotal = Math.max(...Object.values(teams).map(t => t.total || 1), 1);
   const totalAll = Object.values(teams).reduce((sum, t) => sum + (t.total || 0), 0);

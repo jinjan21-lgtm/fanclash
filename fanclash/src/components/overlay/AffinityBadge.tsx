@@ -15,7 +15,7 @@ const LEVEL_COLORS = [
   'from-purple-600 to-blue-400',
 ];
 
-export default function AffinityBadge({ widget }: { widget: Widget }) {
+export default function AffinityBadge({ widget, preview }: { widget: Widget; preview?: boolean }) {
   const [levelUp, setLevelUp] = useState<{ nickname: string; level: number; title: string } | null>(null);
   const socketRef = useSocket(widget.id);
   const theme = themes[widget.theme];
@@ -31,6 +31,13 @@ export default function AffinityBadge({ widget }: { widget: Widget }) {
     socket.on('affinity:levelup', handler);
     return () => { socket.off('affinity:levelup', handler); };
   }, [socketRef.current]);
+
+  // Show demo data in preview mode
+  useEffect(() => {
+    if (preview) {
+      setLevelUp({ nickname: '별빛소나기', level: 3, title: '첫사랑' });
+    }
+  }, [preview]);
 
   return (
     <div className={`${theme.bg} ${theme.fontClass}`}>

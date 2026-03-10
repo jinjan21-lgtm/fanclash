@@ -7,7 +7,6 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: '대시보드', icon: '📊' },
   { href: '/dashboard/widgets', label: '위젯 관리', icon: '🎮' },
   { href: '/dashboard/donations', label: '후원 입력', icon: '💰' },
-  { href: '/dashboard/battle', label: '배틀 관리', icon: '⚔️' },
   { href: '/dashboard/stats', label: '후원 통계', icon: '📈' },
   { href: '/dashboard/integrations', label: '연동 설정', icon: '🔗' },
   { href: '/dashboard/pricing', label: '요금제', icon: '💎' },
