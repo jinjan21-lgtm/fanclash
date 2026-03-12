@@ -1,8 +1,7 @@
 import type { Server, Socket } from 'socket.io';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { BattleManager } from '../services/battle';
-
-const activeBattles = new Map<string, BattleManager>();
+import { activeBattles } from '../services/battle-store';
 
 export function handleBattle(io: Server, socket: Socket, supabase: SupabaseClient) {
   socket.on('battle:create' as any, async (data: { streamer_id: string; benefit: string; min_amount: number; time_limit: number }) => {

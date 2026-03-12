@@ -5,7 +5,7 @@ import { TiktokConnector } from './tiktok';
 import { StreamlabsConnector } from './streamlabs';
 import { ChzzkConnector } from './chzzk';
 import { SoopConnector } from './soop';
-import { calculateAffinity } from '../services/affinity';
+import { processDonation } from '../services/donation-processor';
 
 interface ActiveConnection {
   platform: string;
@@ -23,82 +23,12 @@ export class IntegrationManager {
     this.supabase = supabase;
   }
 
-  private async processDonation(streamerId: string, fanNickname: string, amount: number) {
-    const room = `streamer:${streamerId}`;
-
-    // 1. Save donation
-    await this.supabase.from('donations').insert({
-      streamer_id: streamerId,
-      fan_nickname: fanNickname,
-      amount,
-      message: '',
-    });
-
-    // 2. Update fan profile
-    const { data: existing } = await this.supabase
-      .from('fan_profiles')
-      .select('*')
-      .eq('streamer_id', streamerId)
-      .eq('nickname', fanNickname)
-      .single();
-
-    const newTotal = (existing?.total_donated || 0) + amount;
-    const oldLevel = existing?.affinity_level || 0;
-    const affinity = calculateAffinity(newTotal);
-
-    if (existing) {
-      await this.supabase.from('fan_profiles')
-        .update({ total_donated: newTotal, affinity_level: affinity.level, title: affinity.title, updated_at: new Date().toISOString() })
-        .eq('id', existing.id);
-    } else {
-      await this.supabase.from('fan_profiles')
-        .insert({ streamer_id: streamerId, nickname: fanNickname, total_donated: newTotal, affinity_level: affinity.level, title: affinity.title });
-    }
-
-    // 3. Emit donation event
-    this.io.to(room).emit('donation:new', {
-      id: '', streamer_id: streamerId, fan_nickname: fanNickname, amount, message: '', created_at: new Date().toISOString(),
-    });
-
-    // 4. Update rankings
-    const { data: allProfiles } = await this.supabase
-      .from('fan_profiles')
-      .select('nickname, total_donated')
-      .eq('streamer_id', streamerId)
-      .order('total_donated', { ascending: false })
-      .limit(10);
-
-    const rankings = (allProfiles || []).map(d => ({ nickname: d.nickname, total: d.total_donated }));
-    this.io.to(room).emit('ranking:update', { rankings: rankings as any, period: 'total' });
-
-    // 5. Check affinity level up
-    if (affinity.level > oldLevel) {
-      this.io.to(room).emit('affinity:levelup', { nickname: fanNickname, level: affinity.level, title: affinity.title });
-    }
-
-    // 6. Update donation goal
-    const { data: goal } = await this.supabase
-      .from('donation_goals')
-      .select('*')
-      .eq('streamer_id', streamerId)
-      .eq('active', true)
-      .single();
-
-    if (goal) {
-      const newAmount = goal.current_amount + amount;
-      await this.supabase.from('donation_goals').update({ current_amount: newAmount }).eq('id', goal.id);
-      this.io.to(room).emit('goal:update', { current_amount: newAmount, milestones: goal.milestones });
-    }
-
-    console.log(`[Integration] Donation processed: ${fanNickname} -> ${amount}원 (streamer: ${streamerId.substring(0, 8)})`);
-  }
-
   async startIntegration(integrationId: string, streamerId: string, platform: string, config: Record<string, string>) {
     // Stop existing connection for this integration
     this.stopIntegration(integrationId);
 
     const donationHandler = (nickname: string, amount: number) => {
-      this.processDonation(streamerId, nickname, amount);
+      processDonation(this.io, this.supabase, streamerId, nickname, amount);
     };
 
     let connector: ToonationConnector | TiktokConnector | StreamlabsConnector | ChzzkConnector | SoopConnector;
