@@ -18,6 +18,7 @@ export interface TiktokGift {
 }
 
 type GiftCallback = (gift: TiktokGift) => void;
+type DisconnectCallback = () => void;
 
 // Rough diamond to KRW conversion (1 diamond ≈ 7 KRW)
 const DIAMOND_TO_KRW = 7;
@@ -26,6 +27,7 @@ export class TiktokConnector {
   private connection: any = null;
   private username: string;
   private onGift: GiftCallback;
+  private onDisconnect: DisconnectCallback | null = null;
   private _connected = false;
 
   constructor(username: string, onGift: GiftCallback) {
@@ -34,53 +36,53 @@ export class TiktokConnector {
     this.onGift = onGift;
   }
 
+  setOnDisconnect(cb: DisconnectCallback) {
+    this.onDisconnect = cb;
+  }
+
   async connect() {
     if (!WebcastPushConnection) {
-      console.error('[TikTok] tiktok-live-connector not installed');
-      return;
+      throw new Error('tiktok-live-connector not installed');
     }
 
-    try {
-      this.connection = new WebcastPushConnection(this.username, {
-        enableExtendedGiftInfo: true,
-      });
+    this.connection = new WebcastPushConnection(this.username, {
+      enableExtendedGiftInfo: true,
+    });
 
-      this.connection.on('gift', (data: any) => {
-        // Only process when gift streak ends (repeatEnd: true) or non-streak gifts
-        if (data.repeatEnd || !data.gift?.repeat_end) {
-          const diamondCount = data.diamondCount || data.gift?.diamond_count || 0;
-          const repeatCount = data.repeatCount || 1;
-          const totalDiamonds = diamondCount * repeatCount;
+    this.connection.on('gift', (data: any) => {
+      // Only process when gift streak ends (repeatEnd: true) or non-streak gifts
+      if (data.repeatEnd || !data.gift?.repeat_end) {
+        const diamondCount = data.diamondCount || data.gift?.diamond_count || 0;
+        const repeatCount = data.repeatCount || 1;
+        const totalDiamonds = diamondCount * repeatCount;
 
-          this.onGift({
-            nickname: data.nickname || data.uniqueId || '익명',
-            giftName: data.giftName || data.gift?.name || 'Gift',
-            diamondCount: totalDiamonds,
-            repeatCount: repeatCount,
-            amount: Math.round(totalDiamonds * DIAMOND_TO_KRW),
-          });
-        }
-      });
+        this.onGift({
+          nickname: data.nickname || data.uniqueId || '익명',
+          giftName: data.giftName || data.gift?.name || 'Gift',
+          diamondCount: totalDiamonds,
+          repeatCount: repeatCount,
+          amount: Math.round(totalDiamonds * DIAMOND_TO_KRW),
+        });
+      }
+    });
 
-      this.connection.on('connected', () => {
-        console.log(`[TikTok] Connected to @${this.username}`);
-        this._connected = true;
-      });
+    this.connection.on('connected', () => {
+      console.log(`[TikTok] Connected to @${this.username}`);
+      this._connected = true;
+    });
 
-      this.connection.on('disconnected', () => {
-        console.log(`[TikTok] Disconnected from @${this.username}`);
-        this._connected = false;
-      });
-
-      this.connection.on('error', (err: any) => {
-        console.error('[TikTok] Error:', err?.message || err);
-      });
-
-      await this.connection.connect();
-    } catch (err: any) {
-      console.error(`[TikTok] Failed to connect to @${this.username}:`, err?.message || err);
+    this.connection.on('disconnected', () => {
+      console.log(`[TikTok] Disconnected from @${this.username}`);
       this._connected = false;
-    }
+      this.onDisconnect?.();
+    });
+
+    this.connection.on('error', (err: any) => {
+      console.error('[TikTok] Error:', err?.info || err?.message || err);
+    });
+
+    // connect() throws on failure (e.g. user not live)
+    await this.connection.connect();
   }
 
   disconnect() {

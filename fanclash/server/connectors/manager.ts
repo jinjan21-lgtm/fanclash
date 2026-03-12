@@ -7,14 +7,28 @@ import { ChzzkConnector } from './chzzk';
 import { SoopConnector } from './soop';
 import { processDonation } from '../services/donation-processor';
 
+type AnyConnector = ToonationConnector | TiktokConnector | StreamlabsConnector | ChzzkConnector | SoopConnector;
+
 interface ActiveConnection {
   platform: string;
-  connector: ToonationConnector | TiktokConnector | StreamlabsConnector | ChzzkConnector | SoopConnector;
+  connector: AnyConnector;
   streamerId: string;
 }
 
+interface IntegrationRecord {
+  id: string;
+  streamer_id: string;
+  platform: string;
+  config: Record<string, string>;
+}
+
+const RETRY_INTERVAL_MS = 60_000; // 1 minute
+const MAX_RETRIES = 10;
+
 export class IntegrationManager {
   private connections = new Map<string, ActiveConnection>();
+  private retryTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private retryCounts = new Map<string, number>();
   private io: Server;
   private supabase: SupabaseClient;
 
@@ -31,7 +45,7 @@ export class IntegrationManager {
       processDonation(this.io, this.supabase, streamerId, nickname, amount);
     };
 
-    let connector: ToonationConnector | TiktokConnector | StreamlabsConnector | ChzzkConnector | SoopConnector;
+    let connector: AnyConnector;
 
     switch (platform) {
       case 'toonation':
@@ -40,7 +54,10 @@ export class IntegrationManager {
         break;
       case 'tiktok':
         connector = new TiktokConnector(config.username, (g) => donationHandler(g.nickname, g.amount));
-        await connector.connect();
+        (connector as TiktokConnector).setOnDisconnect(() => {
+          this.scheduleRetry(integrationId, streamerId, platform, config);
+        });
+        await (connector as TiktokConnector).connect();
         break;
       case 'streamlabs':
         connector = new StreamlabsConnector(config.socket_token, (d) => donationHandler(d.nickname, d.amount));
@@ -60,6 +77,7 @@ export class IntegrationManager {
     }
 
     this.connections.set(integrationId, { platform, connector, streamerId });
+    this.retryCounts.delete(integrationId);
 
     // Update connected status in DB
     await this.supabase.from('integrations').update({ connected: true }).eq('id', integrationId);
@@ -67,7 +85,48 @@ export class IntegrationManager {
     console.log(`[Integration] Started ${platform} for streamer ${streamerId.substring(0, 8)}`);
   }
 
+  private scheduleRetry(integrationId: string, streamerId: string, platform: string, config: Record<string, string>) {
+    // Clear any existing retry timer
+    const existing = this.retryTimers.get(integrationId);
+    if (existing) clearTimeout(existing);
+
+    const count = (this.retryCounts.get(integrationId) || 0) + 1;
+    this.retryCounts.set(integrationId, count);
+
+    if (count > MAX_RETRIES) {
+      console.log(`[Integration] ${platform} max retries (${MAX_RETRIES}) reached, giving up. Streamer: ${streamerId.substring(0, 8)}`);
+      this.supabase.from('integrations').update({ connected: false }).eq('id', integrationId);
+      return;
+    }
+
+    // Mark as disconnected in DB
+    this.supabase.from('integrations').update({ connected: false }).eq('id', integrationId);
+
+    console.log(`[Integration] ${platform} disconnected, retry ${count}/${MAX_RETRIES} in ${RETRY_INTERVAL_MS / 1000}s`);
+
+    const timer = setTimeout(async () => {
+      this.retryTimers.delete(integrationId);
+      try {
+        await this.startIntegration(integrationId, streamerId, platform, config);
+        console.log(`[Integration] ${platform} reconnected successfully`);
+      } catch (err: any) {
+        console.error(`[Integration] ${platform} retry failed:`, err?.message || err);
+        this.scheduleRetry(integrationId, streamerId, platform, config);
+      }
+    }, RETRY_INTERVAL_MS);
+
+    this.retryTimers.set(integrationId, timer);
+  }
+
   async stopIntegration(integrationId: string) {
+    // Clear retry timer
+    const timer = this.retryTimers.get(integrationId);
+    if (timer) {
+      clearTimeout(timer);
+      this.retryTimers.delete(integrationId);
+    }
+    this.retryCounts.delete(integrationId);
+
     const existing = this.connections.get(integrationId);
     if (existing) {
       existing.connector.disconnect();
@@ -95,8 +154,15 @@ export class IntegrationManager {
           integration.platform,
           integration.config,
         );
-      } catch (err) {
-        console.error(`[Integration] Failed to start ${integration.platform}:`, err);
+      } catch (err: any) {
+        console.error(`[Integration] Failed to start ${integration.platform}:`, err?.message || err);
+        // Schedule retry for failed initial connections
+        this.scheduleRetry(
+          integration.id,
+          integration.streamer_id,
+          integration.platform,
+          integration.config,
+        );
       }
     }
   }
