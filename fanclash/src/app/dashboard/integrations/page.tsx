@@ -5,17 +5,23 @@ import { io, Socket } from 'socket.io-client';
 import IntegrationCard from '@/components/dashboard/IntegrationCard';
 import type { Integration, PlatformType } from '@/types';
 
-const PLATFORMS: PlatformType[] = ['toonation', 'tiktok', 'streamlabs', 'chzzk'];
+const PLATFORMS: PlatformType[] = ['toonation', 'tiktok', 'streamlabs', 'chzzk', 'soop'];
 
 export default function IntegrationsPage() {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [streamerId, setStreamerId] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [integrationErrors, setIntegrationErrors] = useState<Record<string, string>>({});
   const supabase = createClient();
 
   useEffect(() => {
     const s = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001');
     setSocket(s);
+
+    s.on('integration:error', (data: { integration_id: string; platform: string; message: string }) => {
+      setIntegrationErrors(prev => ({ ...prev, [data.platform]: data.message }));
+    });
+
     return () => { s.disconnect(); };
   }, []);
 
@@ -32,6 +38,12 @@ export default function IntegrationsPage() {
   const handleToggleConnection = (integration: Integration, connect: boolean) => {
     if (!socket) return;
     if (connect) {
+      // Clear any previous error for this platform
+      setIntegrationErrors(prev => {
+        const next = { ...prev };
+        delete next[integration.platform];
+        return next;
+      });
       socket.emit('integration:start', {
         integration_id: integration.id,
         streamer_id: integration.streamer_id,
@@ -60,19 +72,18 @@ export default function IntegrationsPage() {
             platform={platform}
             integration={integrations.find(i => i.platform === platform) || null}
             streamerId={streamerId}
-            onUpdate={fetchIntegrations}
+            onUpdate={() => {
+              fetchIntegrations();
+              setIntegrationErrors(prev => {
+                const next = { ...prev };
+                delete next[platform];
+                return next;
+              });
+            }}
             onToggleConnection={handleToggleConnection}
+            error={integrationErrors[platform] || null}
           />
         ))}
-      </div>
-      <div className="mt-8 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-        <h3 className="font-bold mb-2 text-sm">연동 가이드</h3>
-        <ul className="text-sm text-gray-400 space-y-1">
-          <li>• <strong>투네이션</strong>: 투네이션 &gt; 알림설정 &gt; Alert Box URL에서 키 값을 복사하세요</li>
-          <li>• <strong>틱톡 라이브</strong>: 틱톡 유저네임을 입력하세요 (라이브 중일 때만 연동됩니다)</li>
-          <li>• <strong>Streamlabs</strong>: Streamlabs &gt; API Settings &gt; Socket API Token을 복사하세요</li>
-          <li>• <strong>치지직</strong>: 준비 중입니다 (곧 지원 예정)</li>
-        </ul>
       </div>
     </div>
   );
