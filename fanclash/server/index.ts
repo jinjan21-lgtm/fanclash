@@ -33,7 +33,7 @@ if (!SERVER_SECRET) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // HTTP server for both Socket.IO and REST endpoints
-const httpServer = createServer((req, res) => {
+const httpServer = createServer(async (req, res) => {
   // CORS headers - only allow explicitly configured origins
   const origin = req.headers.origin || '';
   const allowedOrigins = CORS_ORIGIN.split(',').map(s => s.trim());
