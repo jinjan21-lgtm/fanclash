@@ -1,74 +1,68 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getSocket } from '@/lib/socket/client';
+import { createClient } from '@/lib/supabase/client';
 
-type Status = 'connected' | 'disconnected' | 'reconnecting';
+const PLATFORM_LABELS: Record<string, string> = {
+  toonation: '투네이션',
+  tiktok: '틱톡',
+  streamlabs: '스트림랩스',
+  chzzk: '치지직',
+  soop: '숲',
+};
+
+type IntegrationStatus = { platform: string; connected: boolean };
 
 export default function ConnectionStatus() {
-  const [status, setStatus] = useState<Status>('disconnected');
-  const [attempt, setAttempt] = useState(0);
+  const [integrations, setIntegrations] = useState<IntegrationStatus[]>([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  const fetchStatus = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase
+      .from('integrations')
+      .select('platform, connected')
+      .eq('streamer_id', user.id);
+    setIntegrations(data || []);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    let s: ReturnType<typeof getSocket>;
-    try {
-      s = getSocket();
-    } catch {
-      return;
-    }
-
-    if (s.connected) setStatus('connected');
-
-    s.on('connect', () => { setStatus('connected'); setAttempt(0); });
-    s.on('disconnect', () => setStatus('disconnected'));
-    s.io.on('reconnect_attempt', (n) => { setStatus('reconnecting'); setAttempt(n); });
-    s.io.on('reconnect_failed', () => setStatus('disconnected'));
-
-    return () => {
-      s.off('connect');
-      s.off('disconnect');
-      s.io.off('reconnect_attempt');
-      s.io.off('reconnect_failed');
-    };
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 10000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleReconnect = () => {
-    try {
-      const s = getSocket();
-      s.connect();
-      setStatus('reconnecting');
-    } catch {
-      // socket URL not configured
-    }
-  };
+  if (loading) return null;
 
-  const config: Record<Status, { color: string; bg: string; border: string; label: string }> = {
-    connected: { color: 'text-green-400', bg: 'bg-green-400', border: 'border-green-800', label: '서버 연결됨' },
-    reconnecting: { color: 'text-yellow-400', bg: 'bg-yellow-400', border: 'border-yellow-800', label: `재연결 중... (${attempt}/10)` },
-    disconnected: { color: 'text-red-400', bg: 'bg-red-400', border: 'border-red-800', label: '연결 끊김' },
-  };
+  const configured = integrations.length;
+  const connected = integrations.filter(i => i.connected).length;
 
-  const c = config[status];
+  if (configured === 0) {
+    return (
+      <div className="flex items-center gap-2 bg-gray-900 rounded-xl px-4 py-2 border border-gray-700 text-xs text-gray-500">
+        연동된 플랫폼 없음
+      </div>
+    );
+  }
 
   return (
-    <div className={`flex items-center gap-3 bg-gray-900 rounded-xl px-5 py-3 border ${c.border}`}>
-      <span className="relative flex h-3 w-3">
-        {status === 'connected' && (
-          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${c.bg} opacity-75`} />
-        )}
-        <span className={`relative inline-flex rounded-full h-3 w-3 ${c.bg}`} />
+    <div className="flex items-center gap-3 bg-gray-900 rounded-xl px-4 py-2 border border-gray-800">
+      <div className="flex items-center gap-2">
+        {integrations.map(i => (
+          <div key={i.platform} className="flex items-center gap-1.5" title={`${PLATFORM_LABELS[i.platform] || i.platform}: ${i.connected ? '연결됨' : '끊김'}`}>
+            <span className={`inline-block w-2 h-2 rounded-full ${i.connected ? 'bg-green-400' : 'bg-red-400'}`} />
+            <span className={`text-xs ${i.connected ? 'text-green-400' : 'text-gray-500'}`}>
+              {PLATFORM_LABELS[i.platform] || i.platform}
+            </span>
+          </div>
+        ))}
+      </div>
+      <span className="text-xs text-gray-600 border-l border-gray-700 pl-3">
+        {connected}/{configured}
       </span>
-      <span className={`text-sm font-medium ${c.color}`}>{c.label}</span>
-      {status === 'disconnected' && (
-        <button
-          onClick={handleReconnect}
-          className="ml-auto px-3 py-1 bg-red-600 hover:bg-red-700 rounded-lg text-xs font-medium transition-colors"
-        >
-          재연결
-        </button>
-      )}
-      {status === 'reconnecting' && (
-        <span className="ml-auto text-xs text-yellow-500">자동 재연결 시도 중...</span>
-      )}
     </div>
   );
 }
