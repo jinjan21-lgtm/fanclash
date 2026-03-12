@@ -115,7 +115,7 @@ export const AFFINITY_LEVELS = [
 ] as const;
 
 // Integration types
-export type PlatformType = 'toonation' | 'tiktok' | 'streamlabs' | 'chzzk';
+export type PlatformType = 'toonation' | 'tiktok' | 'streamlabs' | 'chzzk' | 'soop';
 
 export interface Integration {
   id: string;
@@ -137,4 +137,8 @@ export interface TiktokConfig {
 
 export interface StreamlabsConfig {
   socket_token: string;
+}
+
+export interface SoopConfig {
+  bj_id: string;
 }
