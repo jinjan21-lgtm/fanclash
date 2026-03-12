@@ -74,7 +74,7 @@ export default function WidgetCard({ widget, plan, onUpdate }: { widget: Widget;
           {isBattleType && (
             <button onClick={() => setShowBattleControl(true)}
               className="flex-1 py-2 bg-red-600 rounded-lg text-sm hover:bg-red-700 font-medium">
-              배틀 운영
+              배틀 관리
             </button>
           )}
           <button onClick={() => setShowPreview(true)}
@@ -129,10 +129,10 @@ export default function WidgetCard({ widget, plan, onUpdate }: { widget: Widget;
           <div className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto p-6"
             onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">{label.name} 운영</h3>
+              <h3 className="text-xl font-bold">{label.name} 관리</h3>
               <button onClick={() => setShowBattleControl(false)} className="text-gray-400 hover:text-white text-2xl">&times;</button>
             </div>
-            <BattleControl streamerId={widget.streamer_id} />
+            <BattleControl streamerId={widget.streamer_id} config={widget.config as Record<string, unknown>} />
           </div>
         </div>
       )}

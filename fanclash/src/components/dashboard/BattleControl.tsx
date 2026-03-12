@@ -4,10 +4,15 @@ import { createClient } from '@/lib/supabase/client';
 import { getSocket } from '@/lib/socket/client';
 import type { Battle, BattleParticipant } from '@/types';
 
-export default function BattleControl({ streamerId }: { streamerId: string }) {
-  const [benefit, setBenefit] = useState('');
-  const [minAmount, setMinAmount] = useState('5000');
-  const [timeLimit, setTimeLimit] = useState('180');
+interface BattleControlProps {
+  streamerId: string;
+  config?: Record<string, unknown>;
+}
+
+export default function BattleControl({ streamerId, config }: BattleControlProps) {
+  const [benefit, setBenefit] = useState((config?.defaultBenefit as string) || '');
+  const [minAmount, setMinAmount] = useState(String((config?.defaultMinAmount as number) || 5000));
+  const [timeLimit, setTimeLimit] = useState(String((config?.defaultTimeLimit as number) || 180));
   const [activeBattle, setActiveBattle] = useState<Battle | null>(null);
   const [participants, setParticipants] = useState<BattleParticipant[]>([]);
   const [loading, setLoading] = useState(true);
