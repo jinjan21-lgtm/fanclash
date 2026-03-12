@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { themes } from '@/lib/themes';
 import { playSound } from '@/lib/sound';
+import { getSocket } from '@/lib/socket/client';
 import type { Widget } from '@/types';
 
 /* ── Flip Digit Component ── */
@@ -150,11 +151,18 @@ export default function EventTimer({ widget, preview }: { widget: Widget; previe
   const penalty = (config.penalty as string) || '';
   const theme = themes[widget.theme];
 
+  // Donation integration config
+  const donationMode = (config.donationMode as string) || 'none';
+  const donationAmountPer = (config.donationAmountPer as number) || 1000;
+  const donationTimeChange = (config.donationTimeChange as number) || 30;
+  const autoStartGoal = (config.autoStartGoal as number) || 50000;
+
   const [timeLeft, setTimeLeft] = useState(totalSeconds);
   const [running, setRunning] = useState(false);
   const [finished, setFinished] = useState(false);
   const [sparkKeys, setSparkKeys] = useState<number[]>([]);
   const sparkCounter = useRef(0);
+  const [accumulated, setAccumulated] = useState(0); // For auto_start mode
 
   useEffect(() => {
     // Listen for timer control via BroadcastChannel (dashboard sends commands)
@@ -165,6 +173,7 @@ export default function EventTimer({ widget, preview }: { widget: Widget; previe
         setTimeLeft(e.data.duration || totalSeconds);
         setRunning(true);
         setFinished(false);
+        setAccumulated(0);
       }
       if (e.data.action === 'stop') {
         setRunning(false);
@@ -173,10 +182,54 @@ export default function EventTimer({ widget, preview }: { widget: Widget; previe
         setRunning(false);
         setFinished(false);
         setTimeLeft(e.data.duration || totalSeconds);
+        setAccumulated(0);
       }
     };
     return () => bc.close();
   }, [widget.id, totalSeconds]);
+
+  // Donation integration via Socket.IO
+  useEffect(() => {
+    if (donationMode === 'none' || preview) return;
+
+    const socket = getSocket();
+    socket.emit('widget:subscribe' as any, widget.id);
+
+    const handler = (data: { amount: number }) => {
+      const amount = data.amount;
+
+      if (donationMode === 'add') {
+        const units = Math.floor(amount / donationAmountPer);
+        if (units > 0) {
+          setTimeLeft(t => t + units * donationTimeChange);
+          // Auto-start if not running
+          setRunning(true);
+          setFinished(false);
+        }
+      } else if (donationMode === 'subtract') {
+        const units = Math.floor(amount / donationAmountPer);
+        if (units > 0) {
+          setTimeLeft(t => Math.max(0, t - units * donationTimeChange));
+        }
+      } else if (donationMode === 'auto_start') {
+        setAccumulated(prev => {
+          const newVal = prev + amount;
+          if (newVal >= autoStartGoal) {
+            setTimeLeft(totalSeconds);
+            setRunning(true);
+            setFinished(false);
+            return 0;
+          }
+          return newVal;
+        });
+      }
+    };
+
+    socket.on('donation:new', handler);
+    return () => {
+      socket.off('donation:new', handler);
+    };
+  }, [widget.id, donationMode, donationAmountPer, donationTimeChange, autoStartGoal, totalSeconds, preview]);
 
   useEffect(() => {
     if (!running || timeLeft <= 0) return;
@@ -363,6 +416,19 @@ export default function EventTimer({ widget, preview }: { widget: Widget; previe
                     ))}
                   </AnimatePresence>
                 </div>
+              )}
+
+              {/* Donation mode indicator */}
+              {donationMode !== 'none' && (
+                <p className="mt-2 text-xs text-gray-500">
+                  {donationMode === 'add' && `💰 ${donationAmountPer.toLocaleString()}원당 +${donationTimeChange}초`}
+                  {donationMode === 'subtract' && `💰 ${donationAmountPer.toLocaleString()}원당 -${donationTimeChange}초`}
+                  {donationMode === 'auto_start' && (
+                    running
+                      ? '⏱️ 타이머 진행 중'
+                      : `💰 ${autoStartGoal.toLocaleString()}원 모이면 시작 (${accumulated.toLocaleString()}원)`
+                  )}
+                </p>
               )}
 
               {/* Penalty text */}
