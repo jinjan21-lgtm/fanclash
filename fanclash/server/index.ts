@@ -220,6 +220,22 @@ integrationManager.loadAllIntegrations();
     console.log('[DEBUG] TikTok response length:', body.length);
     console.log('[DEBUG] Has SIGI_STATE:', body.includes('SIGI_STATE'));
     console.log('[DEBUG] Has LiveRoom:', body.includes('LiveRoom'));
+    const sigiMatch = body.match(/<script id="SIGI_STATE" type="application\/json">(.*?)<\/script>/);
+    if (sigiMatch) {
+      try {
+        const sigi = JSON.parse(sigiMatch[1]);
+        const liveRoom = sigi?.LiveRoom;
+        console.log('[DEBUG] LiveRoom keys:', liveRoom ? Object.keys(liveRoom) : 'null');
+        console.log('[DEBUG] liveRoomUserInfo exists:', !!liveRoom?.liveRoomUserInfo);
+        if (liveRoom?.liveRoomUserInfo) {
+          console.log('[DEBUG] liveRoomUserInfo keys:', Object.keys(liveRoom.liveRoomUserInfo));
+        } else {
+          console.log('[DEBUG] LiveRoom content (first 500 chars):', JSON.stringify(liveRoom).substring(0, 500));
+        }
+      } catch (e: any) {
+        console.log('[DEBUG] Failed to parse SIGI_STATE:', e.message);
+      }
+    }
   } catch (e: any) {
     console.log('[DEBUG] TikTok fetch failed:', e.message);
   }
