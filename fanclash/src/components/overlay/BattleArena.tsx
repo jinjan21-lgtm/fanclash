@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSocket } from '@/hooks/useSocket';
+import { createClient } from '@/lib/supabase/client';
 import { themes } from '@/lib/themes';
 import type { Widget, Battle, BattleParticipant } from '@/types';
 import { playSound } from '@/lib/sound';
@@ -15,6 +16,39 @@ export default function BattleArena({ widget, preview }: { widget: Widget; previ
   const prevAmounts = useRef<Record<string, number>>({});
   const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
+
+  // Load active battle from DB
+  useEffect(() => {
+    if (preview) return;
+    const supabase = createClient();
+    supabase
+      .from('battles')
+      .select('*')
+      .eq('streamer_id', widget.streamer_id)
+      .in('status', ['recruiting', 'active'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+      .then(async ({ data: battleData }) => {
+        if (!battleData) return;
+        setBattle(battleData);
+        if (battleData.status === 'active' && battleData.started_at) {
+          const elapsed = Math.floor((Date.now() - new Date(battleData.started_at).getTime()) / 1000);
+          setTimeLeft(Math.max(0, battleData.time_limit - elapsed));
+        }
+        const { data: parts } = await supabase
+          .from('battle_participants')
+          .select('*')
+          .eq('battle_id', battleData.id)
+          .order('amount', { ascending: false });
+        if (parts) {
+          setParticipants(parts);
+          const amounts: Record<string, number> = {};
+          parts.forEach(p => { amounts[p.nickname] = p.amount || 0; });
+          prevAmounts.current = amounts;
+        }
+      });
+  }, [widget.streamer_id, preview]);
 
   useEffect(() => {
     if (!ready) return;

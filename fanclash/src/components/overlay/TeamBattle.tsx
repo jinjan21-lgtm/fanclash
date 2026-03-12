@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSocket } from '@/hooks/useSocket';
+import { createClient } from '@/lib/supabase/client';
 import { themes } from '@/lib/themes';
 import type { Widget } from '@/types';
 
@@ -22,6 +23,43 @@ export default function TeamBattle({ widget, preview }: { widget: Widget; previe
   const [hasData, setHasData] = useState(false);
   const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
+
+  // Load active team battle from DB
+  useEffect(() => {
+    if (preview) return;
+    const supabase = createClient();
+    supabase
+      .from('team_battles')
+      .select('*')
+      .eq('streamer_id', widget.streamer_id)
+      .in('status', ['recruiting', 'active'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+      .then(async ({ data: battleData }) => {
+        if (!battleData) return;
+        setTeamNames(battleData.team_names || []);
+        const { data: members } = await supabase
+          .from('team_battle_members')
+          .select('*')
+          .eq('team_battle_id', battleData.id);
+        if (members) {
+          const teamsMap: Record<number, { total: number; members: any[] }> = {};
+          for (let i = 0; i < (battleData.team_count || 2); i++) {
+            const teamMembers = members.filter(m => m.team_index === i);
+            teamsMap[i] = {
+              total: teamMembers.reduce((sum, m) => sum + (m.amount || 0), 0),
+              members: teamMembers,
+            };
+          }
+          setTeams(teamsMap);
+          const totals: Record<number, number> = {};
+          Object.entries(teamsMap).forEach(([idx, t]) => { totals[Number(idx)] = t.total; });
+          setPrevTotals(totals);
+          setHasData(true);
+        }
+      });
+  }, [widget.streamer_id, preview]);
 
   useEffect(() => {
     if (!ready) return;
