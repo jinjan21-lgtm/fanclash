@@ -12,12 +12,25 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) { setError(error.message); return; }
-    // Hard navigation to ensure middleware picks up new session cookies
-    window.location.href = '/dashboard';
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        if (error.message === 'Invalid login credentials') {
+          setError('이메일 또는 비밀번호가 올바르지 않습니다. Google로 가입하셨다면 위의 Google 로그인을 이용해주세요.');
+        } else {
+          setError(error.message);
+        }
+        setLoading(false);
+        return;
+      }
+      // Hard navigation to ensure middleware picks up new session cookies
+      window.location.href = '/dashboard';
+    } catch {
+      setError('로그인 중 오류가 발생했습니다.');
+      setLoading(false);
+    }
   };
 
   const handleSocialLogin = async (provider: 'kakao' | 'google') => {
