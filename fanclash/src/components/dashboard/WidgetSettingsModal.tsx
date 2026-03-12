@@ -158,12 +158,8 @@ export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }:
             {widget.type === 'affinity' && (
               <AffinitySettings config={config} onChange={setConfig} />
             )}
-            {widget.type === 'battle' && (
-              <BattleSettings config={config} onChange={setConfig} />
-            )}
-            {widget.type === 'team_battle' && (
-              <TeamBattleSettings config={config} onChange={setConfig} />
-            )}
+            {/* battle settings are now in BattleControl */}
+            {/* team_battle settings are now in BattleControl */}
             {widget.type === 'timer' && (
               <TimerSettings config={config} onChange={setConfig} />
             )}

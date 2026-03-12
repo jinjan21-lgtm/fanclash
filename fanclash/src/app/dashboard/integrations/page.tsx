@@ -14,7 +14,7 @@ export default function IntegrationsPage() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [integrationErrors, setIntegrationErrors] = useState<Record<string, string>>({});
   const supabase = createClient();
-  const pollRef = useRef<ReturnType<typeof setInterval>>();
+  const pollRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   useEffect(() => {
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;

@@ -67,14 +67,15 @@ export default function WidgetCard({ widget, plan, onUpdate }: { widget: Widget;
         <ConfigSummary widget={widget} />
 
         <div className="flex gap-2 mt-4 flex-wrap">
-          <button onClick={() => setShowSettings(true)}
-            className="flex-1 py-2 bg-purple-600 rounded-lg text-sm hover:bg-purple-700 font-medium">
-            설정
-          </button>
-          {isBattleType && (
+          {isBattleType ? (
             <button onClick={() => setShowBattleControl(true)}
-              className="flex-1 py-2 bg-red-600 rounded-lg text-sm hover:bg-red-700 font-medium">
+              className="flex-1 py-2 bg-purple-600 rounded-lg text-sm hover:bg-purple-700 font-medium">
               배틀 관리
+            </button>
+          ) : (
+            <button onClick={() => setShowSettings(true)}
+              className="flex-1 py-2 bg-purple-600 rounded-lg text-sm hover:bg-purple-700 font-medium">
+              설정
             </button>
           )}
           <button onClick={() => setShowPreview(true)}
@@ -132,7 +133,7 @@ export default function WidgetCard({ widget, plan, onUpdate }: { widget: Widget;
               <h3 className="text-xl font-bold">{label.name} 관리</h3>
               <button onClick={() => setShowBattleControl(false)} className="text-gray-400 hover:text-white text-2xl">&times;</button>
             </div>
-            <BattleControl streamerId={widget.streamer_id} config={widget.config as Record<string, unknown>} />
+            <BattleControl widget={widget} onUpdate={onUpdate} />
           </div>
         </div>
       )}
