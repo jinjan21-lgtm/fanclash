@@ -1,7 +1,7 @@
 'use client';
 import { useState, Suspense } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 export default function SignupPage() {
@@ -18,7 +18,6 @@ function SignupForm() {
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const searchParams = useSearchParams();
   const refCode = searchParams.get('ref') || '';
   const supabase = createClient();
@@ -46,7 +45,8 @@ function SignupForm() {
       });
     }
     setLoading(false);
-    router.push('/dashboard');
+    // Hard navigation to ensure middleware picks up new session cookies
+    window.location.href = '/dashboard';
   };
 
   const handleSocialLogin = async (provider: 'kakao' | 'google') => {
