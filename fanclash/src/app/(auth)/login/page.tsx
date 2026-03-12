@@ -38,11 +38,11 @@ export default function LoginPage() {
         <div className="space-y-2">
           <button type="button" onClick={() => handleSocialLogin('kakao')}
             className="w-full p-3 rounded-lg bg-[#FEE500] text-[#191919] font-bold hover:bg-[#FDD800] flex items-center justify-center gap-2">
-            <span>💬</span> 카카오로 시작하기
+            <span>💬</span> 카카오로 로그인
           </button>
           <button type="button" onClick={() => handleSocialLogin('google')}
             className="w-full p-3 rounded-lg bg-white text-gray-800 font-bold hover:bg-gray-100 flex items-center justify-center gap-2">
-            <span>G</span> Google로 시작하기
+            <span>G</span> Google로 로그인
           </button>
         </div>
 

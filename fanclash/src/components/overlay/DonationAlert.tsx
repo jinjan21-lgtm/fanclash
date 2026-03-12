@@ -73,7 +73,7 @@ export default function DonationAlert({ widget, preview }: { widget: Widget; pre
   const [current, setCurrent] = useState<AlertData | null>(null);
   const queueRef = useRef<AlertData[]>([]);
   const busyRef = useRef(false);
-  const socketRef = useSocket(widget.id);
+  const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
 
   const cfg = widget.config as DonationAlertConfig;
@@ -121,16 +121,12 @@ export default function DonationAlert({ widget, preview }: { widget: Widget; pre
 
   // Socket listener
   useEffect(() => {
-    const socket = socketRef.current;
-    if (!socket) return;
+    if (!ready) return;
     const handler = (data: Donation) => {
       enqueue({ fan_nickname: data.fan_nickname, amount: data.amount, message: data.message });
     };
-    socket.on('donation:new', handler);
-    return () => {
-      socket.off('donation:new', handler);
-    };
-  }, [socketRef.current, enqueue]);
+    on('donation:new', handler);
+  }, [ready, enqueue]);
 
   // Preview mode
   useEffect(() => {

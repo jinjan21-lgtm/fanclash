@@ -21,13 +21,12 @@ export default function RankingBoard({ widget, preview }: { widget: Widget; prev
   const [rankings, setRankings] = useState<RankEntry[]>([]);
   const [flashNick, setFlashNick] = useState<string | null>(null);
   const prevRef = useRef<RankEntry[]>([]);
-  const socketRef = useSocket(widget.id);
+  const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
   const [hasData, setHasData] = useState(false);
 
   useEffect(() => {
-    const socket = socketRef.current;
-    if (!socket) return;
+    if (!ready) return;
     const handler = (data: any) => {
       const newRankings = data.rankings.map((r: any) => ({
         nickname: r.nickname,
@@ -46,9 +45,8 @@ export default function RankingBoard({ widget, preview }: { widget: Widget; prev
       setRankings(newRankings);
       setHasData(true);
     };
-    socket.on('ranking:update', handler);
-    return () => { socket.off('ranking:update', handler); };
-  }, [socketRef.current]);
+    on('ranking:update', handler);
+  }, [ready]);
 
   // Show demo data in preview mode when no real data
   useEffect(() => {

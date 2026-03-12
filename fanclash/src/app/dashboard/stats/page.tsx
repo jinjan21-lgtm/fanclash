@@ -1,11 +1,31 @@
 import { createClient } from '@/lib/supabase/server';
+import Link from 'next/link';
 import StatsCharts from '@/components/dashboard/StatsCharts';
 import StatsFilter from '@/components/dashboard/StatsFilter';
+import { isProFeature } from '@/lib/plan';
 
 export default async function StatsPage({ searchParams }: { searchParams: Promise<{ period?: string }> }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const { data: streamer } = await supabase.from('streamers').select('plan').eq('id', user!.id).single();
+  const userPlan = streamer?.plan || 'free';
   const params = await searchParams;
+
+  if (isProFeature('stats', userPlan)) {
+    return (
+      <div>
+        <h2 className="text-2xl font-bold mb-6">후원 통계</h2>
+        <div className="bg-gray-900 rounded-xl p-8 border border-gray-800 text-center">
+          <p className="text-4xl mb-4">📊</p>
+          <h3 className="text-xl font-bold mb-2">Pro 전용 기능</h3>
+          <p className="text-gray-400 mb-4">상세 통계, CSV 내보내기, 시간대 분석 등은 Pro 플랜에서 이용 가능합니다.</p>
+          <Link href="/dashboard/pricing" className="inline-block px-6 py-2 bg-purple-600 rounded-lg hover:bg-purple-700">
+            Pro 업그레이드
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const period = params.period || '7d';
   const daysMap: Record<string, number> = { '1d': 1, '7d': 7, '30d': 30, '90d': 90 };

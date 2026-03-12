@@ -17,13 +17,12 @@ export default function DonationGoal({ widget, preview }: { widget: Widget; prev
   const [justReached, setJustReached] = useState<{ amount: number; mission: string } | null>(null);
   const [amountBump, setAmountBump] = useState(false);
   const prevAmountRef = useRef(0);
-  const socketRef = useSocket(widget.id);
+  const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
   const [hasData, setHasData] = useState(false);
 
   useEffect(() => {
-    const socket = socketRef.current;
-    if (!socket) return;
+    if (!ready) return;
     const handler = (data: any) => {
       const prev = prevAmountRef.current;
       setCurrentAmount(data.current_amount);
@@ -45,9 +44,8 @@ export default function DonationGoal({ widget, preview }: { widget: Widget; prev
         }
       }
     };
-    socket.on('goal:update', handler);
-    return () => { socket.off('goal:update', handler); };
-  }, [socketRef.current]);
+    on('goal:update', handler);
+  }, [ready]);
 
   // Show demo data in preview mode
   useEffect(() => {

@@ -9,22 +9,20 @@ import { playSound } from '@/lib/sound';
 export default function ThroneAlert({ widget, preview }: { widget: Widget; preview?: boolean }) {
   const [alert, setAlert] = useState<{ previous: string; current: string } | null>(null);
   const [throneCount, setThroneCount] = useState(0);
-  const socketRef = useSocket(widget.id);
+  const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
   const duration = ((widget.config as any)?.alertDuration as number) || 5;
 
   useEffect(() => {
-    const socket = socketRef.current;
-    if (!socket) return;
+    if (!ready) return;
     const handler = (data: any) => {
       setAlert({ previous: data.previous, current: data.current });
       setThroneCount(prev => prev + 1);
       playSound((widget.config as any)?.soundUrl);
       setTimeout(() => setAlert(null), duration * 1000);
     };
-    socket.on('throne:change', handler);
-    return () => { socket.off('throne:change', handler); };
-  }, [socketRef.current, duration]);
+    on('throne:change', handler);
+  }, [ready, duration]);
 
   // Show demo alert in preview mode
   useEffect(() => {

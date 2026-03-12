@@ -16,13 +16,12 @@ let msgId = 0;
 
 export default function MessageBoard({ widget, preview }: { widget: Widget; preview?: boolean }) {
   const [messages, setMessages] = useState<Message[]>([]);
-  const socketRef = useSocket(widget.id);
+  const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
   const maxMessages = ((widget.config as any)?.maxMessages as number) || 5;
 
   useEffect(() => {
-    const socket = socketRef.current;
-    if (!socket) return;
+    if (!ready) return;
     const handler = (data: any) => {
       if (!data.message) return; // Skip donations without messages
       setMessages(prev => [
@@ -30,9 +29,8 @@ export default function MessageBoard({ widget, preview }: { widget: Widget; prev
         ...prev,
       ].slice(0, maxMessages));
     };
-    socket.on('donation:new', handler);
-    return () => { socket.off('donation:new', handler); };
-  }, [socketRef.current, maxMessages]);
+    on('donation:new', handler);
+  }, [ready, maxMessages]);
 
   // Show demo messages in preview mode
   useEffect(() => {

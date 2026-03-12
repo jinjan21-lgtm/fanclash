@@ -16,15 +16,12 @@ export default function DashboardNotifications() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get any widget to subscribe (we need the streamer room)
-      const { data: widgets } = await supabase.from('widgets').select('id').eq('streamer_id', user.id).limit(1);
-      if (!widgets?.length) return;
-
       const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001');
       socketRef.current = socket;
 
       socket.on('connect', () => {
-        socket.emit('widget:subscribe', widgets[0].id);
+        // Subscribe to streamer room directly using streamer ID
+        socket.emit('streamer:subscribe', user.id);
         setReady(true);
       });
 

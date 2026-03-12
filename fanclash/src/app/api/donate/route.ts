@@ -9,6 +9,27 @@ const supabase = createClient(
 // Simple rate limiting
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
 
+async function emitDonationToSocket(streamer_id: string, fan_nickname: string, amount: number, message: string) {
+  const socketUrl = process.env.SOCKET_SERVER_URL || process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
+  const secret = process.env.SOCKET_SERVER_SECRET || '';
+
+  const res = await fetch(`${socketUrl}/emit`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${secret}`,
+    },
+    body: JSON.stringify({
+      event: 'donation:add',
+      data: { streamer_id, fan_nickname, amount, message },
+    }),
+  });
+
+  if (!res.ok) {
+    console.error('Failed to emit donation to socket server:', res.status);
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -41,20 +62,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Streamer not found' }, { status: 404 });
     }
 
-    // TODO: Process payment via Toss Payments before saving donation
-    // For now, this creates the donation record directly (for testing)
-    // In production, this should:
-    // 1. Create a Toss payment request
-    // 2. Redirect to Toss checkout
-    // 3. On callback/webhook, save donation and emit socket event
-
-    // Save donation
-    await supabase.from('donations').insert({
-      streamer_id,
-      fan_nickname: fan_nickname.trim(),
-      amount,
-      message: (message || '').trim(),
-    });
+    // Emit to Socket.IO server via HTTP
+    await emitDonationToSocket(streamer_id, fan_nickname.trim(), amount, (message || '').trim());
 
     return NextResponse.json({ success: true });
   } catch {

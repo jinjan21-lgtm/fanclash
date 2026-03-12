@@ -1,6 +1,13 @@
+import { config } from 'dotenv';
+import { resolve } from 'path';
+// Load .env.local for local dev; Railway injects env vars directly
+config({ path: resolve(__dirname, '../.env.local') });
+config({ path: resolve(__dirname, '.env.local') });
+
+import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { createClient } from '@supabase/supabase-js';
-import { handleDonation } from './handlers/donation';
+import { handleDonation, handleDonationDirect } from './handlers/donation';
 import { handleBattle } from './handlers/battle';
 import { IntegrationManager } from './connectors/manager';
 
@@ -9,8 +16,74 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 );
 
-const io = new Server({
-  cors: { origin: '*' },
+const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
+const SERVER_SECRET = process.env.SOCKET_SERVER_SECRET || '';
+
+// HTTP server for both Socket.IO and REST endpoints
+const httpServer = createServer((req, res) => {
+  // CORS headers
+  const origin = req.headers.origin || '';
+  if (CORS_ORIGIN === '*' || CORS_ORIGIN.split(',').includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  // Health check
+  if (req.method === 'GET' && req.url === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok' }));
+    return;
+  }
+
+  // POST /emit - server-to-server donation event
+  if (req.method === 'POST' && req.url === '/emit') {
+    const authHeader = req.headers.authorization;
+    if (!SERVER_SECRET || authHeader !== `Bearer ${SERVER_SECRET}`) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const { event, data } = JSON.parse(body);
+        if (!event || !data) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing event or data' }));
+          return;
+        }
+
+        if (event === 'donation:add' && data.streamer_id) {
+          await handleDonationDirect(io, supabase, data);
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+      } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+      }
+    });
+    return;
+  }
+
+  res.writeHead(404);
+  res.end();
+});
+
+const corsOrigins = CORS_ORIGIN === '*' ? '*' as const : CORS_ORIGIN.split(',');
+
+const io = new Server(httpServer, {
+  cors: { origin: corsOrigins },
 });
 
 io.on('connection', (socket) => {
@@ -22,6 +95,10 @@ io.on('connection', (socket) => {
     if (widget) {
       socket.join(`streamer:${widget.streamer_id}`);
     }
+  });
+
+  socket.on('streamer:subscribe', (streamerId: string) => {
+    socket.join(`streamer:${streamerId}`);
   });
 
   handleDonation(io, socket, supabase);
@@ -40,9 +117,10 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.SOCKET_PORT || 3001;
-io.listen(Number(PORT));
-console.log(`Socket.io server running on port ${PORT}`);
+const PORT = process.env.PORT || process.env.SOCKET_PORT || 3001;
+httpServer.listen(Number(PORT), () => {
+  console.log(`Socket.IO server running on port ${PORT}`);
+});
 
 // Integration manager for auto-donation
 const integrationManager = new IntegrationManager(io as any, supabase);

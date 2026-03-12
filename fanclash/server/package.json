@@ -1,0 +1,17 @@
+{
+  "name": "fanclash-socket",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "npx tsx index.ts",
+    "dev": "npx tsx --watch index.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.99.0",
+    "dotenv": "^17.3.1",
+    "socket.io": "^4.8.3",
+    "tiktok-live-connector": "^2.1.1-beta1",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  }
+}

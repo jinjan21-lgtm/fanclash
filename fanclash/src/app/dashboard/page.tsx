@@ -30,7 +30,7 @@ export default async function DashboardPage() {
   const steps = [
     { done: (widgets?.length || 0) > 0, label: '위젯 만들기', desc: '랭킹, 목표, 배틀 등 위젯을 추가하세요', href: '/dashboard/widgets', cta: '위젯 추가' },
     { done: connectedIntegrations > 0, label: '후원 연동', desc: '투네이션, 틱톡 등 후원 플랫폼을 연결하세요', href: '/dashboard/integrations', cta: '연동 설정' },
-    { done: totalToday > 0, label: 'OBS에 위젯 연결', desc: '위젯 관리에서 OBS URL을 복사해서 브라우저 소스로 추가하세요', href: '/dashboard/widgets', cta: 'URL 복사하기' },
+    { done: activeWidgets > 0, label: 'OBS에 위젯 연결', desc: '위젯 관리에서 OBS URL을 복사해서 브라우저 소스로 추가하세요', href: '/dashboard/widgets', cta: 'URL 복사하기' },
     { done: totalToday > 0, label: '첫 후원 받기', desc: '방송을 켜고 첫 후원을 받아보세요!', href: '/dashboard/donations', cta: '테스트 입력' },
   ];
 

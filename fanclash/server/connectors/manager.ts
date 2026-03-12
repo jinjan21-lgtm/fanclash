@@ -29,6 +29,7 @@ export class IntegrationManager {
       streamer_id: streamerId,
       fan_nickname: fanNickname,
       amount,
+      message: '',
     });
 
     // 2. Update fan profile
@@ -54,7 +55,7 @@ export class IntegrationManager {
 
     // 3. Emit donation event
     this.io.to(room).emit('donation:new', {
-      id: '', streamer_id: streamerId, fan_nickname: fanNickname, amount, created_at: new Date().toISOString(),
+      id: '', streamer_id: streamerId, fan_nickname: fanNickname, amount, message: '', created_at: new Date().toISOString(),
     });
 
     // 4. Update rankings

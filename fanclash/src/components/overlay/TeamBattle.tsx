@@ -20,12 +20,11 @@ export default function TeamBattle({ widget, preview }: { widget: Widget; previe
   const [prevTotals, setPrevTotals] = useState<Record<number, number>>({});
   const [flashIdx, setFlashIdx] = useState<number | null>(null);
   const [hasData, setHasData] = useState(false);
-  const socketRef = useSocket(widget.id);
+  const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
 
   useEffect(() => {
-    const socket = socketRef.current;
-    if (!socket) return;
+    if (!ready) return;
     const handler = (data: any) => {
       // Detect which team just got a donation
       const newTeams = data.teams as Record<number, { total: number; members: any[] }>;
@@ -45,9 +44,8 @@ export default function TeamBattle({ widget, preview }: { widget: Widget; previe
       setTeamNames(data.battle.team_names || []);
       setHasData(true);
     };
-    socket.on('team_battle:update', handler);
-    return () => { socket.off('team_battle:update', handler); };
-  }, [socketRef.current, prevTotals]);
+    on('team_battle:update', handler);
+  }, [ready, prevTotals]);
 
   // Show demo data in preview mode
   useEffect(() => {

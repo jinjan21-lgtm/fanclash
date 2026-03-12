@@ -13,12 +13,11 @@ export default function BattleArena({ widget, preview }: { widget: Widget; previ
   const [timeLeft, setTimeLeft] = useState(0);
   const [flashNick, setFlashNick] = useState<string | null>(null);
   const prevAmounts = useRef<Record<string, number>>({});
-  const socketRef = useSocket(widget.id);
+  const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
 
   useEffect(() => {
-    const socket = socketRef.current;
-    if (!socket) return;
+    if (!ready) return;
     const updateHandler = (data: any) => {
       setBattle(data.battle);
       setParticipants(data.participants);
@@ -40,10 +39,9 @@ export default function BattleArena({ widget, preview }: { widget: Widget; previ
       playSound((widget.config as any)?.soundUrl);
       setTimeout(() => { setWinner(null); setBattle(null); setParticipants([]); prevAmounts.current = {}; }, 8000);
     };
-    socket.on('battle:update', updateHandler);
-    socket.on('battle:finished', finishHandler);
-    return () => { socket.off('battle:update', updateHandler); socket.off('battle:finished', finishHandler); };
-  }, [socketRef.current]);
+    on('battle:update', updateHandler);
+    on('battle:finished', finishHandler);
+  }, [ready]);
 
   useEffect(() => {
     if (battle?.status !== 'active' || timeLeft <= 0) return;

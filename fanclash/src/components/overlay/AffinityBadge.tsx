@@ -17,20 +17,18 @@ const LEVEL_COLORS = [
 
 export default function AffinityBadge({ widget, preview }: { widget: Widget; preview?: boolean }) {
   const [levelUp, setLevelUp] = useState<{ nickname: string; level: number; title: string } | null>(null);
-  const socketRef = useSocket(widget.id);
+  const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
 
   useEffect(() => {
-    const socket = socketRef.current;
-    if (!socket) return;
+    if (!ready) return;
     const handler = (data: any) => {
       setLevelUp(data);
       playSound((widget.config as any)?.soundUrl);
       setTimeout(() => setLevelUp(null), 5000);
     };
-    socket.on('affinity:levelup', handler);
-    return () => { socket.off('affinity:levelup', handler); };
-  }, [socketRef.current]);
+    on('affinity:levelup', handler);
+  }, [ready]);
 
   // Show demo data in preview mode
   useEffect(() => {
