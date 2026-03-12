@@ -10,14 +10,18 @@ interface BattleControlProps {
 }
 
 export default function BattleControl({ streamerId, config }: BattleControlProps) {
-  const [benefit, setBenefit] = useState((config?.defaultBenefit as string) || '');
-  const [minAmount, setMinAmount] = useState(String((config?.defaultMinAmount as number) || 5000));
-  const [timeLimit, setTimeLimit] = useState(String((config?.defaultTimeLimit as number) || 180));
+  const configMinAmount = config?.defaultMinAmount as number | undefined;
+  const configTimeLimit = config?.defaultTimeLimit as number | undefined;
+  const configBenefit = config?.defaultBenefit as string | undefined;
+
+  const [benefit, setBenefit] = useState(configBenefit || '');
+  const [minAmount, setMinAmount] = useState(String(configMinAmount ?? 5000));
+  const [timeLimit, setTimeLimit] = useState(String(configTimeLimit ?? 180));
   const [activeBattle, setActiveBattle] = useState<Battle | null>(null);
   const [participants, setParticipants] = useState<BattleParticipant[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load existing active battle from DB
+  // Load existing active battle from DB, sync recruiting battles with config
   useEffect(() => {
     const supabase = createClient();
     supabase
@@ -30,6 +34,17 @@ export default function BattleControl({ streamerId, config }: BattleControlProps
       .single()
       .then(async ({ data }) => {
         if (data) {
+          // Sync recruiting battle with current widget config
+          if (data.status === 'recruiting') {
+            const updates: Record<string, unknown> = {};
+            if (configMinAmount != null && data.min_amount !== configMinAmount) updates.min_amount = configMinAmount;
+            if (configTimeLimit != null && data.time_limit !== configTimeLimit) updates.time_limit = configTimeLimit;
+            if (configBenefit && data.benefit !== configBenefit) updates.benefit = configBenefit;
+            if (Object.keys(updates).length > 0) {
+              await supabase.from('battles').update(updates).eq('id', data.id);
+              Object.assign(data, updates);
+            }
+          }
           setActiveBattle(data);
           const { data: parts } = await supabase
             .from('battle_participants')
@@ -40,7 +55,7 @@ export default function BattleControl({ streamerId, config }: BattleControlProps
         }
         setLoading(false);
       });
-  }, [streamerId]);
+  }, [streamerId, configMinAmount, configTimeLimit, configBenefit]);
 
   // Socket events
   useEffect(() => {
