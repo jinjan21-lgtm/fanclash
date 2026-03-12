@@ -105,7 +105,15 @@ io.on('connection', (socket) => {
   handleBattle(io, socket, supabase);
 
   socket.on('integration:start' as any, async (data: { integration_id: string; streamer_id: string; platform: string; config: Record<string, string> }) => {
-    await integrationManager.startIntegration(data.integration_id, data.streamer_id, data.platform, data.config);
+    try {
+      await integrationManager.startIntegration(data.integration_id, data.streamer_id, data.platform, data.config);
+    } catch (err: any) {
+      socket.emit('integration:error', {
+        integration_id: data.integration_id,
+        platform: data.platform,
+        message: err?.message || 'Connection failed',
+      });
+    }
   });
 
   socket.on('integration:stop' as any, async (data: { integration_id: string }) => {
