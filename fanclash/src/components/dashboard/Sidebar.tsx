@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: '대시보드', icon: '📊' },
@@ -14,7 +15,14 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
 
   return (
     <>
@@ -50,6 +58,15 @@ export default function Sidebar() {
               </Link>
             ))}
           </nav>
+          <div className="absolute bottom-4 left-4 right-4">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:bg-red-900/30 hover:text-red-400 transition-colors w-full"
+            >
+              <span>🚪</span>
+              <span>로그아웃</span>
+            </button>
+          </div>
         </div>
       </aside>
     </>
