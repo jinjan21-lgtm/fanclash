@@ -10,6 +10,7 @@
     "@supabase/supabase-js": "^2.99.0",
     "dotenv": "^17.3.1",
     "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "tiktok-live-connector": "^2.1.1-beta1",
     "tsx": "^4.21.0",
     "typescript": "^5"
