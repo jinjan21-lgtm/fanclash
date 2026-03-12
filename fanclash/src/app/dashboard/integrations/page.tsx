@@ -1,11 +1,12 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { io, Socket } from 'socket.io-client';
 import IntegrationCard from '@/components/dashboard/IntegrationCard';
 import type { Integration, PlatformType } from '@/types';
 
 const PLATFORMS: PlatformType[] = ['toonation', 'tiktok', 'streamlabs', 'chzzk', 'soop'];
+const POLL_INTERVAL = 5000; // 5초마다 상태 갱신
 
 export default function IntegrationsPage() {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
@@ -13,6 +14,7 @@ export default function IntegrationsPage() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [integrationErrors, setIntegrationErrors] = useState<Record<string, string>>({});
   const supabase = createClient();
+  const pollRef = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
@@ -30,6 +32,20 @@ export default function IntegrationsPage() {
       setIntegrationErrors(prev => ({ ...prev, [data.platform]: data.message }));
     });
 
+    // 서버에서 연결 상태 변경 시 즉시 반영
+    s.on('integration:status', (data: { integration_id: string; platform: string; connected: boolean }) => {
+      setIntegrations(prev => prev.map(i =>
+        i.id === data.integration_id ? { ...i, connected: data.connected } : i
+      ));
+      if (data.connected) {
+        setIntegrationErrors(prev => {
+          const next = { ...prev };
+          delete next[data.platform];
+          return next;
+        });
+      }
+    });
+
     return () => { s.disconnect(); };
   }, []);
 
@@ -43,10 +59,19 @@ export default function IntegrationsPage() {
 
   useEffect(() => { fetchIntegrations(); }, [fetchIntegrations]);
 
+  // 주기적으로 연결 상태 폴링
+  useEffect(() => {
+    if (!streamerId) return;
+    pollRef.current = setInterval(async () => {
+      const { data } = await supabase.from('integrations').select('*').eq('streamer_id', streamerId);
+      if (data) setIntegrations(data);
+    }, POLL_INTERVAL);
+    return () => clearInterval(pollRef.current);
+  }, [streamerId, supabase]);
+
   const handleToggleConnection = (integration: Integration, connect: boolean) => {
     if (!socket) return;
     if (connect) {
-      // Clear any previous error for this platform
       setIntegrationErrors(prev => {
         const next = { ...prev };
         delete next[integration.platform];

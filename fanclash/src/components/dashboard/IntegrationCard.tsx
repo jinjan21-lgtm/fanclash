@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
 import type { Integration, PlatformType } from '@/types';
@@ -15,10 +15,12 @@ const PLATFORM_INFO: Record<PlatformType, {
   icon: string;
   fields: { key: string; label: string; placeholder: string; type?: string }[];
   guide: PlatformGuide;
+  liveRequired: boolean;
 }> = {
   toonation: {
     label: '투네이션',
     icon: '🎵',
+    liveRequired: false,
     fields: [
       { key: 'alertbox_key', label: 'Alert Box 키', placeholder: 'toonation alertbox URL의 키 값', type: 'password' },
     ],
@@ -38,22 +40,25 @@ const PLATFORM_INFO: Record<PlatformType, {
   tiktok: {
     label: '틱톡 라이브',
     icon: '🎵',
+    liveRequired: true,
     fields: [
-      { key: 'username', label: '틱톡 유저네임', placeholder: '@없이 유저네임 입력' },
+      { key: 'username', label: '틱톡 유저네임', placeholder: '@없이 유저네임 입력 (예: myuser.name)' },
     ],
     guide: {
       steps: [
         '틱톡 프로필에서 사용자 이름(유저네임)을 확인합니다.',
         '@ 기호 없이 유저네임만 입력합니다. 예: myusername',
         '"저장" 후 "연결" 버튼을 누릅니다.',
+        '라이브 방송을 시작한 후 연결하세요.',
       ],
-      warning: '틱톡 라이브가 켜져 있을 때만 연동됩니다. 라이브 시작 전에 연결해두면 자동으로 감지합니다.',
+      warning: '틱톡 라이브가 켜져 있을 때만 연동됩니다. 방송 종료 시 연결이 끊기며, 다음 방송 시 다시 연결해주세요.',
       faq: '틱톡 선물(Gift)이 FanClash에 자동 반영됩니다. 다이아몬드는 한국 원화로 자동 환산됩니다 (1다이아 ≈ 7원).',
     },
   },
   streamlabs: {
     label: 'Streamlabs',
     icon: '🔴',
+    liveRequired: false,
     fields: [
       { key: 'socket_token', label: 'Socket API Token', placeholder: 'Streamlabs API Settings에서 복사', type: 'password' },
     ],
@@ -72,6 +77,7 @@ const PLATFORM_INFO: Record<PlatformType, {
   chzzk: {
     label: '치지직',
     icon: '🟢',
+    liveRequired: true,
     fields: [
       { key: 'channel_id', label: '채널 ID', placeholder: '치지직 채널 ID' },
     ],
@@ -90,6 +96,7 @@ const PLATFORM_INFO: Record<PlatformType, {
   soop: {
     label: '숲 (아프리카TV)',
     icon: '🌳',
+    liveRequired: true,
     fields: [
       { key: 'bj_id', label: 'BJ 아이디', placeholder: '숲 BJ 아이디 입력' },
     ],
@@ -126,6 +133,24 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
   const [saving, setSaving] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [prevConnected, setPrevConnected] = useState(integration?.connected ?? false);
+
+  // 연결 상태 변경 감지 → 토스트 알림
+  useEffect(() => {
+    if (!integration) return;
+    const curr = integration.connected;
+    if (prevConnected && !curr && !connecting) {
+      toast(`${info.label} 연결이 끊어졌습니다`, 'error');
+    } else if (!prevConnected && curr) {
+      toast(`${info.label} 연결되었습니다`, 'success');
+    }
+    setPrevConnected(curr);
+  }, [integration?.connected]);
+
+  // config 동기화
+  useEffect(() => {
+    if (integration?.config) setConfig(integration.config);
+  }, [integration?.config]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -154,27 +179,74 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
     if (!integration) return;
     setConnecting(true);
     onToggleConnection(integration, !integration.connected);
-    setTimeout(() => setConnecting(false), 1500);
+    setTimeout(() => setConnecting(false), 3000);
   };
 
   const isConfigured = info.fields.every(f => config[f.key]?.trim());
 
+  // 상태별 배지 렌더링
+  const renderStatus = () => {
+    if (error) {
+      return (
+        <div className="flex items-center gap-1.5">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+          </span>
+          <span className="text-xs text-red-400">연결 실패</span>
+        </div>
+      );
+    }
+    if (connecting) {
+      return (
+        <div className="flex items-center gap-1.5">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75 animate-ping" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-500" />
+          </span>
+          <span className="text-xs text-yellow-400">연결 중...</span>
+        </div>
+      );
+    }
+    if (integration?.connected) {
+      return (
+        <div className="flex items-center gap-1.5">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+          </span>
+          <span className="text-xs text-green-400">연결됨</span>
+        </div>
+      );
+    }
+    if (integration) {
+      return (
+        <div className="flex items-center gap-1.5">
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-gray-500" />
+          <span className="text-xs text-gray-400">미연결</span>
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center gap-1.5">
+        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-gray-600" />
+        <span className="text-xs text-gray-500">미설정</span>
+      </div>
+    );
+  };
+
   return (
-    <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+    <div className={`bg-gray-800 rounded-xl p-5 border transition-colors ${
+      error ? 'border-red-700/50' :
+      integration?.connected ? 'border-green-700/50' :
+      'border-gray-700'
+    }`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <span className="text-2xl">{info.icon}</span>
           <div>
             <h3 className="font-bold text-lg">{info.label}</h3>
-            {error ? (
-              <span className="text-xs text-red-400">● {error}</span>
-            ) : integration?.connected ? (
-              <span className="text-xs text-green-400">● 연결됨</span>
-            ) : integration ? (
-              <span className="text-xs text-yellow-400">● 설정됨 (미연결)</span>
-            ) : (
-              <span className="text-xs text-gray-500">● 미설정</span>
-            )}
+            {renderStatus()}
           </div>
         </div>
         {integration && !editing && (
@@ -188,11 +260,33 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
                   : 'bg-green-600 hover:bg-green-700 text-white'
               } disabled:opacity-50`}
             >
-              {connecting ? '...' : integration.connected ? '연결 해제' : '연결'}
+              {connecting ? '연결 중...' : integration.connected ? '연결 해제' : '연결'}
             </button>
           </div>
         )}
       </div>
+
+      {/* 에러 메시지 표시 */}
+      {error && (
+        <div className="mb-4 p-3 bg-red-900/30 border border-red-700/50 rounded-lg">
+          <p className="text-sm text-red-300 font-medium mb-1">연결 오류</p>
+          <p className="text-xs text-red-400">{error}</p>
+          {info.liveRequired && (
+            <p className="text-xs text-red-400/70 mt-1">
+              라이브 방송 중인지 확인 후 다시 연결해주세요.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* 라이브 필요 플랫폼 안내 */}
+      {integration && !integration.connected && !error && !editing && info.liveRequired && (
+        <div className="mb-4 p-3 bg-yellow-900/20 border border-yellow-700/30 rounded-lg">
+          <p className="text-xs text-yellow-300/80">
+            라이브 방송을 시작한 후 "연결" 버튼을 눌러주세요. 방송 종료 시 자동으로 연결이 해제됩니다.
+          </p>
+        </div>
+      )}
 
       {editing ? (
         <div className="space-y-3">
