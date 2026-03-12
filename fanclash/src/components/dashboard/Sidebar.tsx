@@ -58,7 +58,7 @@ export default function Sidebar() {
               </Link>
             ))}
           </nav>
-          <div className="absolute bottom-4 left-4 right-4">
+          <div className="border-t border-gray-800 mt-4 pt-3">
             <button
               onClick={handleLogout}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:bg-red-900/30 hover:text-red-400 transition-colors w-full"
