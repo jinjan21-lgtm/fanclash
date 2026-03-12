@@ -4,13 +4,36 @@ import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
 import type { Integration, PlatformType } from '@/types';
 
-const PLATFORM_INFO: Record<PlatformType, { label: string; icon: string; fields: { key: string; label: string; placeholder: string; type?: string }[] }> = {
+interface PlatformGuide {
+  steps: string[];
+  warning: string;
+  faq: string;
+}
+
+const PLATFORM_INFO: Record<PlatformType, {
+  label: string;
+  icon: string;
+  fields: { key: string; label: string; placeholder: string; type?: string }[];
+  guide: PlatformGuide;
+}> = {
   toonation: {
     label: '투네이션',
     icon: '🎵',
     fields: [
       { key: 'alertbox_key', label: 'Alert Box 키', placeholder: 'toonation alertbox URL의 키 값', type: 'password' },
     ],
+    guide: {
+      steps: [
+        '투네이션(toonation.com)에 로그인합니다.',
+        '우측 상단 프로필 아이콘 클릭 → "마이페이지"로 이동합니다.',
+        '"위젯/알림" 메뉴에서 "Alert Box"를 선택합니다.',
+        'Alert Box URL을 확인합니다. URL에서 key= 뒤의 값이 Alert Box 키입니다.',
+        '예: https://toon.at/widget/alertbox/ABCDEF... → "ABCDEF..." 부분을 복사합니다.',
+        '위 입력란에 붙여넣고 "저장" 버튼을 누릅니다.',
+      ],
+      warning: 'Alert Box 키는 절대 타인에게 공유하지 마세요. 키가 노출되면 투네이션에서 재발급하세요.',
+      faq: '투네이션 후원이 들어오면 자동으로 FanClash 위젯에 반영됩니다. 기존 투네이션 알림과 동시에 사용 가능합니다.',
+    },
   },
   tiktok: {
     label: '틱톡 라이브',
@@ -18,6 +41,15 @@ const PLATFORM_INFO: Record<PlatformType, { label: string; icon: string; fields:
     fields: [
       { key: 'username', label: '틱톡 유저네임', placeholder: '@없이 유저네임 입력' },
     ],
+    guide: {
+      steps: [
+        '틱톡 프로필에서 사용자 이름(유저네임)을 확인합니다.',
+        '@ 기호 없이 유저네임만 입력합니다. 예: myusername',
+        '"저장" 후 "연결" 버튼을 누릅니다.',
+      ],
+      warning: '틱톡 라이브가 켜져 있을 때만 연동됩니다. 라이브 시작 전에 연결해두면 자동으로 감지합니다.',
+      faq: '틱톡 선물(Gift)이 FanClash에 자동 반영됩니다. 다이아몬드는 한국 원화로 자동 환산됩니다 (1다이아 ≈ 7원).',
+    },
   },
   streamlabs: {
     label: 'Streamlabs',
@@ -25,6 +57,17 @@ const PLATFORM_INFO: Record<PlatformType, { label: string; icon: string; fields:
     fields: [
       { key: 'socket_token', label: 'Socket API Token', placeholder: 'Streamlabs API Settings에서 복사', type: 'password' },
     ],
+    guide: {
+      steps: [
+        'Streamlabs(streamlabs.com)에 로그인합니다.',
+        '좌측 메뉴에서 "Settings" → "API Settings"로 이동합니다.',
+        '"API Tokens" 섹션에서 "Socket API Token"을 찾습니다.',
+        '"Copy" 버튼을 눌러 토큰을 복사합니다.',
+        '위 입력란에 붙여넣고 "저장" 버튼을 누릅니다.',
+      ],
+      warning: 'Socket API Token은 절대 타인에게 공유하지 마세요.',
+      faq: 'Streamlabs를 통한 모든 후원이 자동 반영됩니다. USD, EUR 등 외화는 자동으로 원화 환산됩니다.',
+    },
   },
   chzzk: {
     label: '치지직',
@@ -32,6 +75,36 @@ const PLATFORM_INFO: Record<PlatformType, { label: string; icon: string; fields:
     fields: [
       { key: 'channel_id', label: '채널 ID', placeholder: '치지직 채널 ID' },
     ],
+    guide: {
+      steps: [
+        '치지직(chzzk.naver.com)에서 내 채널로 이동합니다.',
+        '채널 URL을 확인합니다.',
+        '예: https://chzzk.naver.com/channel/abc123def... → "abc123def..." 부분이 채널 ID입니다.',
+        '채널 ID를 위 입력란에 붙여넣고 "저장" 버튼을 누릅니다.',
+        '"연결"을 누르면 라이브 방송 시 치즈 후원이 자동으로 감지됩니다.',
+      ],
+      warning: '라이브 방송 중일 때만 연동됩니다. 방송 시작 전 미리 연결해두세요.',
+      faq: '치지직 치즈 후원이 실시간으로 FanClash 위젯에 반영됩니다.',
+    },
+  },
+  soop: {
+    label: '숲 (아프리카TV)',
+    icon: '🌳',
+    fields: [
+      { key: 'bj_id', label: 'BJ 아이디', placeholder: '숲 BJ 아이디 입력' },
+    ],
+    guide: {
+      steps: [
+        '숲(sooplive.co.kr)에 로그인합니다.',
+        '내 방송국으로 이동합니다.',
+        '방송국 URL에서 BJ 아이디를 확인합니다.',
+        '예: https://bj.sooplive.co.kr/mybjid → "mybjid" 부분이 BJ 아이디입니다.',
+        'BJ 아이디를 위 입력란에 붙여넣고 "저장" 버튼을 누릅니다.',
+        '"연결"을 누르면 라이브 방송 시 별풍선이 자동으로 감지됩니다.',
+      ],
+      warning: '라이브 방송 중일 때만 연동됩니다. 별풍선 1개 = 100원으로 환산됩니다.',
+      faq: '숲 별풍선과 애드벌룬이 실시간으로 FanClash 위젯에 반영됩니다.',
+    },
   },
 };
 
@@ -41,9 +114,10 @@ interface Props {
   streamerId: string;
   onUpdate: () => void;
   onToggleConnection: (integration: Integration, connect: boolean) => void;
+  error: string | null;
 }
 
-export default function IntegrationCard({ platform, integration, streamerId, onUpdate, onToggleConnection }: Props) {
+export default function IntegrationCard({ platform, integration, streamerId, onUpdate, onToggleConnection, error }: Props) {
   const info = PLATFORM_INFO[platform];
   const supabase = createClient();
   const { toast } = useToast();
@@ -51,6 +125,7 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
   const [config, setConfig] = useState<Record<string, string>>(integration?.config || {});
   const [saving, setSaving] = useState(false);
   const [connecting, setConnecting] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
@@ -91,7 +166,9 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
           <span className="text-2xl">{info.icon}</span>
           <div>
             <h3 className="font-bold text-lg">{info.label}</h3>
-            {integration?.connected ? (
+            {error ? (
+              <span className="text-xs text-red-400">● {error}</span>
+            ) : integration?.connected ? (
               <span className="text-xs text-green-400">● 연결됨</span>
             ) : integration ? (
               <span className="text-xs text-yellow-400">● 설정됨 (미연결)</span>
@@ -170,6 +247,35 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
           )}
         </div>
       )}
+
+      {/* Guide section */}
+      <div className="mt-4 border-t border-gray-700 pt-3">
+        <button
+          onClick={() => setShowGuide(!showGuide)}
+          className="text-sm text-gray-400 hover:text-gray-300 flex items-center gap-1"
+        >
+          <span className={`transition-transform ${showGuide ? 'rotate-90' : ''}`}>▸</span>
+          연동 가이드
+        </button>
+        {showGuide && (
+          <div className="mt-3 space-y-3 text-sm">
+            <ol className="space-y-2 text-gray-300">
+              {info.guide.steps.map((step, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="text-purple-400 font-bold shrink-0">{i + 1}.</span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+            <div className="p-2 bg-yellow-900/30 border border-yellow-700/50 rounded text-yellow-300 text-xs">
+              ⚠️ {info.guide.warning}
+            </div>
+            <div className="p-2 bg-blue-900/30 border border-blue-700/50 rounded text-blue-300 text-xs">
+              💡 {info.guide.faq}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
