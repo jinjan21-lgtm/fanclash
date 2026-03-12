@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import ConnectionStatus from '@/components/dashboard/ConnectionStatus';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -39,7 +40,10 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6">안녕하세요, {streamer?.display_name || '스트리머'}님!</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold">안녕하세요, {streamer?.display_name || '스트리머'}님!</h2>
+        <ConnectionStatus />
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
