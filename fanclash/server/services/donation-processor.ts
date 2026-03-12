@@ -2,6 +2,7 @@ import type { Server } from 'socket.io';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { calculateAffinity } from './affinity';
 import { activeBattles } from './battle-store';
+import { activeTeamBattles } from './team-battle-store';
 
 /**
  * Unified donation processor — called by both socket handler and integration manager.
@@ -131,6 +132,9 @@ export async function processDonation(
   // 8. Battle integration — auto-join or add donation to active battle
   await processBattleDonation(io, supabase, streamer_id, fan_nickname, amount);
 
+  // 9. Team battle integration — auto-join team or add donation
+  await processTeamBattleDonation(io, supabase, streamer_id, fan_nickname, amount);
+
   console.log(`[Donation] ${fan_nickname} -> ${amount}원 (streamer: ${streamer_id.substring(0, 8)})`);
 }
 
@@ -200,5 +204,75 @@ async function processBattleDonation(
     });
   } catch (err) {
     console.error('[Donation] Battle integration error:', err);
+  }
+}
+
+/**
+ * If there's an active team battle, auto-assign donor to a team and add their donation.
+ * - New donor: assign to the team with fewest members (balance teams)
+ * - Existing donor: add to their existing team
+ */
+async function processTeamBattleDonation(
+  io: Server,
+  supabase: SupabaseClient,
+  streamer_id: string,
+  fan_nickname: string,
+  amount: number,
+) {
+  const { data: battle } = await supabase
+    .from('team_battles')
+    .select('*')
+    .eq('streamer_id', streamer_id)
+    .in('status', ['recruiting', 'active'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!battle) return;
+
+  const tbm = activeTeamBattles.get(battle.id);
+  if (!tbm) return;
+
+  const room = `streamer:${streamer_id}`;
+
+  try {
+    const existingMember = tbm.findMember(fan_nickname);
+
+    if (existingMember) {
+      // Add to existing team
+      tbm.addDonation(fan_nickname, amount);
+      await supabase.from('team_battle_members')
+        .update({ amount: existingMember.amount })
+        .eq('team_battle_id', battle.id)
+        .eq('nickname', fan_nickname);
+    } else {
+      // Auto-assign to team with fewest members (balance)
+      const teamsData = tbm.getTeamsData();
+      let minMembers = Infinity;
+      let targetTeam = 0;
+      for (let i = 0; i < tbm.getTeamCount(); i++) {
+        const memberCount = teamsData[i]?.members.length || 0;
+        if (memberCount < minMembers) {
+          minMembers = memberCount;
+          targetTeam = i;
+        }
+      }
+
+      tbm.addMember(fan_nickname, amount, targetTeam);
+      await supabase.from('team_battle_members').insert({
+        team_battle_id: battle.id,
+        team_index: targetTeam,
+        nickname: fan_nickname,
+        amount,
+      });
+    }
+
+    // Emit updated team battle state
+    io.to(room).emit('team_battle:update', {
+      battle,
+      teams: tbm.getTeamsData(),
+    });
+  } catch (err) {
+    console.error('[Donation] Team battle integration error:', err);
   }
 }

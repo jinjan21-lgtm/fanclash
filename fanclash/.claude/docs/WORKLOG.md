@@ -3,6 +3,25 @@
 ## 2026-03-12 (세션 5)
 
 ### 완료한 태스크
+- [x] 도네이션 처리 통합 리팩토링 (모든 위젯 1회 후원으로 연동)
+  - 상세:
+    1. server/services/donation-processor.ts 신규 — 통합 processDonation (중복 제거)
+    2. server/services/battle-store.ts 신규 — activeBattles 공유 저장소
+    3. 배틀 자동 연동: recruiting → 자동 참가, active → 금액 추가
+    4. donation.ts, manager.ts 모두 공유 프로세서 호출로 변경
+    5. 1회 후원 → alert, ranking, throne, goal, affinity, battle, messages, roulette, timer 모두 반응
+  - 파일: server/services/donation-processor.ts, server/services/battle-store.ts, server/handlers/donation.ts, server/handlers/battle.ts, server/connectors/manager.ts
+  - 비고: team_battle 서버 핸들러는 아직 미구현 (별도 작업 필요)
+
+- [x] 이벤트 타이머 도네이션 연동
+  - 상세: 3가지 모드 추가 (시간 추가/차감/자동 시작), 위젯 설정 UI + 오버레이 Socket.IO 수신
+  - 파일: src/components/dashboard/WidgetSettingsModal.tsx, src/components/overlay/EventTimer.tsx
+  - 비고: 서버 변경 없이 클라이언트에서 donation:new 이벤트 직접 수신
+
+- [x] 배틀 관리 config 동기화 수정
+  - 상세: recruiting 배틀이 위젯 설정 변경 후에도 이전 값(5000/180) 표시 → DB 자동 동기화
+  - 파일: src/components/dashboard/BattleControl.tsx
+
 - [x] Free 요금제 변경: 후원알림(alert) 위젯만 허용
   - 상세:
     1. plan.ts: FREE_WIDGET_LIMIT=3 → FREE_ALLOWED_WIDGETS=['alert'], isWidgetLocked() 추가

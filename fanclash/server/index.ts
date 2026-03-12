@@ -9,6 +9,7 @@ import { Server } from 'socket.io';
 import { createClient } from '@supabase/supabase-js';
 import { handleDonation, handleDonationDirect } from './handlers/donation';
 import { handleBattle } from './handlers/battle';
+import { handleTeamBattle } from './handlers/team-battle';
 import { IntegrationManager } from './connectors/manager';
 
 // Validate required environment variables
@@ -117,6 +118,7 @@ io.on('connection', (socket) => {
 
   handleDonation(io, socket, supabase);
   handleBattle(io, socket, supabase);
+  handleTeamBattle(io, socket, supabase);
 
   socket.on('integration:start' as any, async (data: { integration_id: string; streamer_id: string; platform: string; config: Record<string, string> }) => {
     try {
