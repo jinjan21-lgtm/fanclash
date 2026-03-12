@@ -11,20 +11,34 @@ import { handleDonation, handleDonationDirect } from './handlers/donation';
 import { handleBattle } from './handlers/battle';
 import { IntegrationManager } from './connectors/manager';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+// Validate required environment variables
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const CORS_ORIGIN = process.env.CORS_ORIGIN;
+const SERVER_SECRET = process.env.SOCKET_SERVER_SECRET;
 
-const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
-const SERVER_SECRET = process.env.SOCKET_SERVER_SECRET || '';
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  console.error('FATAL: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
+  process.exit(1);
+}
+if (!CORS_ORIGIN) {
+  console.error('FATAL: CORS_ORIGIN is required (comma-separated list of allowed origins)');
+  process.exit(1);
+}
+if (!SERVER_SECRET) {
+  console.error('FATAL: SOCKET_SERVER_SECRET is required for /emit endpoint security');
+  process.exit(1);
+}
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // HTTP server for both Socket.IO and REST endpoints
 const httpServer = createServer((req, res) => {
-  // CORS headers
+  // CORS headers - only allow explicitly configured origins
   const origin = req.headers.origin || '';
-  if (CORS_ORIGIN === '*' || CORS_ORIGIN.split(',').includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  const allowedOrigins = CORS_ORIGIN.split(',').map(s => s.trim());
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
   }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -45,7 +59,7 @@ const httpServer = createServer((req, res) => {
   // POST /emit - server-to-server donation event
   if (req.method === 'POST' && req.url === '/emit') {
     const authHeader = req.headers.authorization;
-    if (!SERVER_SECRET || authHeader !== `Bearer ${SERVER_SECRET}`) {
+    if (authHeader !== `Bearer ${SERVER_SECRET}`) {
       res.writeHead(401, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Unauthorized' }));
       return;
@@ -80,14 +94,14 @@ const httpServer = createServer((req, res) => {
   res.end();
 });
 
-const corsOrigins = CORS_ORIGIN === '*' ? '*' as const : CORS_ORIGIN.split(',');
+const corsOrigins = CORS_ORIGIN.split(',').map(s => s.trim());
 
 const io = new Server(httpServer, {
   cors: { origin: corsOrigins },
 });
 
 io.on('connection', (socket) => {
-  console.log('connected:', socket.id);
+  // connection logged for debugging
 
   socket.on('widget:subscribe', async (widgetId: string) => {
     const { data: widget } = await supabase
@@ -121,7 +135,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('disconnected:', socket.id);
+    // disconnection logged for debugging
   });
 });
 

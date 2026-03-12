@@ -15,7 +15,15 @@ export default function IntegrationsPage() {
   const supabase = createClient();
 
   useEffect(() => {
-    const s = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001');
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+    if (!socketUrl) return;
+    const s = io(socketUrl, {
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 10000,
+    });
     setSocket(s);
 
     s.on('integration:error', (data: { integration_id: string; platform: string; message: string }) => {

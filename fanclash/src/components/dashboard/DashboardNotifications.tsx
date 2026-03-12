@@ -16,7 +16,15 @@ export default function DashboardNotifications() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001');
+      const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+      if (!socketUrl) return;
+      const socket = io(socketUrl, {
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 10000,
+      });
       socketRef.current = socket;
 
       socket.on('connect', () => {

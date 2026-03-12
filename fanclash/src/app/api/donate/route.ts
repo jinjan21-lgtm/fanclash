@@ -6,12 +6,19 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Simple rate limiting
+// In-memory rate limiting (best-effort on serverless — state resets per cold start)
+// For stricter limits, migrate to Upstash Redis or Supabase-based rate limiting
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
 
 async function emitDonationToSocket(streamer_id: string, fan_nickname: string, amount: number, message: string) {
-  const socketUrl = process.env.SOCKET_SERVER_URL || process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
-  const secret = process.env.SOCKET_SERVER_SECRET || '';
+  const socketUrl = process.env.SOCKET_SERVER_URL || process.env.NEXT_PUBLIC_SOCKET_URL;
+  if (!socketUrl) {
+    throw new Error('SOCKET_SERVER_URL or NEXT_PUBLIC_SOCKET_URL environment variable is required');
+  }
+  const secret = process.env.SOCKET_SERVER_SECRET;
+  if (!secret) {
+    throw new Error('SOCKET_SERVER_SECRET environment variable is required');
+  }
 
   const res = await fetch(`${socketUrl}/emit`, {
     method: 'POST',
@@ -26,7 +33,7 @@ async function emitDonationToSocket(streamer_id: string, fan_nickname: string, a
   });
 
   if (!res.ok) {
-    console.error('Failed to emit donation to socket server:', res.status);
+    throw new Error(`Socket server responded with ${res.status}`);
   }
 }
 

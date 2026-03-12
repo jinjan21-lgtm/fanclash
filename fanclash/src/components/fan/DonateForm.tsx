@@ -36,9 +36,12 @@ export default function DonateForm({ streamerId, streamerName }: { streamerId: s
       });
       if (res.ok) {
         setStep('done');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error === 'Too many requests' ? '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' : '결제에 실패했습니다. 다시 시도해주세요.');
       }
     } catch {
-      // Payment failed
+      alert('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
     }
     setLoading(false);
   };
