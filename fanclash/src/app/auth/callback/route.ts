@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
+  const refCode = searchParams.get('ref');
   const redirectUrl = new URL('/dashboard', request.url);
 
   if (code) {
@@ -44,9 +45,20 @@ export async function GET(request: NextRequest) {
           data.user.user_metadata?.name ||
           data.user.email?.split('@')[0] ||
           '스트리머';
+        // Look up referrer by referral code
+        let referredBy: string | null = null;
+        if (refCode) {
+          const { data: referrer } = await supabase
+            .from('streamers')
+            .select('id')
+            .eq('referral_code', refCode)
+            .single();
+          if (referrer) referredBy = referrer.id;
+        }
         await supabase.from('streamers').insert({
           id: data.user.id,
           display_name: displayName,
+          ...(referredBy && { referred_by: referredBy }),
         });
       }
     }

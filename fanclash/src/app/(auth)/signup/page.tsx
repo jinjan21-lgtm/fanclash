@@ -1,16 +1,26 @@
 'use client';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-950" />}>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+function SignupForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const refCode = searchParams.get('ref') || '';
   const supabase = createClient();
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -19,7 +29,21 @@ export default function SignupPage() {
     const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
     if (signUpError) { setError(signUpError.message); setLoading(false); return; }
     if (data.user) {
-      await supabase.from('streamers').insert({ id: data.user.id, display_name: displayName });
+      // Look up referrer by referral code
+      let referredBy: string | null = null;
+      if (refCode) {
+        const { data: referrer } = await supabase
+          .from('streamers')
+          .select('id')
+          .eq('referral_code', refCode)
+          .single();
+        if (referrer) referredBy = referrer.id;
+      }
+      await supabase.from('streamers').insert({
+        id: data.user.id,
+        display_name: displayName,
+        ...(referredBy && { referred_by: referredBy }),
+      });
     }
     setLoading(false);
     router.push('/dashboard');
@@ -30,9 +54,12 @@ export default function SignupPage() {
       alert('카카오 로그인은 준비 중입니다. Google 로그인을 이용해주세요.');
       return;
     }
+    // Pass ref code through OAuth redirect
+    const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+    if (refCode) callbackUrl.searchParams.set('ref', refCode);
     await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: callbackUrl.toString() },
     });
   };
 

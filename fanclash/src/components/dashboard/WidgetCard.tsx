@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import WidgetSettingsModal from './WidgetSettingsModal';
 import WidgetPreviewModal from './WidgetPreviewModal';
 import OBSGuideModal from './OBSGuideModal';
+import BattleControl from './BattleControl';
 
 const WIDGET_LABELS: Record<WidgetType, { name: string; desc: string }> = {
   alert: { name: '후원 알림', desc: '후원 시 풀스크린 알림 + TTS' },
@@ -16,16 +17,19 @@ const WIDGET_LABELS: Record<WidgetType, { name: string; desc: string }> = {
   team_battle: { name: '팬 투표', desc: '팀별 투표 대결' },
   timer: { name: '이벤트 타이머', desc: '카운트다운 + 벌칙/미션' },
   messages: { name: '메시지 보드', desc: '후원 메시지 실시간 표시' },
+  roulette: { name: '후원 룰렛', desc: '후원 시 룰렛 돌리기 이벤트' },
 };
 
-export default function WidgetCard({ widget, onUpdate }: { widget: Widget; onUpdate: () => void }) {
+export default function WidgetCard({ widget, plan, onUpdate }: { widget: Widget; plan?: string; onUpdate: () => void }) {
   const supabase = createClient();
   const label = WIDGET_LABELS[widget.type];
   const overlayUrl = typeof window !== 'undefined' ? `${window.location.origin}/overlay/${widget.id}` : '';
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showOBSGuide, setShowOBSGuide] = useState(false);
+  const [showBattleControl, setShowBattleControl] = useState(false);
   const [copied, setCopied] = useState(false);
+  const isBattleType = widget.type === 'battle' || widget.type === 'team_battle';
 
   const toggleEnabled = async () => {
     await supabase.from('widgets').update({ enabled: !widget.enabled }).eq('id', widget.id);
@@ -62,11 +66,17 @@ export default function WidgetCard({ widget, onUpdate }: { widget: Widget; onUpd
         {/* Config summary */}
         <ConfigSummary widget={widget} />
 
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-2 mt-4 flex-wrap">
           <button onClick={() => setShowSettings(true)}
             className="flex-1 py-2 bg-purple-600 rounded-lg text-sm hover:bg-purple-700 font-medium">
             설정
           </button>
+          {isBattleType && (
+            <button onClick={() => setShowBattleControl(true)}
+              className="flex-1 py-2 bg-red-600 rounded-lg text-sm hover:bg-red-700 font-medium">
+              배틀 운영
+            </button>
+          )}
           <button onClick={() => setShowPreview(true)}
             className="flex-1 py-2 bg-indigo-600 rounded-lg text-sm hover:bg-indigo-700 font-medium">
             미리보기
@@ -97,6 +107,7 @@ export default function WidgetCard({ widget, onUpdate }: { widget: Widget; onUpd
       {showSettings && (
         <WidgetSettingsModal
           widget={widget}
+          plan={plan || 'free'}
           onClose={() => setShowSettings(false)}
           onUpdate={onUpdate}
         />
@@ -112,6 +123,18 @@ export default function WidgetCard({ widget, onUpdate }: { widget: Widget; onUpd
           overlayUrl={overlayUrl}
           onClose={() => setShowOBSGuide(false)}
         />
+      )}
+      {showBattleControl && isBattleType && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowBattleControl(false)}>
+          <div className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto p-6"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">{label.name} 운영</h3>
+              <button onClick={() => setShowBattleControl(false)} className="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <BattleControl streamerId={widget.streamer_id} />
+          </div>
+        </div>
       )}
     </>
   );
@@ -157,6 +180,12 @@ function ConfigSummary({ widget }: { widget: Widget }) {
       if (config.duration) items.push(`${(config.duration as number) / 60}분`);
       if (config.penalty) items.push(config.penalty as string);
       break;
+    case 'roulette': {
+      const segs = config.segments as string[];
+      if (segs?.length) items.push(`${segs.length}칸`);
+      if (config.minAmount) items.push(`${(config.minAmount as number).toLocaleString()}원 이상`);
+      break;
+    }
   }
 
   if (items.length === 0) return <p className="text-xs text-gray-600 mb-1">기본 설정 사용 중</p>;

@@ -12,6 +12,7 @@ import TeamBattle from '@/components/overlay/TeamBattle';
 import EventTimer from '@/components/overlay/EventTimer';
 import MessageBoard from '@/components/overlay/MessageBoard';
 import DonationAlert from '@/components/overlay/DonationAlert';
+import DonationRoulette from '@/components/overlay/DonationRoulette';
 
 export default function OverlayPage({ params }: { params: Promise<{ widgetId: string }> }) {
   const { widgetId } = use(params);
@@ -34,13 +35,19 @@ export default function OverlayPage({ params }: { params: Promise<{ widgetId: st
       case 'timer': return <EventTimer {...props} />;
       case 'messages': return <MessageBoard {...props} />;
       case 'alert': return <DonationAlert {...props} />;
+      case 'roulette': return <DonationRoulette {...props} />;
       default: return null;
     }
   };
 
+  const customCss = (widget.config as Record<string, unknown>)?.customCss as string | undefined;
+
   return (
     <ErrorBoundary fallback={<div className="bg-transparent" />}>
-      <WidgetComponent />
+      {customCss && <style dangerouslySetInnerHTML={{ __html: customCss }} />}
+      <div className="widget-container">
+        <WidgetComponent />
+      </div>
     </ErrorBoundary>
   );
 }

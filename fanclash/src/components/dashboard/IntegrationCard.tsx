@@ -240,7 +240,7 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
               </button>
             </div>
           ) : (
-            <button onClick={() => setEditing(true)}
+            <button onClick={() => { setEditing(true); setShowGuide(true); }}
               className="w-full py-3 border-2 border-dashed border-gray-600 rounded-lg text-gray-400 hover:border-purple-500 hover:text-purple-400 transition-colors">
               + 연동 설정하기
             </button>

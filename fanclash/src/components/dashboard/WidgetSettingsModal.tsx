@@ -2,15 +2,17 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
+import { isProFeature } from '@/lib/plan';
 import type { Widget, WidgetType } from '@/types';
 
 interface Props {
   widget: Widget;
+  plan: string;
   onClose: () => void;
   onUpdate: () => void;
 }
 
-export default function WidgetSettingsModal({ widget, onClose, onUpdate }: Props) {
+export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }: Props) {
   const supabase = createClient();
   const { toast } = useToast();
   const [config, setConfig] = useState<Record<string, unknown>>(widget.config || {});
@@ -103,18 +105,32 @@ export default function WidgetSettingsModal({ widget, onClose, onUpdate }: Props
             </div>
 
             {/* Type-specific settings */}
-            {/* Sound setting for alert-type widgets */}
+            {/* Sound setting for alert-type widgets (Pro only) */}
             {(['alert', 'throne', 'affinity', 'battle'] as const).includes(widget.type as any) && (
               <div>
-                <label className="block text-sm text-gray-400 mb-1">알림 사운드 URL (선택)</label>
-                <input
-                  type="url"
-                  value={(config.soundUrl as string) || ''}
-                  onChange={e => setConfig({ ...config, soundUrl: e.target.value })}
-                  placeholder="https://example.com/sound.mp3"
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
-                />
-                <p className="text-xs text-gray-600 mt-1">MP3/WAV 파일 직접 링크. 비워두면 기본 효과음 사용</p>
+                <label className="block text-sm text-gray-400 mb-1">
+                  알림 사운드 URL (선택)
+                  {isProFeature('customSound', plan) && (
+                    <span className="ml-2 text-xs text-yellow-400 font-normal">Pro</span>
+                  )}
+                </label>
+                {isProFeature('customSound', plan) ? (
+                  <div className="p-3 bg-gray-800/50 border border-gray-700 rounded-lg text-sm text-gray-500">
+                    커스텀 사운드는 Pro 플랜 전용입니다.{' '}
+                    <a href="/dashboard/pricing" className="text-purple-400 underline">업그레이드</a>
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      type="url"
+                      value={(config.soundUrl as string) || ''}
+                      onChange={e => setConfig({ ...config, soundUrl: e.target.value })}
+                      placeholder="https://example.com/sound.mp3"
+                      className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
+                    />
+                    <p className="text-xs text-gray-600 mt-1">MP3/WAV 파일 직접 링크. 비워두면 기본 효과음 사용</p>
+                  </>
+                )}
               </div>
             )}
 
@@ -164,6 +180,36 @@ export default function WidgetSettingsModal({ widget, onClose, onUpdate }: Props
                 </select>
               </div>
             )}
+            {widget.type === 'roulette' && (
+              <RouletteSettings config={config} onChange={setConfig} />
+            )}
+          </div>
+
+          {/* Custom CSS (Pro only) */}
+          <div className="mt-4 pt-4 border-t border-gray-700">
+            <label className="block text-sm text-gray-400 mb-1">
+              커스텀 CSS
+              {isProFeature('customCss', plan) && (
+                <span className="ml-2 text-xs text-yellow-400 font-normal">Pro</span>
+              )}
+            </label>
+            {isProFeature('customCss', plan) ? (
+              <div className="p-3 bg-gray-800/50 border border-gray-700 rounded-lg text-sm text-gray-500">
+                커스텀 CSS는 Pro 플랜 전용입니다.{' '}
+                <a href="/dashboard/pricing" className="text-purple-400 underline">업그레이드</a>
+              </div>
+            ) : (
+              <>
+                <textarea
+                  value={(config.customCss as string) || ''}
+                  onChange={e => setConfig({ ...config, customCss: e.target.value })}
+                  placeholder={`.widget-container {\n  background: rgba(0,0,0,0.5);\n  border-radius: 12px;\n}`}
+                  rows={5}
+                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm font-mono focus:border-purple-500 focus:outline-none resize-y"
+                />
+                <p className="text-xs text-gray-600 mt-1">OBS 오버레이에 적용될 CSS를 입력하세요. .widget-container를 루트로 사용합니다.</p>
+              </>
+            )}
           </div>
 
           <div className="flex gap-3 mt-6 pt-4 border-t border-gray-700">
@@ -193,6 +239,7 @@ function getDefaultTitle(type: WidgetType): string {
     team_battle: '팬 투표',
     timer: '이벤트 타이머',
     messages: '메시지 보드',
+    roulette: '후원 룰렛',
   };
   return defaults[type];
 }
@@ -539,6 +586,72 @@ function TeamBattleSettings({ config, onChange }: { config: Record<string, unkno
           <option value={300}>5분</option>
           <option value={600}>10분</option>
         </select>
+      </div>
+    </>
+  );
+}
+
+function RouletteSettings({ config, onChange }: { config: Record<string, unknown>; onChange: (c: Record<string, unknown>) => void }) {
+  const segments = (config.segments as string[]) || ['노래 한 곡', '스쿼트 10개', '광고 읽기', '팬 선택곡', '꽁치킨 약속', '2배속 게임'];
+  const [newSegment, setNewSegment] = useState('');
+
+  const addSegment = () => {
+    if (!newSegment.trim() || segments.length >= 12) return;
+    onChange({ ...config, segments: [...segments, newSegment.trim()] });
+    setNewSegment('');
+  };
+
+  const removeSegment = (index: number) => {
+    if (segments.length <= 2) return;
+    onChange({ ...config, segments: segments.filter((_, i) => i !== index) });
+  };
+
+  return (
+    <>
+      <div>
+        <label className="block text-sm text-gray-400 mb-2">룰렛 항목 ({segments.length}/12)</label>
+        <div className="space-y-2 mb-3">
+          {segments.map((seg, i) => (
+            <div key={i} className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2">
+              <span className="w-2 h-2 rounded-full" style={{
+                background: ['#ef4444','#3b82f6','#22c55e','#eab308','#a855f7','#ec4899','#06b6d4','#f97316'][i % 8]
+              }} />
+              <span className="flex-1 text-sm">{seg}</span>
+              <button onClick={() => removeSegment(i)} className="text-red-400 hover:text-red-300 text-lg"
+                disabled={segments.length <= 2}>&times;</button>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newSegment}
+            onChange={e => setNewSegment(e.target.value)}
+            placeholder="새 항목 (예: 노래 부르기)"
+            maxLength={30}
+            className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
+            onKeyDown={e => e.key === 'Enter' && addSegment()}
+          />
+          <button onClick={addSegment} disabled={segments.length >= 12}
+            className="px-4 py-2 bg-purple-600 rounded-lg text-sm hover:bg-purple-700 disabled:opacity-50">
+            추가
+          </button>
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm text-gray-400 mb-1">최소 후원 금액 (룰렛 작동)</label>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            value={(config.minAmount as number) || 5000}
+            onChange={e => onChange({ ...config, minAmount: parseInt(e.target.value) })}
+            step={1000}
+            min={1000}
+            className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
+          />
+          <span className="text-gray-400 text-sm">원</span>
+        </div>
+        <p className="text-xs text-gray-600 mt-1">이 금액 이상 후원 시 룰렛이 자동으로 돌아갑니다</p>
       </div>
     </>
   );

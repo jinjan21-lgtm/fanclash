@@ -12,6 +12,7 @@ const PREVIEW_SIZES: Record<WidgetType, { w: number; h: number }> = {
   team_battle: { w: 500, h: 400 },
   timer: { w: 400, h: 300 },
   messages: { w: 400, h: 400 },
+  roulette: { w: 500, h: 500 },
 };
 
 interface Props {

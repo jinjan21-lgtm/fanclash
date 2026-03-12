@@ -5,7 +5,7 @@ import WidgetCard from '@/components/dashboard/WidgetCard';
 import { canCreateWidget } from '@/lib/plan';
 import type { Widget, WidgetType } from '@/types';
 
-const ALL_WIDGET_TYPES: WidgetType[] = ['alert', 'ranking', 'throne', 'goal', 'affinity', 'battle', 'team_battle', 'timer', 'messages'];
+const ALL_WIDGET_TYPES: WidgetType[] = ['alert', 'ranking', 'throne', 'goal', 'affinity', 'battle', 'team_battle', 'timer', 'messages', 'roulette'];
 
 export default function WidgetsPage() {
   const [widgets, setWidgets] = useState<Widget[]>([]);
@@ -45,7 +45,7 @@ export default function WidgetsPage() {
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {widgets.map(w => <WidgetCard key={w.id} widget={w} onUpdate={fetchWidgets} />)}
+        {widgets.map(w => <WidgetCard key={w.id} widget={w} plan={plan} onUpdate={fetchWidgets} />)}
       </div>
       {missingTypes.length > 0 && canAdd && (
         <div>

@@ -1,4 +1,4 @@
-export type WidgetType = 'ranking' | 'throne' | 'goal' | 'affinity' | 'battle' | 'team_battle' | 'timer' | 'messages' | 'alert';
+export type WidgetType = 'ranking' | 'throne' | 'goal' | 'affinity' | 'battle' | 'team_battle' | 'timer' | 'messages' | 'alert' | 'roulette';
 export type ThemeName = 'modern' | 'game' | 'girlcam';
 export type BattleStatus = 'recruiting' | 'active' | 'finished' | 'cancelled';
 
@@ -6,6 +6,8 @@ export interface Streamer {
   id: string;
   display_name: string;
   channel_url: string | null;
+  referral_code: string;
+  referred_by: string | null;
   created_at: string;
 }
 

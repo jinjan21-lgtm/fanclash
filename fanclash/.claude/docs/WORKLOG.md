@@ -1,0 +1,95 @@
+# 작업 일지
+
+## 2026-03-12 (세션 2)
+
+### 완료한 태스크
+- [x] 프로덕션 코드 정리 (보안 + 안정성)
+  - 상세:
+    1. 모든 localhost:3001 하드코딩 제거 (socket/client.ts, DashboardNotifications.tsx, integrations/page.tsx, api/donate/route.ts)
+    2. 환경변수 없으면 에러 throw / 서버 즉시 종료 (SUPABASE_URL, CORS_ORIGIN, SOCKET_SERVER_SECRET)
+    3. CORS 와일드카드(*) 기본값 제거, 명시적 origin 리스트 필수
+    4. SOCKET_SERVER_SECRET 빈 값 허용 제거
+    5. Socket.IO 재연결 설정 추가 (reconnectionAttempts: 10, exponential backoff)
+    6. DonateForm 에러 핸들링 (한국어 사용자 메시지)
+    7. 서버 console.log 정리
+    8. rate limiting 서버리스 한계 문서화
+  - 파일: server/index.ts, src/lib/socket/client.ts, src/components/dashboard/DashboardNotifications.tsx, src/app/dashboard/integrations/page.tsx, src/app/api/donate/route.ts, src/components/fan/DonateForm.tsx
+  - 비고: TypeScript 체크 + 빌드 성공, 커밋 & push 완료 (b3fafc9)
+
+- [x] ws 의존성 커밋 (chzzk/soop 커넥터용)
+  - 파일: package.json, package-lock.json
+  - 비고: 커밋 & push 완료 (c2489c3)
+
+- [x] 연동 설정 UX 개선
+  - 상세: "연동 설정하기" 클릭 시 가이드가 자동으로 펼쳐지도록 변경
+  - 파일: src/components/dashboard/IntegrationCard.tsx
+
+- [x] 배틀 관리를 위젯 관리로 통합
+  - 상세:
+    1. 사이드바(LNB)에서 "배틀 관리" 메뉴 제거
+    2. WidgetCard에 배틀/팀배틀 위젯용 "배틀 운영" 버튼 추가
+    3. 클릭 시 모달로 BattleControl 표시 (배틀 개설/시작/취소)
+  - 파일: src/components/dashboard/Sidebar.tsx, src/components/dashboard/WidgetCard.tsx
+
+---
+
+## 2026-03-12
+
+### 완료한 태스크
+- [x] 커스텀 사운드 Pro 체크 + 커스텀 CSS (Pro only) + 레퍼럴 시스템
+  - 상세:
+    1. WidgetSettingsModal에 plan prop 추가, 커스텀 사운드 URL 입력에 Pro 체크 (Free → 업그레이드 안내)
+    2. 커스텀 CSS textarea 추가 (Pro only), 오버레이에 .widget-container + style 태그로 적용
+    3. plan.ts에 customCss 기능 추가, PricingCards에 커스텀 CSS 항목 추가
+    4. DB migration: streamers에 referral_code (UNIQUE), referred_by 컬럼 추가
+    5. 회원가입 페이지: ?ref= 쿼리 파라미터로 레퍼럴 코드 수신, 가입 시 referred_by 설정
+    6. OAuth callback: ref 파라미터 전달 및 레퍼럴 코드 처리
+    7. 설정 페이지: 초대 링크 복사 + 초대 수 표시
+  - 파일: WidgetSettingsModal.tsx, WidgetCard.tsx, widgets/page.tsx, plan.ts, PricingCards.tsx, overlay/[widgetId]/page.tsx, 004_referrals.sql, types/index.ts, signup/page.tsx, auth/callback/route.ts, settings/page.tsx
+  - 비고: 빌드 성공 확인
+
+- [x] 치지직(Chzzk) + 숲(Soop) 커넥터 추가 & 연동 가이드 강화
+  - 상세:
+    1. ws 의존성 추가 (raw WebSocket용)
+    2. ChzzkConnector 구현 (채팅 웹소켓, 치즈 후원 감지, 20초 heartbeat)
+    3. SoopConnector 구현 (채팅 웹소켓, 별풍선/애드벌룬 감지, 60초 heartbeat)
+    4. IntegrationManager에 chzzk/soop 커넥터 등록
+    5. integration:error 서버 이벤트 추가 (연결 실패 시 클라이언트에 전달)
+    6. PlatformType에 'soop' 추가, SoopConfig 타입 추가
+    7. IntegrationCard에 5개 플랫폼 상세 가이드 내장 (접이식 UI)
+    8. integrations 페이지에 soop 추가, 에러 상태 표시, 레거시 가이드 제거
+  - 파일: server/connectors/chzzk.ts, soop.ts, manager.ts, server/index.ts, src/types/index.ts, IntegrationCard.tsx, integrations/page.tsx
+  - 비고: 빌드 성공 확인
+
+---
+
+## 2026-03-11
+
+### 완료한 태스크
+- [x] 비즈니스 로직 감사 8개 이슈 수정
+  - 상세:
+    1. FREE_WIDGET_LIMIT 적용 (widgets/page.tsx에서 canCreateWidget 호출, 초과 시 안내 표시)
+    2. /api/donate에서 Socket.IO로 donation:add 이벤트 발생 (위젯에 실시간 반영)
+    3. donations.message 컬럼 존재 확인 (이슈 아님)
+    4. 온보딩 스텝3 "OBS에 위젯 연결" 조건을 activeWidgets > 0으로 수정
+    5. Stats 페이지 Pro 전용 gate 추가
+    6. widgets 테이블에 UNIQUE(streamer_id, type) 제약 추가
+    7. DashboardNotifications가 streamer:subscribe로 직접 구독 (위젯 없어도 동작)
+    8. useSocket의 socket.off() → 개별 리스너 해제로 변경
+  - 파일: widgets/page.tsx, api/donate/route.ts, dashboard/page.tsx, stats/page.tsx, DashboardNotifications.tsx, useSocket.ts, server/index.ts, overlay 8개 컴포넌트
+  - 비고: 빌드 성공 확인
+
+---
+
+## 이전 세션
+
+### 완료한 태스크
+- [x] 위젯 미리보기 수정 (9종 모두 preview 모드 데모 데이터 추가)
+- [x] DonationAlert 위젯 추가 (큐 시스템, TTS, 파티클)
+- [x] OBS 연결 가이드 모달
+- [x] 대시보드 알림 (Socket.IO + Toast)
+- [x] 프로필 설정 페이지
+- [x] 후원 통계 고도화 (필터, CSV, 차트)
+- [x] 팬 후원 페이지 (/donate/[streamerId])
+- [x] 사이드바 정리 (배틀 관리, 후원 입력 제거)
+- [x] 데이터 & 비즈니스 로직 전체 감사

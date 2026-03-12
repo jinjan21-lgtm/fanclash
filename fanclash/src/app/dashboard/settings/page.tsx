@@ -10,8 +10,11 @@ export default function SettingsPage() {
   const [channelUrl, setChannelUrl] = useState('');
   const [email, setEmail] = useState('');
   const [plan, setPlan] = useState('free');
+  const [referralCode, setReferralCode] = useState('');
+  const [referralCount, setReferralCount] = useState(0);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -23,7 +26,14 @@ export default function SettingsPage() {
         setDisplayName(streamer.display_name || '');
         setChannelUrl(streamer.channel_url || '');
         setPlan(streamer.plan || 'free');
+        setReferralCode(streamer.referral_code || '');
       }
+      // Count referrals
+      const { count } = await supabase
+        .from('streamers')
+        .select('id', { count: 'exact', head: true })
+        .eq('referred_by', user.id);
+      setReferralCount(count || 0);
       setLoading(false);
     })();
   }, []);
@@ -109,6 +119,44 @@ export default function SettingsPage() {
               {plan === 'pro' ? '모든 기능 이용 가능' : '위젯 3개 제한'}
             </span>
           </div>
+        </div>
+
+        {/* Referral */}
+        <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+          <h3 className="font-bold text-lg mb-4">초대 프로그램</h3>
+          <p className="text-gray-400 text-sm mb-4">
+            친구를 초대하면 함께 성장할 수 있어요!
+          </p>
+          {referralCode && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">내 초대 링크</label>
+                <div className="flex gap-2">
+                  <input
+                    readOnly
+                    value={typeof window !== 'undefined' ? `${window.location.origin}/signup?ref=${referralCode}` : ''}
+                    className="flex-1 bg-gray-800/50 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${referralCode}`);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className="px-4 py-2 bg-purple-600 rounded-lg text-sm hover:bg-purple-700 whitespace-nowrap"
+                  >
+                    {copied ? '복사됨!' : '복사'}
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 p-3 bg-gray-800 rounded-lg">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-purple-400">{referralCount}</p>
+                  <p className="text-xs text-gray-500">초대한 스트리머</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Security */}
