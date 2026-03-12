@@ -22,6 +22,10 @@ export default function LoginPage() {
   };
 
   const handleSocialLogin = async (provider: 'kakao' | 'google') => {
+    if (provider === 'kakao') {
+      alert('카카오 로그인은 준비 중입니다. Google 로그인을 이용해주세요.');
+      return;
+    }
     await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo: `${window.location.origin}/auth/callback` },
