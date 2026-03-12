@@ -3,11 +3,13 @@ import { Server } from 'socket.io';
 import { ToonationConnector } from './toonation';
 import { TiktokConnector } from './tiktok';
 import { StreamlabsConnector } from './streamlabs';
+import { ChzzkConnector } from './chzzk';
+import { SoopConnector } from './soop';
 import { calculateAffinity } from '../services/affinity';
 
 interface ActiveConnection {
   platform: string;
-  connector: ToonationConnector | TiktokConnector | StreamlabsConnector;
+  connector: ToonationConnector | TiktokConnector | StreamlabsConnector | ChzzkConnector | SoopConnector;
   streamerId: string;
 }
 
@@ -99,7 +101,7 @@ export class IntegrationManager {
       this.processDonation(streamerId, nickname, amount);
     };
 
-    let connector: ToonationConnector | TiktokConnector | StreamlabsConnector;
+    let connector: ToonationConnector | TiktokConnector | StreamlabsConnector | ChzzkConnector | SoopConnector;
 
     switch (platform) {
       case 'toonation':
@@ -113,6 +115,14 @@ export class IntegrationManager {
       case 'streamlabs':
         connector = new StreamlabsConnector(config.socket_token, (d) => donationHandler(d.nickname, d.amount));
         connector.connect();
+        break;
+      case 'chzzk':
+        connector = new ChzzkConnector(config.channel_id, (d) => donationHandler(d.nickname, d.amount));
+        await connector.connect();
+        break;
+      case 'soop':
+        connector = new SoopConnector(config.bj_id, (d) => donationHandler(d.nickname, d.amount));
+        await connector.connect();
         break;
       default:
         console.error(`[Integration] Unknown platform: ${platform}`);
