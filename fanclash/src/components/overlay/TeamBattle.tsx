@@ -99,6 +99,28 @@ export default function TeamBattle({ widget, preview }: { widget: Widget; previe
   const maxTotal = Math.max(...Object.values(teams).map(t => t.total || 1), 1);
   const totalAll = Object.values(teams).reduce((sum, t) => sum + (t.total || 0), 0);
 
+  if (Object.keys(teams).length === 0 && !preview) {
+    return (
+      <div className={`p-6 ${theme.bg} ${theme.fontClass}`}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className={`p-6 rounded-2xl ${theme.card} border ${theme.border} text-center`}
+        >
+          <motion.div
+            animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+            transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+            className="text-5xl mb-3"
+          >
+            🗳️
+          </motion.div>
+          <p className={`text-xl font-bold ${theme.text}`}>팀 배틀</p>
+          <p className="text-gray-500 text-sm mt-1">배틀 대기 중...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className={`p-6 ${theme.bg} ${theme.fontClass}`}>
       <motion.div

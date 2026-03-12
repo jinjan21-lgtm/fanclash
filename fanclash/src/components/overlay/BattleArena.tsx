@@ -159,7 +159,27 @@ export default function BattleArena({ widget, preview }: { widget: Widget; previ
     );
   }
 
-  if (!battle) return null;
+  if (!battle) {
+    return (
+      <div className={`p-6 ${theme.bg} ${theme.fontClass}`}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className={`p-6 rounded-2xl ${theme.card} border ${theme.border} text-center`}
+        >
+          <motion.div
+            animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+            transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+            className="text-5xl mb-3"
+          >
+            ⚔️
+          </motion.div>
+          <p className={`text-xl font-bold ${theme.text}`}>후원 배틀</p>
+          <p className="text-gray-500 text-sm mt-1">배틀 대기 중...</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   // Recruiting
   if (battle.status === 'recruiting') {
