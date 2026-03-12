@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSocket } from '@/hooks/useSocket';
+import { createClient } from '@/lib/supabase/client';
 import { themes } from '@/lib/themes';
 import type { Widget } from '@/types';
 
@@ -25,6 +26,26 @@ export default function RankingBoard({ widget, preview }: { widget: Widget; prev
   const theme = themes[widget.theme];
   const [hasData, setHasData] = useState(false);
 
+  // Load initial rankings from DB
+  useEffect(() => {
+    if (preview) return;
+    const supabase = createClient();
+    supabase
+      .from('fan_profiles')
+      .select('nickname, total_donated')
+      .eq('streamer_id', widget.streamer_id)
+      .order('total_donated', { ascending: false })
+      .limit(10)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const initial = data.map(d => ({ nickname: d.nickname, total: d.total_donated }));
+          setRankings(initial);
+          prevRef.current = initial;
+          setHasData(true);
+        }
+      });
+  }, [widget.streamer_id, preview]);
+
   useEffect(() => {
     if (!ready) return;
     const handler = (data: any) => {
@@ -32,7 +53,6 @@ export default function RankingBoard({ widget, preview }: { widget: Widget; prev
         nickname: r.nickname,
         total: r.total_donated || r.total,
       }));
-      // Detect who just donated (amount changed)
       for (const entry of newRankings) {
         const prev = prevRef.current.find(p => p.nickname === entry.nickname);
         if (!prev || entry.total > prev.total) {

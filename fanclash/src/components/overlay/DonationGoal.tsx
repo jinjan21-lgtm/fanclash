@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSocket } from '@/hooks/useSocket';
+import { createClient } from '@/lib/supabase/client';
 import { themes } from '@/lib/themes';
 import type { Widget } from '@/types';
 
@@ -20,6 +21,26 @@ export default function DonationGoal({ widget, preview }: { widget: Widget; prev
   const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
   const [hasData, setHasData] = useState(false);
+
+  // Load initial goal from DB
+  useEffect(() => {
+    if (preview) return;
+    const supabase = createClient();
+    supabase
+      .from('donation_goals')
+      .select('*')
+      .eq('streamer_id', widget.streamer_id)
+      .eq('active', true)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setCurrentAmount(data.current_amount);
+          setMilestones(data.milestones);
+          prevAmountRef.current = data.current_amount;
+          setHasData(true);
+        }
+      });
+  }, [widget.streamer_id, preview]);
 
   useEffect(() => {
     if (!ready) return;

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSocket } from '@/hooks/useSocket';
+import { createClient } from '@/lib/supabase/client';
 import { themes } from '@/lib/themes';
 import type { Widget } from '@/types';
 
@@ -19,6 +20,29 @@ export default function MessageBoard({ widget, preview }: { widget: Widget; prev
   const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
   const maxMessages = ((widget.config as any)?.maxMessages as number) || 5;
+
+  // Load recent messages from DB
+  useEffect(() => {
+    if (preview) return;
+    const supabase = createClient();
+    supabase
+      .from('donations')
+      .select('fan_nickname, amount, message')
+      .eq('streamer_id', widget.streamer_id)
+      .not('message', 'eq', '')
+      .order('created_at', { ascending: false })
+      .limit(maxMessages)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setMessages(data.map(d => ({
+            nickname: d.fan_nickname,
+            amount: d.amount,
+            message: d.message || '',
+            id: msgId++,
+          })));
+        }
+      });
+  }, [widget.streamer_id, maxMessages, preview]);
 
   useEffect(() => {
     if (!ready) return;
