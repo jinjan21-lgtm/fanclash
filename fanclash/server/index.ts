@@ -56,6 +56,59 @@ const httpServer = createServer((req, res) => {
     return;
   }
 
+  // Debug: TikTok connectivity test
+  if (req.method === 'GET' && req.url?.startsWith('/debug/tiktok')) {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const username = url.searchParams.get('user') || '.ventress';
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+
+    const results: Record<string, any> = {};
+
+    // 1. Server IP & region
+    try {
+      const ipRes = await fetch('https://ipinfo.io/json');
+      results.serverInfo = await ipRes.json();
+    } catch (e: any) {
+      results.serverInfo = { error: e.message };
+    }
+
+    // 2. Can we reach TikTok at all?
+    try {
+      const tiktokRes = await fetch(`https://www.tiktok.com/@${username}/live`, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      });
+      results.tiktokFetch = {
+        status: tiktokRes.status,
+        headers: Object.fromEntries(tiktokRes.headers.entries()),
+        bodyPreview: (await tiktokRes.text()).substring(0, 500),
+      };
+    } catch (e: any) {
+      results.tiktokFetch = { error: e.message };
+    }
+
+    // 3. Try tiktok-live-connector
+    try {
+      const { WebcastPushConnection } = require('tiktok-live-connector');
+      const conn = new WebcastPushConnection(username, { enableExtendedGiftInfo: true });
+      await Promise.race([
+        conn.connect().then(() => {
+          results.connector = { success: true, message: 'Connected!' };
+          conn.disconnect();
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout 10s')), 10000)),
+      ]);
+    } catch (e: any) {
+      results.connector = {
+        success: false,
+        message: e.message || String(e),
+        errors: e.errors?.map((err: any) => err.message || String(err)),
+      };
+    }
+
+    res.end(JSON.stringify(results, null, 2));
+    return;
+  }
+
   // POST /emit - server-to-server donation event
   if (req.method === 'POST' && req.url === '/emit') {
     const authHeader = req.headers.authorization;
@@ -147,3 +200,27 @@ httpServer.listen(Number(PORT), () => {
 // Integration manager for auto-donation
 const integrationManager = new IntegrationManager(io as any, supabase);
 integrationManager.loadAllIntegrations();
+
+// Debug: log server IP and test TikTok connectivity on startup
+(async () => {
+  try {
+    const ipRes = await fetch('https://ipinfo.io/json');
+    const ipInfo = await ipRes.json();
+    console.log('[DEBUG] Server IP info:', JSON.stringify(ipInfo));
+  } catch (e: any) {
+    console.log('[DEBUG] Failed to get IP info:', e.message);
+  }
+
+  try {
+    const tiktokRes = await fetch('https://www.tiktok.com/@.ventress/live', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+    });
+    console.log('[DEBUG] TikTok fetch status:', tiktokRes.status);
+    const body = await tiktokRes.text();
+    console.log('[DEBUG] TikTok response length:', body.length);
+    console.log('[DEBUG] Has SIGI_STATE:', body.includes('SIGI_STATE'));
+    console.log('[DEBUG] Has LiveRoom:', body.includes('LiveRoom'));
+  } catch (e: any) {
+    console.log('[DEBUG] TikTok fetch failed:', e.message);
+  }
+})();
