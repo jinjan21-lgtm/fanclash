@@ -31,7 +31,7 @@ export default async function DashboardPage() {
     { done: (widgets?.length || 0) > 0, label: '위젯 만들기', desc: '랭킹, 목표, 배틀 등 위젯을 추가하세요', href: '/dashboard/widgets', cta: '위젯 추가' },
     { done: connectedIntegrations > 0, label: '후원 연동', desc: '투네이션, 틱톡 등 후원 플랫폼을 연결하세요', href: '/dashboard/integrations', cta: '연동 설정' },
     { done: activeWidgets > 0, label: 'OBS에 위젯 연결', desc: '위젯 관리에서 OBS URL을 복사해서 브라우저 소스로 추가하세요', href: '/dashboard/widgets', cta: 'URL 복사하기' },
-    { done: totalToday > 0, label: '첫 후원 받기', desc: '방송을 켜고 첫 후원을 받아보세요!', href: '/dashboard/donations', cta: '테스트 입력' },
+    { done: totalToday > 0, label: '첫 후원 받기', desc: '방송을 켜고 연동된 플랫폼에서 첫 후원을 받아보세요!', href: '/dashboard/integrations', cta: '연동 확인' },
   ];
 
   const completedSteps = steps.filter(s => s.done).length;
@@ -112,11 +112,11 @@ export default async function DashboardPage() {
           </Link>
         </div>
         <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-          <h3 className="font-bold text-lg">팬 후원 페이지</h3>
-          <p className="text-gray-400 text-sm mt-1">팬이 직접 후원할 수 있는 페이지를 공유하세요</p>
-          <Link href={`/donate/${user!.id}`} target="_blank"
-            className="inline-block mt-3 px-4 py-2 bg-yellow-600 rounded-lg text-sm hover:bg-yellow-700">
-            후원 페이지 열기
+          <h3 className="font-bold text-lg">플랫폼 연동</h3>
+          <p className="text-gray-400 text-sm mt-1">투네이션, 틱톡, 치지직 등 후원 플랫폼을 연결하세요</p>
+          <Link href="/dashboard/integrations"
+            className="inline-block mt-3 px-4 py-2 bg-blue-600 rounded-lg text-sm hover:bg-blue-700">
+            연동 설정
           </Link>
         </div>
       </div>
@@ -137,9 +137,9 @@ export default async function DashboardPage() {
             <span className="text-2xl block mb-1">🔗</span>
             <span className="text-sm">연동 설정</span>
           </Link>
-          <Link href="/dashboard/donations" className="p-4 bg-gray-800 rounded-xl text-center hover:bg-gray-700 transition-colors">
-            <span className="text-2xl block mb-1">🧪</span>
-            <span className="text-sm">테스트 후원</span>
+          <Link href="/dashboard/settings" className="p-4 bg-gray-800 rounded-xl text-center hover:bg-gray-700 transition-colors">
+            <span className="text-2xl block mb-1">⚙️</span>
+            <span className="text-sm">프로필 설정</span>
           </Link>
         </div>
       </div>

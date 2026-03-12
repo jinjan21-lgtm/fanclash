@@ -6,10 +6,10 @@
 - (없음)
 
 ## 높음 (이번 주)
-- [ ] **Toss Payments 결제 연동**
-  - /api/donate에 실결제 플로우 구현
-  - Toss 결제 요청 → 리다이렉트 → 콜백/웹훅에서 donation 저장 + 소켓 이벤트
-  - 현재는 DB 직접 저장 (테스트용)
+- [ ] **Toss Payments Pro 구독 결제**
+  - /api/subscribe에 구독 결제 플로우 구현
+  - Toss 정기결제 → 콜백/웹훅에서 plan 업데이트
+  - 직접 후원은 비활성화됨 (외부 연동으로 전환)
 - [ ] **추가 이벤트 위젯** (룰렛 완료, 나머지 미착수)
   - 보스 레이드 — 보스 HP를 후원금으로 깎는 협력 이벤트
   - 후원 뽑기 (가챠) — 등급별 랜덤 카드 + 이펙트
@@ -27,6 +27,7 @@
 - [ ] 다국어 지원 (영어)
 
 ## 완료된 항목 (참고용)
+- [x] Free 요금제 변경: alert만 허용 + 잠금 위젯 미리보기 + 데모 오버레이
 - [x] 핵심 위젯 9종 → 10종 (룰렛 추가)
 - [x] 위젯 모션 대폭 강화 (MessageBoard, EventTimer, RankingBoard, TeamBattle)
 - [x] 프로덕션 코드 정리 (localhost 제거, CORS 강화, 환경변수 검증)
@@ -35,3 +36,6 @@
 - [x] Supabase Auth 리다이렉트 URL 설정 완료
 - [x] Gabia DNS A 레코드 설정 완료
 - [x] login/signup Suspense boundary 수정
+- [x] 직접 후원 비활성화 (컨셉 정리: 이벤트 레이어만)
+- [x] 커스텀 사운드 Pro 체크 + 커스텀 CSS (Pro only)
+- [x] 레퍼럴 시스템 (초대 링크, 가입 추적)

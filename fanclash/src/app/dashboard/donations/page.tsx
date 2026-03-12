@@ -7,8 +7,9 @@ export default async function DonationsPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6">후원 입력</h2>
-      <p className="text-gray-400 mb-4">방송 중 받은 후원을 수동으로 입력하세요. 위젯에 실시간 반영됩니다.</p>
+      <h2 className="text-2xl font-bold mb-2">테스트 후원 입력</h2>
+      <p className="text-gray-400 mb-1">위젯 테스트를 위한 수동 후원 입력입니다.</p>
+      <p className="text-gray-500 text-sm mb-4">실제 후원은 연동된 플랫폼(투네이션, 틱톡, 치지직 등)에서 자동 수집됩니다.</p>
       <DonationForm streamerId={user!.id} />
     </div>
   );

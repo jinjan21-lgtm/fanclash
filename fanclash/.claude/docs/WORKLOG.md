@@ -1,5 +1,65 @@
 # 작업 일지
 
+## 2026-03-12 (세션 5)
+
+### 완료한 태스크
+- [x] Free 요금제 변경: 후원알림(alert) 위젯만 허용
+  - 상세:
+    1. plan.ts: FREE_WIDGET_LIMIT=3 → FREE_ALLOWED_WIDGETS=['alert'], isWidgetLocked() 추가
+    2. widgets/page.tsx: Free 유저 alert 자동 생성, 위젯 추가 UI 제거 (Pro만 표시)
+    3. 잠금 위젯 카드 UI: 잠금 아이콘 + Pro 배지, 미리보기 버튼 + 업그레이드 링크
+    4. overlay/demo/[type]/page.tsx 신규: DB 없이 데모 데이터로 위젯 미리보기
+    5. PricingCards: "위젯 3개" → "후원 알림 위젯 1개", "다른 위젯 사용 불가" 추가
+  - 파일: src/lib/plan.ts, src/app/dashboard/widgets/page.tsx, src/app/overlay/demo/[type]/page.tsx, src/components/dashboard/PricingCards.tsx
+  - 비고: 빌드 성공 확인
+
+---
+
+## 2026-03-12 (세션 4)
+
+### 완료한 태스크
+- [x] 직접 후원 비활성화 (프로덕트 컨셉 정리)
+  - 상세:
+    1. /donate/[streamerId] → 404 반환
+    2. /api/donate → 410 Gone 반환
+    3. DonateForm → null 반환
+    4. 대시보드 "팬 후원 페이지" → "플랫폼 연동" 카드로 교체
+    5. 팬 리더보드 "후원하기" 링크 제거
+    6. 빠른 실행 "테스트 후원" → "프로필 설정"
+    7. PricingCards "수동 후원 입력" 제거
+    8. /dashboard/donations를 "테스트 후원 입력"으로 명칭 변경 (위젯 테스트용 유지)
+    9. Toss Payments 방향: 직접 후원 → Pro 구독 정기결제로 전환
+  - 파일: donate/[streamerId]/page.tsx, api/donate/route.ts, DonateForm.tsx, dashboard/page.tsx, fan/[streamerId]/page.tsx, dashboard/donations/page.tsx, PricingCards.tsx, REMAINING.md
+  - 비고: 컨셉 = 이벤트 레이어 (외부 플랫폼 후원 수집 → 게이미피케이션), 직접 결제 X
+
+- [x] 전역 CLAUDE.md 업데이트
+  - 상세: /session-handoff를 세션 시작 + 작업 완료 시 두 시점 모두 자동 실행하도록 설정
+
+---
+
+## 2026-03-12 (세션 3)
+
+### 완료한 태스크
+- [x] 룰렛 위젯 DB 제약조건 수정
+  - 상세: widgets 테이블의 type CHECK 제약조건에 'roulette'이 누락되어 위젯 생성 불가했음. migration 005 추가 및 Supabase DB에 직접 SQL 실행
+  - 파일: supabase/migrations/005_add_roulette_type.sql
+  - 비고: Supabase MCP 서버 추가 시도 (postgres MCP는 SELECT만 허용), 최종적으로 사용자가 SQL Editor에서 직접 실행
+
+- [x] "배틀 운영" → "배틀 관리" 명칭 변경
+  - 상세: WidgetCard의 버튼 텍스트와 모달 제목을 "운영"에서 "관리"로 변경
+  - 파일: src/components/dashboard/WidgetCard.tsx
+
+- [x] BattleControl이 위젯 설정값을 읽도록 수정
+  - 상세: 하드코딩된 기본값(5000/180) 대신 widget.config의 defaultMinAmount, defaultTimeLimit, defaultBenefit을 사용. WidgetCard에서 config prop 전달
+  - 파일: src/components/dashboard/BattleControl.tsx, src/components/dashboard/WidgetCard.tsx
+  - 비고: 커밋 & push 완료 (63e28ea)
+
+- [x] Supabase MCP 서버 등록
+  - 상세: claude mcp add --transport http supabase https://mcp.supabase.com/mcp
+  - 비고: 다음 세션에서 OAuth 인증 후 execute_sql 사용 가능
+
+---
+
 ## 2026-03-12 (세션 2)
 
 ### 완료한 태스크

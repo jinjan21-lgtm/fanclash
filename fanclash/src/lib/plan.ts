@@ -1,6 +1,6 @@
 import type { WidgetType } from '@/types';
 
-export const FREE_WIDGET_LIMIT = 3;
+export const FREE_ALLOWED_WIDGETS: WidgetType[] = ['alert'];
 
 export const PRO_FEATURES = {
   maxWidgets: Infinity,
@@ -12,7 +12,7 @@ export const PRO_FEATURES = {
 };
 
 export const FREE_FEATURES = {
-  maxWidgets: FREE_WIDGET_LIMIT,
+  maxWidgets: 1,
   customSound: false,
   customCss: false,
   stats: false,
@@ -22,7 +22,12 @@ export const FREE_FEATURES = {
 
 export function canCreateWidget(plan: string, currentCount: number): boolean {
   if (plan === 'pro') return true;
-  return currentCount < FREE_WIDGET_LIMIT;
+  return currentCount < 1;
+}
+
+export function isWidgetLocked(type: WidgetType, plan: string): boolean {
+  if (plan === 'pro') return false;
+  return !FREE_ALLOWED_WIDGETS.includes(type);
 }
 
 export function isProFeature(feature: string, plan: string): boolean {
