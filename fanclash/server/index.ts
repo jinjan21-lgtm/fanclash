@@ -239,4 +239,30 @@ integrationManager.loadAllIntegrations();
   } catch (e: any) {
     console.log('[DEBUG] TikTok fetch failed:', e.message);
   }
+
+  // Test actual library connection to .ventress
+  try {
+    const { WebcastPushConnection } = require('tiktok-live-connector');
+    console.log('[DEBUG] Testing tiktok-live-connector with .ventress...');
+    const testConn = new WebcastPushConnection('.ventress', { enableExtendedGiftInfo: true });
+
+    testConn.on('error', (err: any) => {
+      console.log('[DEBUG] Library error event:', JSON.stringify({ info: err?.info, message: err?.exception?.message || err?.message }));
+    });
+
+    await Promise.race([
+      testConn.connect().then(() => {
+        console.log('[DEBUG] Library .ventress: CONNECTED!');
+        testConn.disconnect();
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout 15s')), 15000)),
+    ]);
+  } catch (e: any) {
+    console.log('[DEBUG] Library .ventress FAILED:', e.message || String(e));
+    if (e.errors) {
+      e.errors.forEach((err: any, i: number) => {
+        console.log(`[DEBUG] Library error[${i}]:`, err.message || String(err));
+      });
+    }
+  }
 })();
