@@ -33,7 +33,7 @@ if (!SERVER_SECRET) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // HTTP server for both Socket.IO and REST endpoints
-const httpServer = createServer(async (req, res) => {
+const httpServer = createServer((req, res) => {
   // CORS headers - only allow explicitly configured origins
   const origin = req.headers.origin || '';
   const allowedOrigins = CORS_ORIGIN.split(',').map(s => s.trim());
@@ -53,59 +53,6 @@ const httpServer = createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'ok' }));
-    return;
-  }
-
-  // Debug: TikTok connectivity test
-  if (req.method === 'GET' && req.url?.startsWith('/debug/tiktok')) {
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const username = url.searchParams.get('user') || '.ventress';
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-
-    const results: Record<string, any> = {};
-
-    // 1. Server IP & region
-    try {
-      const ipRes = await fetch('https://ipinfo.io/json');
-      results.serverInfo = await ipRes.json();
-    } catch (e: any) {
-      results.serverInfo = { error: e.message };
-    }
-
-    // 2. Can we reach TikTok at all?
-    try {
-      const tiktokRes = await fetch(`https://www.tiktok.com/@${username}/live`, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-      });
-      results.tiktokFetch = {
-        status: tiktokRes.status,
-        headers: Object.fromEntries(tiktokRes.headers.entries()),
-        bodyPreview: (await tiktokRes.text()).substring(0, 500),
-      };
-    } catch (e: any) {
-      results.tiktokFetch = { error: e.message };
-    }
-
-    // 3. Try tiktok-live-connector
-    try {
-      const { WebcastPushConnection } = require('tiktok-live-connector');
-      const conn = new WebcastPushConnection(username, { enableExtendedGiftInfo: true });
-      await Promise.race([
-        conn.connect().then(() => {
-          results.connector = { success: true, message: 'Connected!' };
-          conn.disconnect();
-        }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout 10s')), 10000)),
-      ]);
-    } catch (e: any) {
-      results.connector = {
-        success: false,
-        message: e.message || String(e),
-        errors: e.errors?.map((err: any) => err.message || String(err)),
-      };
-    }
-
-    res.end(JSON.stringify(results, null, 2));
     return;
   }
 
@@ -201,68 +148,3 @@ httpServer.listen(Number(PORT), () => {
 const integrationManager = new IntegrationManager(io as any, supabase);
 integrationManager.loadAllIntegrations();
 
-// Debug: log server IP and test TikTok connectivity on startup
-(async () => {
-  try {
-    const ipRes = await fetch('https://ipinfo.io/json');
-    const ipInfo = await ipRes.json();
-    console.log('[DEBUG] Server IP info:', JSON.stringify(ipInfo));
-  } catch (e: any) {
-    console.log('[DEBUG] Failed to get IP info:', e.message);
-  }
-
-  try {
-    const tiktokRes = await fetch('https://www.tiktok.com/@.ventress/live', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-    });
-    console.log('[DEBUG] TikTok fetch status:', tiktokRes.status);
-    const body = await tiktokRes.text();
-    console.log('[DEBUG] TikTok response length:', body.length);
-    console.log('[DEBUG] Has SIGI_STATE:', body.includes('SIGI_STATE'));
-    console.log('[DEBUG] Has LiveRoom:', body.includes('LiveRoom'));
-    const sigiMatch = body.match(/<script id="SIGI_STATE" type="application\/json">(.*?)<\/script>/);
-    if (sigiMatch) {
-      try {
-        const sigi = JSON.parse(sigiMatch[1]);
-        const liveRoom = sigi?.LiveRoom;
-        console.log('[DEBUG] LiveRoom keys:', liveRoom ? Object.keys(liveRoom) : 'null');
-        console.log('[DEBUG] liveRoomUserInfo exists:', !!liveRoom?.liveRoomUserInfo);
-        if (liveRoom?.liveRoomUserInfo) {
-          console.log('[DEBUG] liveRoomUserInfo keys:', Object.keys(liveRoom.liveRoomUserInfo));
-        } else {
-          console.log('[DEBUG] LiveRoom content (first 500 chars):', JSON.stringify(liveRoom).substring(0, 500));
-        }
-      } catch (e: any) {
-        console.log('[DEBUG] Failed to parse SIGI_STATE:', e.message);
-      }
-    }
-  } catch (e: any) {
-    console.log('[DEBUG] TikTok fetch failed:', e.message);
-  }
-
-  // Test actual library connection to .ventress
-  try {
-    const { WebcastPushConnection } = require('tiktok-live-connector');
-    console.log('[DEBUG] Testing tiktok-live-connector with .ventress...');
-    const testConn = new WebcastPushConnection('.ventress', { enableExtendedGiftInfo: true });
-
-    testConn.on('error', (err: any) => {
-      console.log('[DEBUG] Library error event:', JSON.stringify({ info: err?.info, message: err?.exception?.message || err?.message }));
-    });
-
-    await Promise.race([
-      testConn.connect().then(() => {
-        console.log('[DEBUG] Library .ventress: CONNECTED!');
-        testConn.disconnect();
-      }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout 15s')), 15000)),
-    ]);
-  } catch (e: any) {
-    console.log('[DEBUG] Library .ventress FAILED:', e.message || String(e));
-    if (e.errors) {
-      e.errors.forEach((err: any, i: number) => {
-        console.log(`[DEBUG] Library error[${i}]:`, err.message || String(err));
-      });
-    }
-  }
-})();
