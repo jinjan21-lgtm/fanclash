@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
 import { isProFeature } from '@/lib/plan';
 import type { Widget, WidgetType } from '@/types';
+import { widgetConfigSchema } from '@/lib/schemas';
 
 import AlertSettings from './settings/AlertSettings';
 import RankingSettings from './settings/RankingSettings';
@@ -79,6 +80,16 @@ export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }:
     if (widget.type === 'goal') {
       finalConfig.milestones = milestones;
     }
+
+    // Validate config with Zod
+    const result = widgetConfigSchema.safeParse(finalConfig);
+    if (!result.success) {
+      const firstError = result.error.errors[0];
+      toast(firstError?.message || '설정 값이 올바르지 않습니다', 'error');
+      setSaving(false);
+      return;
+    }
+
     await supabase.from('widgets').update({ config: finalConfig }).eq('id', widget.id);
 
     // If goal widget, also update donation_goals table
