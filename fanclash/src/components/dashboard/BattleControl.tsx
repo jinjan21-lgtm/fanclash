@@ -10,9 +10,33 @@ interface BattleControlProps {
   onUpdate: () => void;
 }
 
+interface TournamentMatch {
+  player1: string;
+  player2: string;
+  winner: string | null;
+}
+
+interface TournamentRound {
+  matches: TournamentMatch[];
+}
+
+interface TournamentState {
+  rounds: TournamentRound[];
+  currentRound: number;
+  currentMatch: number;
+  bracketSize: number;
+  players: string[];
+  finished: boolean;
+  champion: string | null;
+}
+
 export default function BattleControl({ widget, onUpdate }: BattleControlProps) {
   if (widget.type === 'team_battle') {
     return <TeamBattleControl widget={widget} onUpdate={onUpdate} />;
+  }
+  const config = (widget.config || {}) as Record<string, unknown>;
+  if (config.tournamentMode) {
+    return <TournamentControl widget={widget} onUpdate={onUpdate} />;
   }
   return <SingleBattleControl widget={widget} onUpdate={onUpdate} />;
 }
@@ -355,6 +379,289 @@ function TeamBattleControl({ widget, onUpdate }: BattleControlProps) {
       )}
     </div>
   );
+}
+
+/* ═══════════════════════════════════════════
+   Tournament Mode (토너먼트)
+   ═══════════════════════════════════════════ */
+function TournamentControl({ widget, onUpdate }: BattleControlProps) {
+  const { toast } = useToast();
+  const config = (widget.config || {}) as Record<string, unknown>;
+  const bracketSize = (config.bracketSize as number) || 4;
+  const supabase = createClient();
+
+  const [tournament, setTournament] = useState<TournamentState | null>(null);
+  const [collecting, setCollecting] = useState(false);
+  const [players, setPlayers] = useState<string[]>([]);
+
+  // Listen for donations to fill player slots
+  useEffect(() => {
+    if (!collecting) return;
+    const socket = getSocket();
+    socket.emit('streamer:subscribe' as any, widget.streamer_id);
+    const handler = (data: any) => {
+      setPlayers(prev => {
+        if (prev.includes(data.fan_nickname)) return prev;
+        if (prev.length >= bracketSize) return prev;
+        return [...prev, data.fan_nickname];
+      });
+    };
+    socket.on('donation:new' as any, handler);
+    return () => { socket.off('donation:new' as any, handler); };
+  }, [collecting, widget.streamer_id, bracketSize]);
+
+  const startCollecting = () => {
+    setPlayers([]);
+    setCollecting(true);
+    setTournament(null);
+    toast('참가자 모집 시작! 도네이션으로 참가합니다.');
+  };
+
+  const buildBracket = () => {
+    if (players.length < bracketSize) {
+      toast(`참가자가 부족합니다 (${players.length}/${bracketSize})`);
+      return;
+    }
+    setCollecting(false);
+    const shuffled = [...players].sort(() => Math.random() - 0.5);
+    const firstRoundMatches: TournamentMatch[] = [];
+    for (let i = 0; i < shuffled.length; i += 2) {
+      firstRoundMatches.push({ player1: shuffled[i], player2: shuffled[i + 1], winner: null });
+    }
+
+    const totalRounds = Math.log2(bracketSize);
+    const rounds: TournamentRound[] = [{ matches: firstRoundMatches }];
+    let matchCount = firstRoundMatches.length / 2;
+    for (let r = 1; r < totalRounds; r++) {
+      const emptyMatches: TournamentMatch[] = [];
+      for (let m = 0; m < matchCount; m++) {
+        emptyMatches.push({ player1: '', player2: '', winner: null });
+      }
+      rounds.push({ matches: emptyMatches });
+      matchCount = matchCount / 2;
+    }
+
+    setTournament({
+      rounds,
+      currentRound: 0,
+      currentMatch: 0,
+      bracketSize,
+      players: shuffled,
+      finished: false,
+      champion: null,
+    });
+  };
+
+  const startMatch = () => {
+    if (!tournament) return;
+    const match = tournament.rounds[tournament.currentRound].matches[tournament.currentMatch];
+    if (!match.player1 || !match.player2) {
+      toast('대진이 아직 준비되지 않았습니다');
+      return;
+    }
+    const socket = getSocket();
+    socket.emit('battle:create' as any, {
+      streamer_id: widget.streamer_id,
+      benefit: getRoundLabel(tournament.currentRound, tournament.currentMatch, bracketSize),
+      min_amount: (config.defaultMinAmount as number) || 1000,
+      time_limit: (config.defaultTimeLimit as number) || 180,
+    });
+    toast(`${match.player1} vs ${match.player2} 배틀 시작!`);
+
+    // Emit tournament info to overlay
+    socket.emit('tournament:update' as any, {
+      streamer_id: widget.streamer_id,
+      roundLabel: getRoundLabel(tournament.currentRound, tournament.currentMatch, bracketSize),
+      tournament,
+    });
+  };
+
+  const setMatchWinner = (winnerName: string) => {
+    if (!tournament) return;
+    const newTournament = { ...tournament };
+    const rounds = newTournament.rounds.map(r => ({ ...r, matches: r.matches.map(m => ({ ...m })) }));
+
+    rounds[tournament.currentRound].matches[tournament.currentMatch].winner = winnerName;
+
+    // Advance winner to next round
+    if (tournament.currentRound < rounds.length - 1) {
+      const nextRound = rounds[tournament.currentRound + 1];
+      const nextMatchIdx = Math.floor(tournament.currentMatch / 2);
+      const slot = tournament.currentMatch % 2 === 0 ? 'player1' : 'player2';
+      nextRound.matches[nextMatchIdx][slot] = winnerName;
+    }
+
+    // Find next match
+    let nextRound = tournament.currentRound;
+    let nextMatch = tournament.currentMatch + 1;
+
+    if (nextMatch >= rounds[nextRound].matches.length) {
+      nextRound++;
+      nextMatch = 0;
+    }
+
+    const isFinished = nextRound >= rounds.length;
+
+    setTournament({
+      ...newTournament,
+      rounds,
+      currentRound: isFinished ? tournament.currentRound : nextRound,
+      currentMatch: isFinished ? tournament.currentMatch : nextMatch,
+      finished: isFinished,
+      champion: isFinished ? winnerName : null,
+    });
+
+    if (isFinished) {
+      toast(`토너먼트 우승: ${winnerName}!`);
+      const socket = getSocket();
+      socket.emit('tournament:champion' as any, {
+        streamer_id: widget.streamer_id,
+        champion: winnerName,
+      });
+    }
+  };
+
+  const resetTournament = () => {
+    setTournament(null);
+    setPlayers([]);
+    setCollecting(false);
+  };
+
+  if (!tournament && !collecting) {
+    return (
+      <div className="space-y-5">
+        <div className="space-y-3">
+          <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wide">토너먼트 모드</h4>
+          <div className="bg-gray-800/50 rounded-lg p-3">
+            <p className="text-gray-400 text-sm">대진표: <span className="text-white font-bold">{bracketSize}강</span></p>
+          </div>
+        </div>
+        <button onClick={startCollecting}
+          className="w-full py-3 bg-purple-600 rounded-lg font-bold hover:bg-purple-700">
+          &#x1F3C6; 토너먼트 참가자 모집
+        </button>
+        <p className="text-gray-500 text-xs text-center">도네이션으로 {bracketSize}명의 참가자를 모집합니다.</p>
+      </div>
+    );
+  }
+
+  if (collecting) {
+    return (
+      <div className="space-y-5">
+        <div className="flex justify-between items-center">
+          <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wide">&#x1F3C6; 참가자 모집 중</h4>
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-yellow-600">
+            {players.length}/{bracketSize}
+          </span>
+        </div>
+        <div className="space-y-2">
+          {players.map((p, i) => (
+            <div key={i} className="flex justify-between bg-gray-800 rounded-lg p-3">
+              <span className="font-bold text-white">#{i + 1} {p}</span>
+            </div>
+          ))}
+          {players.length < bracketSize && (
+            <p className="text-gray-500 text-sm text-center py-3">도네이션으로 참가 대기 중...</p>
+          )}
+        </div>
+        <div className="flex gap-3">
+          <button onClick={buildBracket} disabled={players.length < bracketSize}
+            className="flex-1 py-3 bg-purple-600 rounded-lg font-bold hover:bg-purple-700 disabled:opacity-50">
+            대진표 생성 ({players.length}/{bracketSize})
+          </button>
+          <button onClick={resetTournament}
+            className="px-4 py-3 bg-gray-700 rounded-lg font-bold hover:bg-gray-600">
+            취소
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Tournament bracket view
+  return (
+    <div className="space-y-5">
+      <div className="flex justify-between items-center">
+        <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wide">&#x1F3C6; 토너먼트</h4>
+        {tournament?.finished && (
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-yellow-600">완료</span>
+        )}
+      </div>
+
+      {tournament?.champion && (
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-center">
+          <span className="text-3xl">&#x1F3C6;</span>
+          <p className="text-yellow-400 font-bold text-xl mt-1">우승: {tournament.champion}</p>
+        </div>
+      )}
+
+      {/* Bracket visualization */}
+      <div className="space-y-4 overflow-x-auto">
+        {tournament?.rounds.map((round, rIdx) => (
+          <div key={rIdx}>
+            <p className="text-xs text-gray-500 mb-2 font-bold">
+              {getRoundLabel(rIdx, -1, bracketSize)}
+            </p>
+            <div className="space-y-2">
+              {round.matches.map((match, mIdx) => {
+                const isCurrent = !tournament.finished && rIdx === tournament.currentRound && mIdx === tournament.currentMatch;
+                return (
+                  <div key={mIdx} className={`rounded-lg p-3 ${isCurrent ? 'bg-purple-900/40 border border-purple-500' : 'bg-gray-800/50'}`}>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className={`font-bold ${match.winner === match.player1 ? 'text-yellow-400' : match.player1 ? 'text-white' : 'text-gray-600'}`}>
+                        {match.player1 || 'TBD'}
+                      </span>
+                      <span className="text-gray-600 text-xs">VS</span>
+                      <span className={`font-bold ${match.winner === match.player2 ? 'text-yellow-400' : match.player2 ? 'text-white' : 'text-gray-600'}`}>
+                        {match.player2 || 'TBD'}
+                      </span>
+                    </div>
+                    {match.winner && (
+                      <p className="text-xs text-yellow-400 text-center mt-1">&#x1F451; {match.winner}</p>
+                    )}
+                    {isCurrent && !match.winner && match.player1 && match.player2 && (
+                      <div className="mt-2 space-y-2">
+                        <button onClick={startMatch}
+                          className="w-full py-2 bg-red-600 rounded text-xs font-bold hover:bg-red-700">
+                          &#x26A1; 배틀 시작
+                        </button>
+                        <div className="flex gap-2">
+                          <button onClick={() => setMatchWinner(match.player1)}
+                            className="flex-1 py-1.5 bg-gray-700 rounded text-xs hover:bg-gray-600">
+                            {match.player1} 승리
+                          </button>
+                          <button onClick={() => setMatchWinner(match.player2)}
+                            className="flex-1 py-1.5 bg-gray-700 rounded text-xs hover:bg-gray-600">
+                            {match.player2} 승리
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {tournament?.finished && (
+        <button onClick={resetTournament}
+          className="w-full py-3 bg-gray-700 rounded-lg font-bold hover:bg-gray-600">
+          토너먼트 초기화
+        </button>
+      )}
+    </div>
+  );
+}
+
+function getRoundLabel(roundIdx: number, matchIdx: number, bracketSize: number): string {
+  const totalRounds = Math.log2(bracketSize);
+  const roundFromEnd = totalRounds - roundIdx;
+  if (roundFromEnd === 1) return matchIdx >= 0 ? '결승전' : '결승';
+  if (roundFromEnd === 2) return matchIdx >= 0 ? `4강 ${matchIdx + 1}경기` : '4강';
+  if (roundFromEnd === 3) return matchIdx >= 0 ? `8강 ${matchIdx + 1}경기` : '8강';
+  return matchIdx >= 0 ? `${Math.pow(2, roundFromEnd)}강 ${matchIdx + 1}경기` : `${Math.pow(2, roundFromEnd)}강`;
 }
 
 /* ═══════════════════════════════════════════

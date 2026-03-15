@@ -13,6 +13,7 @@ export default function BattleArena({ widget, preview }: { widget: Widget; previ
   const [winner, setWinner] = useState<{ winner: string; benefit: string } | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [flashNick, setFlashNick] = useState<string | null>(null);
+  const [roundLabel, setRoundLabel] = useState<string | null>(null);
   const prevAmounts = useRef<Record<string, number>>({});
   const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
@@ -73,8 +74,18 @@ export default function BattleArena({ widget, preview }: { widget: Widget; previ
       playSound((widget.config as any)?.soundUrl);
       setTimeout(() => { setWinner(null); setBattle(null); setParticipants([]); prevAmounts.current = {}; }, 8000);
     };
+    const tournamentHandler = (data: any) => {
+      if (data.roundLabel) setRoundLabel(data.roundLabel);
+    };
+    const championHandler = (data: any) => {
+      setWinner({ winner: data.champion, benefit: '토너먼트 우승!' });
+      playSound((widget.config as any)?.soundUrl);
+      setTimeout(() => { setWinner(null); setBattle(null); setParticipants([]); setRoundLabel(null); prevAmounts.current = {}; }, 10000);
+    };
     on('battle:update', updateHandler);
     on('battle:finished', finishHandler);
+    on('tournament:update' as any, tournamentHandler);
+    on('tournament:champion' as any, championHandler);
   }, [ready]);
 
   useEffect(() => {
@@ -256,13 +267,24 @@ export default function BattleArena({ widget, preview }: { widget: Widget; previ
         )}
 
         <div className="flex justify-between items-center mb-5">
-          <motion.span
-            animate={isUrgent ? { scale: [1, 1.1, 1] } : {}}
-            transition={{ repeat: Infinity, duration: 0.5 }}
-            className={`font-bold text-xl ${isUrgent ? 'text-red-400' : 'text-orange-400'}`}
-          >
-            ⚔️ 배틀 진행 중!
-          </motion.span>
+          <div className="flex flex-col">
+            {roundLabel && (
+              <motion.span
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-yellow-400 text-xs font-bold mb-0.5"
+              >
+                &#x1F3C6; {roundLabel}
+              </motion.span>
+            )}
+            <motion.span
+              animate={isUrgent ? { scale: [1, 1.1, 1] } : {}}
+              transition={{ repeat: Infinity, duration: 0.5 }}
+              className={`font-bold text-xl ${isUrgent ? 'text-red-400' : 'text-orange-400'}`}
+            >
+              &#x2694;&#xFE0F; 배틀 진행 중!
+            </motion.span>
+          </div>
           <motion.span
             className={`text-3xl font-mono font-bold ${isUrgent ? 'text-red-400' : 'text-white'}`}
             animate={isUrgent ? { scale: [1, 1.15, 1] } : {}}
