@@ -49,11 +49,7 @@ interface CollectionCounts {
 interface DonationGachaProps {
   widgetId?: string;
   streamerId?: string;
-  config?: {
-    showHistory?: boolean;
-    maxHistory?: number;
-    showCollection?: boolean;
-  };
+  config?: Record<string, unknown>;
 }
 
 export default function DonationGacha({ widgetId, streamerId, config }: DonationGachaProps) {
@@ -63,12 +59,14 @@ export default function DonationGacha({ widgetId, streamerId, config }: Donation
   const [screenFlash, setScreenFlash] = useState<string | null>(null);
   const [collection, setCollection] = useState<CollectionCounts>({ N: 0, R: 0, SR: 0, SSR: 0, UR: 0 });
   const resultId = useRef(0);
-  const showHistory = config?.showHistory ?? true;
-  const maxHistory = config?.maxHistory ?? 5;
-  const showCollection = config?.showCollection ?? true;
+  const showHistory = (config?.showHistory as boolean) ?? true;
+  const maxHistory = (config?.maxHistory as number) ?? 10;
+  const showCollection = (config?.showCollection as boolean) ?? true;
+  const minAmount = (config?.minAmount as number) ?? 1000;
 
   const triggerGacha = useCallback((amount: number, nickname: string) => {
     if (isAnimating) return;
+    if (amount < minAmount) return;
 
     const grade = rollGrade(amount);
     const result: GachaResult = {
@@ -115,7 +113,7 @@ export default function DonationGacha({ widgetId, streamerId, config }: Donation
         setCurrentPull(null);
       }, 2000);
     }, 1500);
-  }, [isAnimating, maxHistory, streamerId, widgetId]);
+  }, [isAnimating, maxHistory, minAmount, streamerId, widgetId]);
 
   // Expose for demo/socket
   useEffect(() => {
