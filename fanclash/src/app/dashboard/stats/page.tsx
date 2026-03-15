@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import StatsCharts from '@/components/dashboard/StatsCharts';
 import StatsFilter from '@/components/dashboard/StatsFilter';
+import SeasonManager from '@/components/dashboard/SeasonManager';
 import { isProFeature } from '@/lib/plan';
 
 export default async function StatsPage({ searchParams }: { searchParams: Promise<{ period?: string }> }) {
@@ -12,14 +13,42 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
   const params = await searchParams;
 
   if (isProFeature('stats', userPlan)) {
+    // Free users: show basic stats without charts/filters
+    const { data: allDonations } = await supabase
+      .from('donations')
+      .select('amount, fan_nickname, created_at')
+      .eq('streamer_id', user!.id);
+
+    const today = new Date().toISOString().split('T')[0];
+    const totalAll = allDonations?.reduce((sum, d) => sum + d.amount, 0) || 0;
+    const totalCount = allDonations?.length || 0;
+    const uniqueFans = new Set(allDonations?.map(d => d.fan_nickname)).size;
+    const todayCount = allDonations?.filter(d => d.created_at.startsWith(today)).length || 0;
+
     return (
       <div>
         <h2 className="text-2xl font-bold mb-6">후원 통계</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-gray-900 rounded-xl p-5">
+            <p className="text-gray-400 text-sm">총 후원</p>
+            <p className="text-2xl font-bold text-purple-400 mt-1">{totalAll.toLocaleString()}원</p>
+          </div>
+          <div className="bg-gray-900 rounded-xl p-5">
+            <p className="text-gray-400 text-sm">후원 횟수</p>
+            <p className="text-2xl font-bold text-green-400 mt-1">{totalCount}회</p>
+          </div>
+          <div className="bg-gray-900 rounded-xl p-5">
+            <p className="text-gray-400 text-sm">참여 팬 수</p>
+            <p className="text-2xl font-bold text-blue-400 mt-1">{uniqueFans}명</p>
+          </div>
+          <div className="bg-gray-900 rounded-xl p-5">
+            <p className="text-gray-400 text-sm">오늘 후원</p>
+            <p className="text-2xl font-bold text-yellow-400 mt-1">{todayCount}건</p>
+          </div>
+        </div>
         <div className="bg-gray-900 rounded-xl p-8 border border-gray-800 text-center">
-          <p className="text-4xl mb-4">📊</p>
-          <h3 className="text-xl font-bold mb-2">Pro 전용 기능</h3>
-          <p className="text-gray-400 mb-4">상세 통계, CSV 내보내기, 시간대 분석 등은 Pro 플랜에서 이용 가능합니다.</p>
-          <Link href="/dashboard/pricing" className="inline-block px-6 py-2 bg-purple-600 rounded-lg hover:bg-purple-700">
+          <p className="text-gray-400 mb-4">기간별 차트, 시즌 시스템, CSV 내보내기 등은 Pro에서 이용 가능합니다.</p>
+          <Link href="/dashboard/pricing" className="inline-block px-6 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 text-sm">
             Pro 업그레이드
           </Link>
         </div>
@@ -48,6 +77,14 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
     .eq('streamer_id', user!.id)
     .order('total_donated', { ascending: false })
     .limit(10);
+
+  // Seasons
+  const { data: seasons } = await supabase
+    .from('seasons')
+    .select('*')
+    .eq('streamer_id', user!.id)
+    .order('created_at', { ascending: false })
+    .limit(5);
 
   // Aggregate daily
   const dailyMap = new Map<string, number>();
@@ -113,6 +150,11 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
           created_at: d.created_at,
         }))}
       />
+
+      {/* Season system - Pro only */}
+      {!isProFeature('stats', userPlan) && (
+        <SeasonManager seasons={seasons || []} />
+      )}
     </div>
   );
 }
