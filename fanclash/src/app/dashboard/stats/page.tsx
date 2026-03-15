@@ -3,7 +3,107 @@ import Link from 'next/link';
 import StatsCharts from '@/components/dashboard/StatsCharts';
 import StatsFilter from '@/components/dashboard/StatsFilter';
 import SeasonManager from '@/components/dashboard/SeasonManager';
+import DonationInsights from '@/components/dashboard/DonationInsights';
 import { isProFeature } from '@/lib/plan';
+
+interface InsightCard {
+  emoji: string;
+  title: string;
+  description: string;
+  color: string;
+}
+
+function generateInsights(
+  allDonations: { amount: number; fan_nickname: string; created_at: string }[]
+): InsightCard[] {
+  const insights: InsightCard[] = [];
+  if (!allDonations || allDonations.length < 3) return insights;
+
+  // 1. Peak hour
+  const hourCounts = new Array(24).fill(0);
+  allDonations.forEach(d => {
+    const hour = new Date(d.created_at).getHours();
+    hourCounts[hour] += d.amount;
+  });
+  const peakHour = hourCounts.indexOf(Math.max(...hourCounts));
+  const peakLabel = peakHour < 12
+    ? `오전 ${peakHour === 0 ? 12 : peakHour}시`
+    : `오후 ${peakHour === 12 ? 12 : peakHour - 12}시`;
+  insights.push({
+    emoji: '🕐',
+    title: '최고 시간대',
+    description: `${peakLabel}에 후원이 가장 활발합니다`,
+    color: 'text-blue-400',
+  });
+
+  // 2. Fan loyalty
+  const fanCountMap = new Map<string, number>();
+  allDonations.forEach(d => {
+    fanCountMap.set(d.fan_nickname, (fanCountMap.get(d.fan_nickname) || 0) + 1);
+  });
+  const totalUniqueFans = fanCountMap.size;
+  const returningFans = Array.from(fanCountMap.values()).filter(c => c >= 2).length;
+  if (totalUniqueFans > 0) {
+    const loyaltyPercent = Math.round((returningFans / totalUniqueFans) * 100);
+    insights.push({
+      emoji: '💜',
+      title: '팬 충성도',
+      description: `전체 팬의 ${loyaltyPercent}%가 2회 이상 후원했습니다`,
+      color: 'text-purple-400',
+    });
+  }
+
+  // 3. Trend: this week vs last week
+  const now = new Date();
+  const thisWeekStart = new Date(now);
+  thisWeekStart.setDate(thisWeekStart.getDate() - 7);
+  const lastWeekStart = new Date(thisWeekStart);
+  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+
+  const thisWeekTotal = allDonations
+    .filter(d => new Date(d.created_at) >= thisWeekStart)
+    .reduce((sum, d) => sum + d.amount, 0);
+  const lastWeekTotal = allDonations
+    .filter(d => {
+      const dt = new Date(d.created_at);
+      return dt >= lastWeekStart && dt < thisWeekStart;
+    })
+    .reduce((sum, d) => sum + d.amount, 0);
+
+  if (lastWeekTotal > 0) {
+    const changePercent = Math.round(((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100);
+    const direction = changePercent >= 0 ? '증가' : '감소';
+    insights.push({
+      emoji: changePercent >= 0 ? '📈' : '📉',
+      title: '주간 트렌드',
+      description: `지난주 대비 후원이 ${Math.abs(changePercent)}% ${direction}했습니다`,
+      color: changePercent >= 0 ? 'text-green-400' : 'text-red-400',
+    });
+  } else if (thisWeekTotal > 0) {
+    insights.push({
+      emoji: '🆕',
+      title: '주간 트렌드',
+      description: '이번 주 첫 후원이 들어왔습니다!',
+      color: 'text-green-400',
+    });
+  }
+
+  // 4. Top supporter insight
+  if (totalUniqueFans > 0) {
+    const sortedFans = Array.from(fanCountMap.entries()).sort((a, b) => b[1] - a[1]);
+    const topFan = sortedFans[0];
+    if (topFan[1] >= 3) {
+      insights.push({
+        emoji: '👑',
+        title: '최고 서포터',
+        description: `${topFan[0]}님이 ${topFan[1]}회 후원으로 가장 많이 참여했습니다`,
+        color: 'text-yellow-400',
+      });
+    }
+  }
+
+  return insights;
+}
 
 export default async function StatsPage({ searchParams }: { searchParams: Promise<{ period?: string }> }) {
   const supabase = await createClient();
@@ -78,6 +178,15 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
     .order('total_donated', { ascending: false })
     .limit(10);
 
+  // All donations for insights (last 30 days)
+  const insightsStart = new Date();
+  insightsStart.setDate(insightsStart.getDate() - 30);
+  const { data: allDonationsForInsights } = await supabase
+    .from('donations')
+    .select('amount, fan_nickname, created_at')
+    .eq('streamer_id', user!.id)
+    .gte('created_at', insightsStart.toISOString());
+
   // Seasons
   const { data: seasons } = await supabase
     .from('seasons')
@@ -150,6 +259,14 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
           created_at: d.created_at,
         }))}
       />
+
+      {/* Donation Insights - Pro only */}
+      {allDonationsForInsights && allDonationsForInsights.length > 0 && (
+        <div className="mt-8">
+          <h3 className="text-lg font-bold mb-4">후원 인사이트</h3>
+          <DonationInsights insights={generateInsights(allDonationsForInsights)} />
+        </div>
+      )}
 
       {/* Season system - Pro only */}
       {!isProFeature('stats', userPlan) && (
