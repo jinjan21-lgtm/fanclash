@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types';
+import ThemeToggle from './ThemeToggle';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: '대시보드', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -71,9 +72,10 @@ export default function Sidebar({ profile }: SidebarProps) {
             <p className="text-xs text-gray-500 truncate">{profile.email}</p>
           </div>
         )}
+        <ThemeToggle />
         <button
           onClick={handleLogout}
-          className="w-full text-left text-sm text-gray-500 hover:text-red-400 transition-colors px-1"
+          className="w-full text-left text-sm text-gray-500 hover:text-red-400 transition-colors px-1 mt-1"
         >
           로그아웃
         </button>

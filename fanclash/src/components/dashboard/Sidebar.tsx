@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import ThemeToggle from './ThemeToggle';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: '대시보드', icon: '📊' },
@@ -60,7 +61,8 @@ export default function Sidebar() {
               </Link>
             ))}
           </nav>
-          <div className="border-t border-gray-800 mt-4 pt-3">
+          <div className="border-t border-gray-800 mt-4 pt-3 space-y-1">
+            <ThemeToggle />
             <button
               onClick={handleLogout}
               className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-gray-400 hover:bg-red-900/30 hover:text-red-400 transition-colors w-full"
