@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
 import { isLiveRequired, getKoreanError } from '@/lib/integration-errors';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import type { Integration, PlatformType } from '@/types';
 
 interface PlatformGuide {
@@ -139,6 +140,7 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
   const connectTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [retryCount, setRetryCount] = useState(0);
   const [retrying, setRetrying] = useState(false);
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
   const MAX_RETRIES = 5;
   const RETRY_INTERVAL = 30000;
   const retryTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -201,11 +203,17 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
         startRetry();
       }, 15000);
     } else {
-      // Disconnecting
-      setConnecting(true);
-      onToggleConnection(integration, false);
-      setTimeout(() => setConnecting(false), 3000);
+      // Disconnecting: show confirm modal
+      setShowDisconnectConfirm(true);
     }
+  };
+
+  const handleConfirmDisconnect = () => {
+    if (!integration) return;
+    setShowDisconnectConfirm(false);
+    setConnecting(true);
+    onToggleConnection(integration, false);
+    setTimeout(() => setConnecting(false), 3000);
   };
 
   // Auto-retry logic
@@ -467,6 +475,17 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
           </div>
         )}
       </div>
+
+      {showDisconnectConfirm && (
+        <ConfirmModal
+          title="연동 해제"
+          message="플랫폼 연결이 끊어집니다. 계속하시겠습니까?"
+          confirmText="해제"
+          variant="danger"
+          onConfirm={handleConfirmDisconnect}
+          onCancel={() => setShowDisconnectConfirm(false)}
+        />
+      )}
     </div>
   );
 }
