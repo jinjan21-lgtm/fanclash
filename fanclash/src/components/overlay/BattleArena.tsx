@@ -15,8 +15,27 @@ export default function BattleArena({ widget, preview }: { widget: Widget; previ
   const [flashNick, setFlashNick] = useState<string | null>(null);
   const [roundLabel, setRoundLabel] = useState<string | null>(null);
   const prevAmounts = useRef<Record<string, number>>({});
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
+
+  // Helper to track timeouts
+  const safeTimeout = (fn: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      timeoutIdsRef.current.delete(id);
+      fn();
+    }, ms);
+    timeoutIdsRef.current.add(id);
+    return id;
+  };
+
+  // Cleanup all tracked timeouts on unmount
+  useEffect(() => {
+    return () => {
+      timeoutIdsRef.current.forEach(id => clearTimeout(id));
+      timeoutIdsRef.current.clear();
+    };
+  }, []);
 
   // Load active battle from DB
   useEffect(() => {
@@ -57,14 +76,15 @@ export default function BattleArena({ widget, preview }: { widget: Widget; previ
       setBattle(data.battle);
       setParticipants(data.participants);
       if (data.battle.status === 'active' && data.battle.time_limit) {
-        setTimeLeft(data.battle.time_limit);
+        const elapsed = Math.floor((Date.now() - new Date(data.battle.started_at).getTime()) / 1000);
+        setTimeLeft(Math.max(0, data.battle.time_limit - elapsed));
       }
       // Detect donation flash
       for (const p of data.participants) {
         const prev = prevAmounts.current[p.nickname] || 0;
         if ((p.amount || 0) > prev) {
           setFlashNick(p.nickname);
-          setTimeout(() => setFlashNick(null), 800);
+          safeTimeout(() => setFlashNick(null), 800);
         }
         prevAmounts.current[p.nickname] = p.amount || 0;
       }
@@ -78,7 +98,7 @@ export default function BattleArena({ widget, preview }: { widget: Widget; previ
         data: { winner: data.winner, benefit: data.benefit },
         streamerId: widget.streamer_id,
       });
-      setTimeout(() => { setWinner(null); setBattle(null); setParticipants([]); prevAmounts.current = {}; }, 8000);
+      safeTimeout(() => { setWinner(null); setBattle(null); setParticipants([]); prevAmounts.current = {}; }, 8000);
     };
     const tournamentHandler = (data: any) => {
       if (data.roundLabel) setRoundLabel(data.roundLabel);
@@ -86,7 +106,7 @@ export default function BattleArena({ widget, preview }: { widget: Widget; previ
     const championHandler = (data: any) => {
       setWinner({ winner: data.champion, benefit: '토너먼트 우승!' });
       playSound((widget.config as any)?.soundUrl);
-      setTimeout(() => { setWinner(null); setBattle(null); setParticipants([]); setRoundLabel(null); prevAmounts.current = {}; }, 10000);
+      safeTimeout(() => { setWinner(null); setBattle(null); setParticipants([]); setRoundLabel(null); prevAmounts.current = {}; }, 10000);
     };
     on('battle:update', updateHandler);
     on('battle:finished', finishHandler);

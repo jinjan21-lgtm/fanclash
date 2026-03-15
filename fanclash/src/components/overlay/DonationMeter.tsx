@@ -46,8 +46,17 @@ export default function DonationMeter({ widgetId, config }: DonationMeterProps) 
   const [shake, setShake] = useState(false);
   const donationsRef = useRef<{ amount: number; time: number }[]>([]);
   const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const socketRef = useRef<ReturnType<typeof import('socket.io-client').io> | null>(null);
   const maxEmittedRef = useRef(false);
+
+  // Cleanup tracked timeouts on unmount
+  useEffect(() => {
+    return () => {
+      timeoutIdsRef.current.forEach(id => clearTimeout(id));
+      timeoutIdsRef.current.clear();
+    };
+  }, []);
 
   // Weather skin state
   const [weatherType, setWeatherType] = useState<WeatherType>('none');
@@ -92,22 +101,25 @@ export default function DonationMeter({ widgetId, config }: DonationMeterProps) 
       if (level.type === 'storm' || level.type === 'blizzard') {
         if (Math.random() < 0.1) {
           setLightning(true);
-          setTimeout(() => setLightning(false), 150);
+          const tId = setTimeout(() => { timeoutIdsRef.current.delete(tId); setLightning(false); }, 150);
+          timeoutIdsRef.current.add(tId);
         }
       }
 
       if (level.type === 'blizzard') {
         setShake(true);
-        setTimeout(() => setShake(false), 200);
+        const tId = setTimeout(() => { timeoutIdsRef.current.delete(tId); setShake(false); }, 200);
+        timeoutIdsRef.current.add(tId);
       }
     } else {
       // Gauge skin logic
-      const pct = Math.min(total / maxAmount, 1.2);
+      const pct = Math.min(maxAmount > 0 ? total / maxAmount : 0, 1.2);
       setPercentage(pct);
 
       if (pct >= 0.8) {
         setShake(true);
-        setTimeout(() => setShake(false), 200);
+        const tId = setTimeout(() => { timeoutIdsRef.current.delete(tId); setShake(false); }, 200);
+        timeoutIdsRef.current.add(tId);
         if (!maxEmittedRef.current) {
           maxEmittedRef.current = true;
           socketRef.current?.emit('widget:event' as any, {
@@ -157,7 +169,7 @@ export default function DonationMeter({ widgetId, config }: DonationMeterProps) 
           updateMeter();
         }
       });
-    });
+    }).catch(err => console.error('Socket init failed:', err));
     return () => { socket?.disconnect(); socketRef.current = null; };
   }, [widgetId, addDonation, updateMeter]);
 

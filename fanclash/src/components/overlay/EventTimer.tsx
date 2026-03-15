@@ -166,26 +166,30 @@ export default function EventTimer({ widget, preview }: { widget: Widget; previe
 
   useEffect(() => {
     // Listen for timer control via BroadcastChannel (dashboard sends commands)
-    const bc = new BroadcastChannel('fanclash-timer');
-    bc.onmessage = (e) => {
-      if (e.data.widgetId !== widget.id) return;
-      if (e.data.action === 'start') {
-        setTimeLeft(e.data.duration || totalSeconds);
-        setRunning(true);
-        setFinished(false);
-        setAccumulated(0);
-      }
-      if (e.data.action === 'stop') {
-        setRunning(false);
-      }
-      if (e.data.action === 'reset') {
-        setRunning(false);
-        setFinished(false);
-        setTimeLeft(e.data.duration || totalSeconds);
-        setAccumulated(0);
-      }
-    };
-    return () => bc.close();
+    try {
+      const bc = new BroadcastChannel('fanclash-timer');
+      bc.onmessage = (e) => {
+        if (e.data.widgetId !== widget.id) return;
+        if (e.data.action === 'start') {
+          setTimeLeft(e.data.duration || totalSeconds);
+          setRunning(true);
+          setFinished(false);
+          setAccumulated(0);
+        }
+        if (e.data.action === 'stop') {
+          setRunning(false);
+        }
+        if (e.data.action === 'reset') {
+          setRunning(false);
+          setFinished(false);
+          setTimeLeft(e.data.duration || totalSeconds);
+          setAccumulated(0);
+        }
+      };
+      return () => bc.close();
+    } catch {
+      return () => {};
+    }
   }, [widget.id, totalSeconds]);
 
   // Donation integration via Socket.IO
@@ -235,7 +239,7 @@ export default function EventTimer({ widget, preview }: { widget: Widget; previe
     if (!running || timeLeft <= 0) return;
     const interval = setInterval(() => {
       setTimeLeft(t => {
-        if (t <= 1) {
+        if (t <= 0) {
           setRunning(false);
           setFinished(true);
           playSound((config.soundUrl as string) || undefined);

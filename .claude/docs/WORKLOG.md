@@ -1,5 +1,46 @@
 # 작업 일지
 
+## 2026-03-15 (위젯 크리티컬 버그 6건 수정)
+
+### 완료한 태스크
+
+#### Fix 1: BattleArena.tsx — 배틀 타이머 계산 버그
+- [x] `battle:update` 이벤트에서 `time_limit` 대신 `started_at` 기반 남은 시간 계산
+- [x] 모든 `setTimeout` → `safeTimeout` 패턴으로 교체 (메모리 누수 방지)
+- [x] `timeoutIdsRef` 추가 + 언마운트 시 전체 정리
+
+#### Fix 2: DonationSlots.tsx — 빈 미션 크래시 + 스핀 타이밍
+- [x] 빈 `missions` 배열 시 `NaN` 크래시 방어 (기본값 폴백)
+- [x] `spinDuration` 범위 제한 (1~5초)
+- [x] `setInterval`/`setTimeout` 추적 + 언마운트 시 정리
+- [x] `spinningRef` 언마운트 시 리셋
+
+#### Fix 3: DonationQuiz.tsx — null 메시지 크래시
+- [x] `message.trim()` → `(message ?? '').trim()` null safety
+- [x] `endQuiz` 10초 타이머 추적 (`timeoutIdsRef`)
+
+#### Fix 4: EventTimer.tsx — 타이머 off-by-one + BroadcastChannel
+- [x] `t <= 1` → `t <= 0` (1초 일찍 종료되던 버그)
+- [x] `BroadcastChannel` try-catch 래핑 (미지원 환경 방어)
+
+#### Fix 5: DonationPhysics.tsx — 물리 바디 제거 순서
+- [x] `bodiesMetaRef`에 `createdAt` 타임스탬프 추가
+- [x] `allBodies[0]` 대신 `createdAt` 기준 최고령 바디 찾아서 제거
+- [x] canvas `getContext('2d')` null 체크 추가
+
+#### Fix 6: DonationMeter.tsx — 0 나누기 + 타임아웃 추적
+- [x] `total / maxAmount` → `maxAmount > 0 ? total / maxAmount : 0` (Infinity 방지)
+- [x] 번개/흔들림 `setTimeout` 모두 `timeoutIdsRef` 추적
+- [x] 언마운트 시 타임아웃 정리
+
+#### 공통 개선 (전체 수정 파일)
+- [x] Socket.IO import `.catch(err => console.error(...))` 에러 핸들링 추가
+
+#### 빌드 확인
+- [x] 빌드 성공 (0 에러)
+
+---
+
 ## 2026-03-15 (온보딩 + 테스트 시뮬레이터 + 디스코드 웹훅)
 
 ### 완료한 태스크

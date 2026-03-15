@@ -10,8 +10,10 @@ interface DonationSlotsProps {
 
 export default function DonationSlots({ widgetId, config }: DonationSlotsProps) {
   const minAmount = (config?.minAmount as number) || 1000;
-  const missions = (config?.missions as string[]) || ['\uB178\uB798 \uD55C \uACE1', '\uC2A4\uCFFC\uD2B8 10\uAC1C', '\uAD11\uACE0 \uC77D\uAE30'];
-  const spinDuration = (config?.spinDuration as number) || 2;
+  const missions = (config?.missions as string[])?.length > 0
+    ? (config!.missions as string[])
+    : ['\uB178\uB798 \uD55C \uACE1', '\uC2A4\uCFFC\uD2B8 10\uAC1C', '\uAD11\uACE0 \uC77D\uAE30'];
+  const spinDuration = Math.max(1, Math.min(5, (config?.spinDuration as number) || 2));
 
   const [reels, setReels] = useState([0, 0, 0]);
   const [spinning, setSpinning] = useState([false, false, false]);
@@ -20,7 +22,17 @@ export default function DonationSlots({ widgetId, config }: DonationSlotsProps) 
   const [lastDonor, setLastDonor] = useState<string | null>(null);
   const spinningRef = useRef(false);
   const reelIntervals = useRef<ReturnType<typeof setInterval>[]>([]);
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const socketRefLocal = useRef<ReturnType<typeof import('socket.io-client').io> | null>(null);
+
+  // Cleanup all intervals and timeouts on unmount, reset spinningRef
+  useEffect(() => {
+    return () => {
+      reelIntervals.current.forEach(id => clearInterval(id));
+      timeoutIdsRef.current.forEach(id => clearTimeout(id));
+      spinningRef.current = false;
+    };
+  }, []);
 
   const triggerSpin = useCallback((amount: number, nickname: string) => {
     if (amount < minAmount || spinningRef.current) return;
@@ -81,7 +93,8 @@ export default function DonationSlots({ widgetId, config }: DonationSlotsProps) 
     const baseStop = spinDuration * 500;
     for (let i = 0; i < 3; i++) {
       const stopTime = baseStop + i * baseStop * 0.5;
-      setTimeout(() => {
+      const tId = setTimeout(() => {
+        timeoutIdsRef.current.delete(tId);
         clearInterval(reelIntervals.current[i]);
         setReels(prev => {
           const next = [...prev];
@@ -96,7 +109,8 @@ export default function DonationSlots({ widgetId, config }: DonationSlotsProps) 
 
         // After last reel stops, show result
         if (i === 2) {
-          setTimeout(() => {
+          const tId2 = setTimeout(() => {
+            timeoutIdsRef.current.delete(tId2);
             if (shouldMatch3) {
               setResult('big');
               const m = missions[Math.floor(Math.random() * missions.length)];
@@ -111,8 +125,10 @@ export default function DonationSlots({ widgetId, config }: DonationSlotsProps) 
             }
             spinningRef.current = false;
           }, 300);
+          timeoutIdsRef.current.add(tId2);
         }
       }, stopTime);
+      timeoutIdsRef.current.add(tId);
     }
   }, [minAmount, missions, spinDuration]);
 
@@ -141,7 +157,7 @@ export default function DonationSlots({ widgetId, config }: DonationSlotsProps) 
           triggerSpin(minAmount, (event.data?.nickname as string) || '이벤트 체인');
         }
       });
-    });
+    }).catch(err => console.error('Socket init failed:', err));
     return () => { socket?.disconnect(); socketRefLocal.current = null; };
   }, [widgetId, triggerSpin, minAmount]);
 

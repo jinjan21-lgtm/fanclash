@@ -13,7 +13,7 @@ export default function DonationPhysics({ widgetId, config }: DonationPhysicsPro
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Matter.Engine | null>(null);
   const renderLoopRef = useRef<number>(0);
-  const bodiesMetaRef = useRef<Map<number, { emoji: string; nickname: string; color: string; showName: boolean }>>(new Map());
+  const bodiesMetaRef = useRef<Map<number, { emoji: string; nickname: string; color: string; showName: boolean; createdAt: number }>>(new Map());
   const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const maxObjects = config?.maxObjects ?? 50;
 
@@ -39,7 +39,8 @@ export default function DonationPhysics({ widgetId, config }: DonationPhysicsPro
     Matter.Composite.add(engine.world, [ground, leftWall, rightWall]);
 
     // Render loop
-    const ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     const render = () => {
       Matter.Engine.update(engine, 1000 / 60);
       ctx.clearRect(0, 0, width, height);
@@ -129,7 +130,7 @@ export default function DonationPhysics({ widgetId, config }: DonationPhysicsPro
     });
 
     Matter.Composite.add(engine.world, body);
-    bodiesMetaRef.current.set(body.id, { emoji, nickname, color, showName: true });
+    bodiesMetaRef.current.set(body.id, { emoji, nickname, color, showName: true, createdAt: Date.now() });
 
     // Hide nickname after 3s
     const timeoutId = setTimeout(() => {
@@ -139,12 +140,24 @@ export default function DonationPhysics({ widgetId, config }: DonationPhysicsPro
     }, 3000);
     timeoutIdsRef.current.add(timeoutId);
 
-    // Remove old objects if too many
+    // Remove old objects if too many — find the actually oldest by createdAt
     const allBodies = Matter.Composite.allBodies(engine.world).filter(b => !b.isStatic);
     if (allBodies.length > maxObjects) {
-      const oldest = allBodies[0];
-      Matter.Composite.remove(engine.world, oldest);
-      bodiesMetaRef.current.delete(oldest.id);
+      let oldestId = -1;
+      let oldestTime = Infinity;
+      bodiesMetaRef.current.forEach((meta, id) => {
+        if (meta.createdAt < oldestTime) {
+          oldestTime = meta.createdAt;
+          oldestId = id;
+        }
+      });
+      if (oldestId !== -1) {
+        const oldestBody = allBodies.find(b => b.id === oldestId);
+        if (oldestBody) {
+          Matter.Composite.remove(engine.world, oldestBody);
+          bodiesMetaRef.current.delete(oldestId);
+        }
+      }
     }
   }, [maxObjects]);
 
@@ -166,7 +179,7 @@ export default function DonationPhysics({ widgetId, config }: DonationPhysicsPro
       socket.on('donation:new', (data: { fan_nickname: string; amount: number }) => {
         triggerDrop(data.amount, data.fan_nickname);
       });
-    });
+    }).catch(err => console.error('Socket init failed:', err));
     return () => { socket?.disconnect(); };
   }, [widgetId, triggerDrop]);
 

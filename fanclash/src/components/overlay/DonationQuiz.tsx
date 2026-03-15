@@ -27,8 +27,17 @@ export default function DonationQuiz({ widgetId, config }: DonationQuizProps) {
   const [correctAnswers, setCorrectAnswers] = useState<QuizAnswer[]>([]);
   const [answerCount, setAnswerCount] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const showAnswersDuringQuiz = config?.showAnswersDuringQuiz ?? false;
   const minAmount = config?.minAmount ?? 0;
+
+  // Cleanup all tracked timeouts on unmount
+  useEffect(() => {
+    return () => {
+      timeoutIdsRef.current.forEach(id => clearTimeout(id));
+      timeoutIdsRef.current.clear();
+    };
+  }, []);
 
   const startQuiz = useCallback((q: string, a: string, timeLimit: number) => {
     setQuestion(q);
@@ -47,20 +56,22 @@ export default function DonationQuiz({ widgetId, config }: DonationQuizProps) {
       timerRef.current = undefined;
     }
     // Auto-hide result after 10s
-    setTimeout(() => {
+    const tId = setTimeout(() => {
+      timeoutIdsRef.current.delete(tId);
       setState('IDLE');
       setQuestion('');
       setAnswer('');
       setCorrectAnswers([]);
       setAnswerCount(0);
     }, 10000);
+    timeoutIdsRef.current.add(tId);
   }, []);
 
   const handleDonation = useCallback((nickname: string, amount: number, message?: string) => {
     if (state !== 'ACTIVE') return;
     if (minAmount > 0 && amount < minAmount) return;
     setAnswerCount(prev => prev + 1);
-    if (message && message.trim().toLowerCase() === answer) {
+    if ((message ?? '').trim().toLowerCase() === answer) {
       setCorrectAnswers(prev => {
         if (prev.some(a => a.nickname === nickname)) return prev;
         return [...prev, { nickname, amount, timestamp: Date.now() }];
@@ -110,7 +121,7 @@ export default function DonationQuiz({ widgetId, config }: DonationQuizProps) {
       socket.on('donation:new', (data: { fan_nickname: string; amount: number; message?: string }) => {
         handleDonation(data.fan_nickname, data.amount, data.message);
       });
-    });
+    }).catch(err => console.error('Socket init failed:', err));
     return () => { socket?.disconnect(); };
   }, [widgetId, startQuiz, endQuiz, handleDonation]);
 
