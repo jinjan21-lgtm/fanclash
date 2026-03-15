@@ -34,6 +34,17 @@ export default function GachaSettings({ config, onChange }: {
           <span className="text-gray-400 text-sm">원</span>
         </div>
       </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <label className="text-sm text-gray-400">컬렉션 표시</label>
+          <p className="text-xs text-gray-600">등급별 수집 현황 바 표시</p>
+        </div>
+        <button onClick={() => onChange({ ...config, showCollection: !(config.showCollection ?? true) })}
+          className={`px-3 py-1 rounded-full text-xs font-bold ${(config.showCollection ?? true) ? 'bg-green-600' : 'bg-gray-700'}`}
+          aria-label="컬렉션 표시 토글" aria-pressed={(config.showCollection ?? true) as boolean}>
+          {(config.showCollection ?? true) ? 'ON' : 'OFF'}
+        </button>
+      </div>
     </>
   );
 }
