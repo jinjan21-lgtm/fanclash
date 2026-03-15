@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/widgets', label: '위젯 관리', icon: '🎮' },
   { href: '/dashboard/stats', label: '후원 통계', icon: '📈' },
   { href: '/dashboard/integrations', label: '연동 설정', icon: '🔗' },
-  { href: '/dashboard/donations', label: '테스트 후원', icon: '🧪' },
+  { href: '/dashboard/test', label: '테스트', icon: '🧪' },
   { href: '/dashboard/command', label: '커맨드', icon: '🎛️' },
   { href: '/dashboard/pricing', label: '요금제', icon: '💎' },
   { href: '/dashboard/settings', label: '프로필 설정', icon: '⚙️' },
