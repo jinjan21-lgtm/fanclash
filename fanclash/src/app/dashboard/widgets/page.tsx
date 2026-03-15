@@ -162,66 +162,45 @@ export default function WidgetsPage() {
         </div>
       )}
 
-      {/* Pro: add missing widgets */}
-      {isPro && (() => {
+      {/* Add missing widgets — available for all users */}
+      {(() => {
         const existingTypes = widgets.map(w => w.type);
         const missingTypes = ALL_WIDGET_TYPES.filter(t => !existingTypes.includes(t));
         if (missingTypes.length === 0) return null;
         return (
           <div className="mb-8">
-            <h3 className="text-lg font-bold mb-3 text-gray-400">위젯 추가</h3>
+            <h3 className="text-lg font-bold mb-3">위젯 추가</h3>
             <div className="flex flex-wrap gap-2">
-              {missingTypes.map(type => (
-                <button key={type} onClick={async () => {
-                  const { data: { user } } = await supabase.auth.getUser();
-                  if (!user) return;
-                  await supabase.from('widgets').insert({ streamer_id: user.id, type });
-                  fetchWidgets();
-                }}
-                  className="px-4 py-2 bg-purple-600 rounded-lg text-sm hover:bg-purple-700">
-                  + {WIDGET_LABELS[type].name}
-                </button>
-              ))}
+              {missingTypes.map(type => {
+                const label = WIDGET_LABELS[type];
+                const locked = !isPro && !FREE_ALLOWED_WIDGETS.includes(type);
+                return (
+                  <button key={type} onClick={async () => {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) return;
+                    await supabase.from('widgets').insert({ streamer_id: user.id, type, enabled: !locked });
+                    fetchWidgets();
+                  }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                      locked
+                        ? 'bg-gray-800 text-gray-400 hover:bg-gray-700 border border-gray-700'
+                        : 'bg-purple-600 hover:bg-purple-700 text-white'
+                    }`}>
+                    + {label.name}
+                    {locked && <span className="ml-1 text-xs text-purple-400">Pro</span>}
+                  </button>
+                );
+              })}
             </div>
+            {!isPro && (
+              <p className="text-xs text-gray-600 mt-2">
+                Pro 위젯도 추가할 수 있지만, 활성화하려면 Pro 플랜이 필요합니다.
+                <a href="/dashboard/pricing" className="text-purple-400 ml-1 hover:underline">업그레이드</a>
+              </p>
+            )}
           </div>
         );
       })()}
-
-      {/* Free: locked widget cards */}
-      {!isPro && lockedTypes.length > 0 && (
-        <div>
-          <h3 className="text-lg font-bold mb-3 text-gray-400">Pro 전용 위젯</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {lockedTypes.map(type => {
-              const label = WIDGET_LABELS[type];
-              return (
-                <div key={type} className="bg-gray-900 rounded-xl p-5 border border-gray-800 opacity-70 relative">
-                  <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 bg-purple-600/20 border border-purple-500/30 rounded-full">
-                    <svg className="w-3.5 h-3.5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-xs font-bold text-purple-400">Pro</span>
-                  </div>
-                  <h3 className="font-bold text-lg">{label.name}</h3>
-                  <p className="text-gray-400 text-sm mt-1">{label.desc}</p>
-                  <div className="flex gap-2 mt-4">
-                    <button
-                      onClick={() => setPreviewType(type)}
-                      className="flex-1 py-2 bg-indigo-600/50 rounded-lg text-sm hover:bg-indigo-600 font-medium transition-colors"
-                    >
-                      미리보기
-                    </button>
-                    <a href="/dashboard/pricing"
-                      className="flex-1 py-2 bg-purple-600 rounded-lg text-sm hover:bg-purple-700 font-medium text-center">
-                      업그레이드
-                    </a>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {isPro && <EventChainManager />}
       {isPro && <CollabBattleManager />}
