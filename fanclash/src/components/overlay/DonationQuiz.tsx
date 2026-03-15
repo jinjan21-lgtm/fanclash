@@ -211,7 +211,7 @@ export default function DonationQuiz({ widgetId, config }: DonationQuizProps) {
       </div>
 
       {/* Correct answers list on side */}
-      {correctAnswers.length > 0 && (showAnswersDuringQuiz || state === 'RESULT') && (
+      {correctAnswers.length > 0 && showAnswersDuringQuiz && (
         <div className="absolute bottom-4 right-4 flex flex-col gap-2 max-h-[40%] overflow-y-auto">
           <p className="text-xs text-green-400 font-bold">정답자</p>
           {correctAnswers.map((a, i) => (
