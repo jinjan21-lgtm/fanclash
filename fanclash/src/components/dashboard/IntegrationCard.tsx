@@ -137,6 +137,12 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
   const [prevConnected, setPrevConnected] = useState(integration?.connected ?? false);
   const [timeoutError, setTimeoutError] = useState<string | null>(null);
   const connectTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [retryCount, setRetryCount] = useState(0);
+  const [retrying, setRetrying] = useState(false);
+  const MAX_RETRIES = 5;
+  const RETRY_INTERVAL = 30000;
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const retryCountRef = useRef(0);
 
   // 연결 상태 변경 감지 → 토스트 알림
   useEffect(() => {
@@ -181,6 +187,10 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
   const handleToggle = async () => {
     if (!integration) return;
     setTimeoutError(null);
+    setRetryCount(0);
+    retryCountRef.current = 0;
+    setRetrying(false);
+    if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
     if (!integration.connected) {
       // Connecting: start 15s timeout
       setConnecting(true);
@@ -188,6 +198,7 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
       connectTimeoutRef.current = setTimeout(() => {
         setConnecting(false);
         setTimeoutError('플랫폼 서버가 응답하지 않습니다. 잠시 후 다시 시도해주세요.');
+        startRetry();
       }, 15000);
     } else {
       // Disconnecting
@@ -197,26 +208,56 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
     }
   };
 
-  // Clear timeout on successful connection
+  // Auto-retry logic
+  const startRetry = () => {
+    if (!integration || retryCountRef.current >= MAX_RETRIES) {
+      setRetrying(false);
+      return;
+    }
+    setRetrying(true);
+    retryTimerRef.current = setTimeout(() => {
+      retryCountRef.current += 1;
+      setRetryCount(retryCountRef.current);
+      setTimeoutError(null);
+      setConnecting(true);
+      onToggleConnection(integration!, true);
+      connectTimeoutRef.current = setTimeout(() => {
+        setConnecting(false);
+        setTimeoutError('플랫폼 서버가 응답하지 않습니다. 잠시 후 다시 시도해주세요.');
+        // Chain next retry attempt
+        startRetry();
+      }, 15000);
+    }, RETRY_INTERVAL);
+  };
+
+  // Clear timeout on successful connection & reset retry
   useEffect(() => {
     if (integration?.connected) {
       setConnecting(false);
       setTimeoutError(null);
+      setRetryCount(0);
+      retryCountRef.current = 0;
+      setRetrying(false);
       if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current);
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
     }
   }, [integration?.connected]);
 
-  // Clear timeout on error from parent
+  // Clear timeout on error from parent & trigger retry
   useEffect(() => {
     if (error) {
       setConnecting(false);
       if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current);
+      startRetry();
     }
   }, [error]);
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => { if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current); };
+    return () => {
+      if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current);
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    };
   }, []);
 
   const isConfigured = info.fields.every(f => config[f.key]?.trim());
@@ -320,6 +361,16 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
           {info.liveRequired && (
             <p className="text-xs text-red-400/70 mt-1">
               라이브 방송 중인지 확인 후 다시 연결해주세요.
+            </p>
+          )}
+          {retrying && (
+            <p className="text-xs text-yellow-400 mt-1">
+              재연결 중... ({retryCount}/{MAX_RETRIES})
+            </p>
+          )}
+          {!retrying && retryCount >= MAX_RETRIES && (
+            <p className="text-xs text-red-400 mt-1">
+              자동 재연결 실패. 수동으로 다시 시도해주세요.
             </p>
           )}
         </div>
