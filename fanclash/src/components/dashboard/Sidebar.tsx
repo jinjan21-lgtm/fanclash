@@ -9,6 +9,8 @@ const NAV_ITEMS = [
   { href: '/dashboard/widgets', label: '위젯 관리', icon: '🎮' },
   { href: '/dashboard/stats', label: '후원 통계', icon: '📈' },
   { href: '/dashboard/integrations', label: '연동 설정', icon: '🔗' },
+  { href: '/dashboard/donations', label: '테스트 후원', icon: '🧪' },
+  { href: '/dashboard/command', label: '커맨드', icon: '🎛️' },
   { href: '/dashboard/pricing', label: '요금제', icon: '💎' },
   { href: '/dashboard/settings', label: '프로필 설정', icon: '⚙️' },
 ];
@@ -47,24 +49,24 @@ export default function Sidebar() {
       `}>
         <h1 className="text-xl font-bold text-purple-400 mb-8 px-3 hidden md:block">FanClash</h1>
         <div className="mt-14 md:mt-0">
-          <nav className="space-y-1">
+          <nav className="space-y-1.5">
             {NAV_ITEMS.map(item => (
               <Link key={item.href} href={item.href} onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-colors ${
                   pathname === item.href ? 'bg-purple-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                 }`}>
-                <span>{item.icon}</span>
-                <span>{item.label}</span>
+                <span className="text-lg">{item.icon}</span>
+                <span className="font-medium">{item.label}</span>
               </Link>
             ))}
           </nav>
           <div className="border-t border-gray-800 mt-4 pt-3">
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:bg-red-900/30 hover:text-red-400 transition-colors w-full"
+              className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-gray-400 hover:bg-red-900/30 hover:text-red-400 transition-colors w-full"
             >
-              <span>🚪</span>
-              <span>로그아웃</span>
+              <span className="text-lg">🚪</span>
+              <span className="font-medium">로그아웃</span>
             </button>
           </div>
         </div>
