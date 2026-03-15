@@ -90,7 +90,56 @@ Redirect URLs:
 - [ ] Portal 랜딩 페이지
 - [ ] 크로스앱 SSO (한 앱에서 가입 → 다른 앱 자동 프로필 생성)
 
-## 5. 도메인 설정 (선택)
+## 5. Claude Code에서 Vercel 토큰으로 자동 배포
+
+### 토큰
+Vercel API Token: `$VERCEL_TOKEN`
+계정: `jinjan21-9740`
+Scope: `jinjan21-9740s-projects`
+
+### 배포 명령어 (Claude Code에서 사용)
+```bash
+TOKEN="$VERCEL_TOKEN"
+SCOPE="jinjan21-9740s-projects"
+
+# 각 앱 배포
+cd fanclash && vercel --prod --yes --token "$TOKEN" --scope "$SCOPE"
+cd clipforge && vercel --prod --yes --token "$TOKEN" --scope "$SCOPE"
+cd shieldchat && vercel --prod --yes --token "$TOKEN" --scope "$SCOPE"
+cd portal && vercel --prod --yes --token "$TOKEN" --scope "$SCOPE"
+```
+
+### 환경변수 관리
+```bash
+# 환경변수 추가
+vercel env add VAR_NAME production --value "value" --yes --token "$TOKEN" --scope "$SCOPE"
+
+# 환경변수 확인
+vercel env ls --token "$TOKEN" --scope "$SCOPE"
+
+# 프로젝트 목록
+vercel project ls --token "$TOKEN" --scope "$SCOPE"
+
+# 배포 로그
+vercel inspect [DEPLOY_URL] --logs --token "$TOKEN" --scope "$SCOPE"
+```
+
+### 자동 배포 플로우
+1. 코드 수정 → `git commit` → `git push origin master`
+2. GitHub 연동 프로젝트: push만으로 자동 배포
+3. CLI 프로젝트: `vercel --prod` 명령으로 수동 배포
+
+### Vercel 프로젝트 현황
+| 프로젝트 | URL | GitHub 연동 |
+|----------|-----|------------|
+| fanclash | https://www.fanclash.asia | O (자동 배포) |
+| clipforge | https://clipforge-steel.vercel.app | CLI 배포 |
+| shieldchat | https://shieldchat.vercel.app | CLI 배포 |
+| portal | https://portal-pi-blush.vercel.app | CLI 배포 |
+
+> GitHub 자동 배포로 전환하려면: Vercel 대시보드 → 프로젝트 → Settings → Git → Root Directory 설정
+
+## 6. 도메인 설정 (선택)
 
 Vercel 대시보드에서 커스텀 도메인 연결:
 - fanclash.kr → fanclash.vercel.app
