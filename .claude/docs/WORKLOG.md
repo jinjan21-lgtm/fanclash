@@ -1,5 +1,57 @@
 # 작업 일지
 
+## 2026-03-15 (팬 미션 + 크리에이터 탐색 + 업적 시스템)
+
+### 완료한 태스크
+
+#### Feature 1: 팬 미션 시스템 (mission 위젯)
+- [x] DB 마이그레이션 (fan_missions 테이블)
+  - 파일: fanclash/supabase/migrations/012_fan_missions.sql
+- [x] DonationMission 오버레이 컴포넌트
+  - 상세: 활성 미션 프로그레스 바, 시간 제한 카운트다운, 미션 달성 축하 (confetti), 최대 3개 동시 표시
+  - 파일: fanclash/src/components/overlay/DonationMission.tsx
+- [x] MissionControl 대시보드 패널
+  - 상세: 미션 생성 폼 (제목/설명/목표유형/목표값/보상/시간제한), 활성 미션 목록 + 취소, 히스토리 탭
+  - 파일: fanclash/src/components/dashboard/MissionControl.tsx
+- [x] MissionSettings 설정 컴포넌트
+  - 상세: 기본 시간 제한, 보상 텍스트 표시, 최대 표시 미션 수
+  - 파일: fanclash/src/components/dashboard/settings/MissionSettings.tsx
+- [x] API 라우트 (GET/POST/PUT)
+  - 파일: fanclash/src/app/api/missions/route.ts
+- [x] 전체 와이어링 (타입, 오버레이 라우팅, 데모, 라벨, 프리뷰, 위젯 카드)
+  - 파일: types/index.ts, overlay pages, WidgetCard.tsx, widgets/page.tsx, WidgetPreviewModal.tsx, WidgetSettingsModal.tsx
+
+#### Feature 2: 크리에이터 둘러보기 (/explore)
+- [x] /explore 공개 페이지 (인증 불필요)
+  - 상세: 서버 컴포넌트로 스트리머 조회 (활성 위젯 1개 이상), 팬 수/후원 수/위젯 타입 표시
+  - 파일: fanclash/src/app/explore/page.tsx
+- [x] ExploreGrid 클라이언트 컴포넌트
+  - 상세: 닉네임 검색, 정렬 (최신활동/팬수/위젯수), 3컬럼 반응형 그리드, 프로필/실시간 링크
+  - 파일: fanclash/src/components/explore/ExploreGrid.tsx
+- [x] OG 메타태그 + CTA 푸터
+
+#### Feature 3: 업적/뱃지 시스템
+- [x] DB 마이그레이션 (fan_achievements 테이블)
+  - 파일: fanclash/supabase/migrations/013_achievements.sql
+- [x] 20개 업적 정의 (5 카테고리, 4 등급)
+  - 파일: fanclash/src/lib/achievements.ts
+  - 카테고리: donation(5), battle(3), gacha(4), rpg(3), special(5)
+  - 등급: common, rare, epic, legendary
+- [x] 업적 체커 (도네이션 컨텍스트 기반 자동 판정)
+  - 파일: fanclash/src/lib/achievement-checker.ts
+- [x] AchievementPopup 오버레이 컴포넌트
+  - 상세: 등급별 스타일링, 슬라이드인 애니메이션, 4초 자동 해제
+  - 파일: fanclash/src/components/overlay/AchievementPopup.tsx
+- [x] API 라우트 (GET/POST)
+  - 파일: fanclash/src/app/api/achievements/route.ts
+- [x] 팬 프로필 페이지에 업적 그리드 추가
+  - 파일: fanclash/src/app/fan/[streamerId]/[nickname]/page.tsx, FanProfileClient.tsx
+
+#### 빌드 확인
+- [x] 빌드 성공 (0 에러, 44 라우트)
+
+---
+
 ## 2026-03-15 (크로스앱 연동 + 알림 + 어드민 + 문서 + 테마)
 
 ### 완료한 태스크

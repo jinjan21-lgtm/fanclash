@@ -1,6 +1,6 @@
 # 남은 업무
 
-> 마지막 업데이트: 2026-03-15
+> 마지막 업데이트: 2026-03-15 (팬 미션 + 크리에이터 탐색 + 업적 시스템)
 
 ## 보류 (블로커 있음)
 - [ ] Toss Payments 구독 결제 연동 (3개 프로덕트)
@@ -17,6 +17,11 @@
 - [ ] ShieldChat YouTube 댓글 자동 수집 (YouTube Data API — 무료 할당량 내)
 
 ## 보통 (코드)
+- [x] FanClash 팬 미션 시스템 (mission 위젯, overlay, control, API) <- 완료
+- [x] FanClash 크리에이터 둘러보기 페이지 (/explore) <- 완료
+- [x] FanClash 업적/뱃지 시스템 (20개 업적, API, 팬 프로필 표시) <- 완료
+- [ ] FanClash 업적 자동 트리거 (도네이션 처리 시 achievement-checker 연동)
+  - 참고: achievement-checker.ts 준비 완료, API 연동만 필요
 - [x] FanClash 위젯 테마 비주얼 에디터 ← 완료
 - [x] 크로스 프로덕트 SSO 링크 ← 완료
 - [x] 스트리머 공개 프로필 페이지 ← 완료
