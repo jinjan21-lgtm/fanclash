@@ -8,9 +8,9 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { num: '01', title: 'URL 입력', desc: 'YouTube, 치지직, Twitch 방송 URL을 붙여넣기하세요.' },
-  { num: '02', title: 'AI 분석', desc: 'AI가 자동으로 하이라이트 구간을 감지합니다.' },
-  { num: '03', title: '클립 다운로드', desc: '원하는 클립을 선택하고 다운로드하세요.' },
+  { num: '01', title: '영상 파일 업로드', desc: '방송 VOD 파일을 드래그 앤 드롭으로 업로드하세요.' },
+  { num: '02', title: 'AI 오디오 분석', desc: 'Web Audio API가 자동으로 하이라이트 구간을 감지합니다.' },
+  { num: '03', title: '클립 다운로드', desc: '원하는 클립을 선택하고 바로 다운로드하세요.' },
 ];
 
 export default function LandingPage() {
@@ -42,8 +42,8 @@ export default function LandingPage() {
             <span className="gradient-text">자동으로 숏폼으로</span>
           </h1>
           <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
-            URL 하나면 충분합니다. AI가 방송에서 가장 재밌는 순간을 찾아내고,
-            TikTok/YouTube Shorts에 바로 올릴 수 있는 세로 클립을 만들어줍니다.
+            영상 파일을 업로드하면 AI가 오디오를 분석하여 하이라이트를 찾아내고,
+            브라우저에서 바로 클립을 생성하여 다운로드할 수 있습니다.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup" className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3.5 rounded-xl text-lg font-semibold transition-colors">
@@ -77,7 +77,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-4">강력한 기능</h2>
           <p className="text-gray-400 text-center mb-16 max-w-2xl mx-auto">
-            복잡한 편집 없이, URL 하나로 숏폼 콘텐츠를 만드세요
+            복잡한 편집 없이, 파일 업로드 하나로 숏폼 콘텐츠를 만드세요
           </p>
           <div className="grid md:grid-cols-2 gap-6">
             {FEATURES.map((f) => (

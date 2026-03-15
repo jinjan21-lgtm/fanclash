@@ -103,28 +103,3 @@ export function formatDuration(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export function generateMockHighlights(): Highlight[] {
-  const reasons = [
-    '큰 리액션 감지',
-    '채팅 폭발',
-    '하이라이트 키워드 감지',
-    '음량 급상승',
-    '게임 킬 감지',
-    '구간 반복 시청 높음',
-  ];
-  const count = 3 + Math.floor(Math.random() * 3); // 3-5
-  const highlights: Highlight[] = [];
-  let currentTime = 120 + Math.random() * 300;
-
-  for (let i = 0; i < count; i++) {
-    const duration = 15 + Math.random() * 45;
-    highlights.push({
-      start_time: Math.floor(currentTime),
-      end_time: Math.floor(currentTime + duration),
-      reason: reasons[Math.floor(Math.random() * reasons.length)],
-      score: Math.floor(70 + Math.random() * 30),
-    });
-    currentTime += duration + 180 + Math.random() * 600;
-  }
-  return highlights;
-}
