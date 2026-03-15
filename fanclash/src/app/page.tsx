@@ -264,6 +264,52 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Creator Tools */}
+      <section className="py-24 px-6">
+        <div className="max-w-4xl mx-auto">
+          <AnimatedSection className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
+              위젯<span className="text-purple-400">뿐만 아니라</span>
+            </h2>
+            <p className="text-gray-400 text-lg">크리에이터를 위한 올인원 도구를 제공합니다</p>
+          </AnimatedSection>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <AnimatedSection delay={0.1}>
+              <Link href="/dashboard/clips" className="block group">
+                <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-8 h-full hover:-translate-y-1 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/10">
+                  <div className="text-4xl mb-4">&#9986;&#65039;</div>
+                  <h3 className="font-bold text-xl mb-3">클립 메이커</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-4">
+                    방송 하이라이트를 자동으로 숏폼으로 만들어 드립니다.
+                    오디오 분석으로 피크 구간을 감지하고, FFmpeg로 바로 클립 추출.
+                  </p>
+                  <span className="text-emerald-400 text-sm font-medium group-hover:translate-x-1 inline-block transition-transform">
+                    클립 만들기 &rarr;
+                  </span>
+                </div>
+              </Link>
+            </AnimatedSection>
+
+            <AnimatedSection delay={0.2}>
+              <Link href="/dashboard/shield" className="block group">
+                <div className="bg-gradient-to-br from-rose-500/10 to-red-500/10 border border-rose-500/20 rounded-2xl p-8 h-full hover:-translate-y-1 transition-all duration-300 hover:shadow-lg hover:shadow-rose-500/10">
+                  <div className="text-4xl mb-4">&#128737;&#65039;</div>
+                  <h3 className="font-bold text-xl mb-3">댓글 방어</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-4">
+                    악성 댓글로부터 안전하게. 독성 분석, 증거 보존, PDF 리포트 생성,
+                    법적 대응 가이드까지 한 곳에서 관리하세요.
+                  </p>
+                  <span className="text-rose-400 text-sm font-medium group-hover:translate-x-1 inline-block transition-transform">
+                    댓글 방어 시작 &rarr;
+                  </span>
+                </div>
+              </Link>
+            </AnimatedSection>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-24 px-6 relative" aria-label="시작하기">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">

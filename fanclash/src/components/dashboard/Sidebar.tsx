@@ -16,6 +16,13 @@ const NAV_ITEMS = [
   { href: '/dashboard/settings', label: '프로필 설정', icon: '⚙️' },
 ];
 
+const CREATOR_TOOLS = [
+  { href: '/dashboard/clips', label: '클립 메이커', icon: '📹' },
+  { href: '/dashboard/clips/new', label: '새 클립', icon: '✂️' },
+  { href: '/dashboard/shield', label: '댓글 방어', icon: '🛡️' },
+  { href: '/dashboard/shield/legal', label: '법적 가이드', icon: '⚖️' },
+];
+
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -52,6 +59,18 @@ export default function Sidebar() {
         <div className="mt-14 md:mt-0">
           <nav className="space-y-1.5">
             {NAV_ITEMS.map(item => (
+              <Link key={item.href} href={item.href} onClick={() => setOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-colors ${
+                  pathname === item.href ? 'bg-purple-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                }`}>
+                <span className="text-lg">{item.icon}</span>
+                <span className="font-medium">{item.label}</span>
+              </Link>
+            ))}
+
+            <div className="border-t border-gray-800 my-3" />
+            <p className="text-xs text-gray-600 px-3 mb-2">크리에이터 도구</p>
+            {CREATOR_TOOLS.map(item => (
               <Link key={item.href} href={item.href} onClick={() => setOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-colors ${
                   pathname === item.href ? 'bg-purple-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
