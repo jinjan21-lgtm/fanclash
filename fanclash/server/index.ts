@@ -149,4 +149,5 @@ httpServer.listen(Number(PORT), () => {
 // Integration manager for auto-donation
 const integrationManager = new IntegrationManager(io as any, supabase);
 integrationManager.loadAllIntegrations();
+integrationManager.startHeartbeat();
 

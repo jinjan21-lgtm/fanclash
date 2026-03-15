@@ -29,12 +29,47 @@ export class IntegrationManager {
   private connections = new Map<string, ActiveConnection>();
   private retryTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private retryCounts = new Map<string, number>();
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private io: Server;
   private supabase: SupabaseClient;
 
   constructor(io: Server, supabase: SupabaseClient) {
     this.io = io;
     this.supabase = supabase;
+  }
+
+  /** Start 30-second heartbeat to verify connector states and sync to DB */
+  startHeartbeat() {
+    if (this.heartbeatTimer) return;
+    this.heartbeatTimer = setInterval(async () => {
+      for (const [integrationId, conn] of this.connections.entries()) {
+        const isAlive = conn.connector.isConnected();
+        // Sync DB state: if connector reports disconnected, update DB
+        if (!isAlive) {
+          console.log(`[Heartbeat] ${conn.platform} (${integrationId.substring(0, 8)}) is not connected, updating DB`);
+          await this.supabase.from('integrations').update({ connected: false }).eq('id', integrationId);
+          // Clean up dead connection and attempt retry
+          this.connections.delete(integrationId);
+          const { data: integration } = await this.supabase
+            .from('integrations')
+            .select('*')
+            .eq('id', integrationId)
+            .single();
+          if (integration && integration.enabled) {
+            this.scheduleRetry(integrationId, integration.streamer_id, integration.platform, integration.config);
+          }
+        }
+      }
+    }, 30_000);
+    console.log('[Heartbeat] Started (30s interval)');
+  }
+
+  /** Stop the heartbeat timer */
+  stopHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
   }
 
   async startIntegration(integrationId: string, streamerId: string, platform: string, config: Record<string, string>) {
