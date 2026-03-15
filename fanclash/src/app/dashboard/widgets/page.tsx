@@ -55,11 +55,19 @@ export default function WidgetsPage() {
   const existingTypes = widgets.map(w => w.type);
   const missingTypes = ALL_WIDGET_TYPES.filter(t => !existingTypes.includes(t));
 
+  const [error, setError] = useState<string | null>(null);
+
   const addWidget = async (type: WidgetType) => {
     setAdding(type);
+    setError(null);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setAdding(null); return; }
-    await supabase.from('widgets').insert({ streamer_id: user.id, type, enabled: true });
+    const { error: insertError } = await supabase.from('widgets').insert({ streamer_id: user.id, type, enabled: true });
+    if (insertError) {
+      setError(`위젯 추가 실패: ${insertError.message}`);
+      setAdding(null);
+      return;
+    }
     await fetchWidgets();
     setAdding(null);
   };
@@ -78,6 +86,13 @@ export default function WidgetsPage() {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">위젯 관리</h2>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-900/30 border border-red-700 rounded-lg text-sm text-red-400 flex justify-between items-center">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="text-red-500 hover:text-red-300">&times;</button>
+        </div>
+      )}
 
       {/* Active widgets */}
       {widgets.length > 0 && (
