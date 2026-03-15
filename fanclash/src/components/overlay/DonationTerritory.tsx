@@ -224,7 +224,7 @@ export default function DonationTerritory({ widgetId, config, theme }: DonationT
   }, [widgetId, triggerClaim]);
 
   return (
-    <div className={`relative w-full ${themeData.fontClass} ${themeData.text}`} style={{ background: 'transparent', height: '100vh' }}>
+    <div className={`relative w-full h-full ${themeData.fontClass} ${themeData.text}`} style={{ background: 'transparent' }}>
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
 
       {/* Territory leaderboard */}

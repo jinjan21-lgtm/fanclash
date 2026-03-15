@@ -190,7 +190,7 @@ export default function DonationPhysics({ widgetId, config, theme }: DonationPhy
   }, [widgetId, triggerDrop]);
 
   return (
-    <div className={`relative w-full ${themeData.fontClass} ${themeData.text}`} style={{ background: 'transparent', height: '100vh' }}>
+    <div className={`relative w-full h-full ${themeData.fontClass} ${themeData.text}`} style={{ background: 'transparent' }}>
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
     </div>
   );
