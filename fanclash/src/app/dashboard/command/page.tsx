@@ -122,9 +122,25 @@ export default function CommandPage() {
 
   const activeWidgetTypes = widgets.map(w => w.type);
 
+  // PWA install banner
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia('(display-mode: browser)').matches) {
+      setShowInstallBanner(true);
+    }
+  }, []);
+
   return (
     <div className="max-w-lg mx-auto">
       <h2 className="text-2xl font-bold mb-6">커맨드 패널</h2>
+
+      {showInstallBanner && (
+        <div className="bg-purple-900/30 border border-purple-700/50 rounded-xl p-3 mb-4 flex items-center justify-between">
+          <p className="text-sm text-purple-300">홈 화면에 추가하면 앱처럼 사용할 수 있습니다</p>
+          <button onClick={() => setShowInstallBanner(false)} className="text-gray-500 text-sm">닫기</button>
+        </div>
+      )}
 
       {/* Quick action buttons */}
       <div className="grid grid-cols-2 gap-3 mb-6">
