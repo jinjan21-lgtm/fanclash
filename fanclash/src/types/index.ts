@@ -8,6 +8,8 @@ export interface Streamer {
   channel_url: string | null;
   referral_code: string;
   referred_by: string | null;
+  broadcast_style: string | null;
+  broadcast_platforms: string[] | null;
   created_at: string;
 }
 

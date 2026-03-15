@@ -2,10 +2,10 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import WidgetCard from '@/components/dashboard/WidgetCard';
-import WidgetPreviewModal from '@/components/dashboard/WidgetPreviewModal';
 import { isWidgetLocked, FREE_ALLOWED_WIDGETS } from '@/lib/plan';
 import CollabBattleManager from '@/components/dashboard/CollabBattleManager';
 import EventChainManager from '@/components/dashboard/EventChainManager';
+import { getRecommendations, type BroadcastStyle } from '@/lib/widget-recommendations';
 import type { Widget, WidgetType } from '@/types';
 
 const ALL_WIDGET_TYPES: WidgetType[] = ['alert', 'ranking', 'throne', 'goal', 'affinity', 'battle', 'team_battle', 'timer', 'messages', 'roulette', 'music', 'gacha', 'physics', 'territory', 'weather', 'train', 'slots', 'meter', 'quiz', 'rpg', 'mission'];
@@ -34,11 +34,16 @@ const WIDGET_LABELS: Record<WidgetType, { name: string; desc: string }> = {
   mission: { name: '팬 미션', desc: '팬들이 함께 달성하는 공동 미션' },
 };
 
+// Popular widget types (fallback when no broadcast_style)
+const POPULAR_WIDGETS: WidgetType[] = ['alert', 'ranking', 'battle', 'roulette', 'goal'];
+
 export default function WidgetsPage() {
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [plan, setPlan] = useState<string>('free');
+  const [broadcastStyle, setBroadcastStyle] = useState<BroadcastStyle | null>(null);
   const [previewType, setPreviewType] = useState<WidgetType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showAllWidgets, setShowAllWidgets] = useState(false);
   const supabase = createClient();
 
   const fetchWidgets = async () => {
@@ -46,10 +51,13 @@ export default function WidgetsPage() {
     if (!user) return;
     const { data } = await supabase.from('widgets').select('*').eq('streamer_id', user.id);
     setWidgets(data || []);
-    const { data: streamer } = await supabase.from('streamers').select('plan').eq('id', user.id).single();
+    const { data: streamer } = await supabase.from('streamers').select('plan, broadcast_style').eq('id', user.id).single();
     setPlan(streamer?.plan || 'free');
+    if (streamer?.broadcast_style) {
+      setBroadcastStyle(streamer.broadcast_style as BroadcastStyle);
+    }
 
-    // Free 유저: 허용된 위젯 자동 생성 (alert, ranking, goal)
+    // Free: auto-create allowed widgets
     if ((!streamer?.plan || streamer.plan === 'free') && data) {
       const existingTypes = data.map(w => w.type);
       const missingFree = FREE_ALLOWED_WIDGETS.filter(t => !existingTypes.includes(t));
@@ -67,12 +75,16 @@ export default function WidgetsPage() {
   useEffect(() => { fetchWidgets(); }, []);
 
   const isPro = plan === 'pro';
-  const freeWidgets = widgets.filter(w => FREE_ALLOWED_WIDGETS.includes(w.type));
-  const proWidgets = isPro ? widgets.filter(w => !FREE_ALLOWED_WIDGETS.includes(w.type)) : [];
-  const lockedTypes = ALL_WIDGET_TYPES.filter(t => !FREE_ALLOWED_WIDGETS.includes(t) && !widgets.some(w => w.type === t));
 
-  // 잠금된 위젯의 미리보기용 더미 위젯
-  const previewWidget = previewType ? widgets.find(w => w.type === previewType) : null;
+  // Determine recommended widget types
+  const recommendedTypes: WidgetType[] = broadcastStyle
+    ? getRecommendations(broadcastStyle).map(r => r.type)
+    : POPULAR_WIDGETS;
+
+  // Split widgets into recommended vs rest
+  const recommendedWidgets = widgets.filter(w => recommendedTypes.includes(w.type));
+  const otherWidgets = widgets.filter(w => !recommendedTypes.includes(w.type));
+  const lockedTypes = ALL_WIDGET_TYPES.filter(t => !FREE_ALLOWED_WIDGETS.includes(t) && !widgets.some(w => w.type === t));
 
   if (loading) return (
     <div className="animate-pulse">
@@ -89,17 +101,68 @@ export default function WidgetsPage() {
     <div>
       <h2 className="text-2xl font-bold mb-6">위젯 관리</h2>
 
-      {/* 활성 위젯: Free 3종 (알림, 랭킹, 목표) + Pro 전체 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {freeWidgets.map(w => (
-          <WidgetCard key={w.id} widget={w} plan={plan} onUpdate={fetchWidgets} />
-        ))}
-        {isPro && proWidgets.map(w => (
-          <WidgetCard key={w.id} widget={w} plan={plan} onUpdate={fetchWidgets} />
-        ))}
-      </div>
+      {/* Recommended widgets section */}
+      {recommendedWidgets.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="text-lg font-bold">
+              {broadcastStyle ? '추천 위젯' : '인기 위젯'}
+            </h3>
+            {broadcastStyle && (
+              <span className="px-2 py-0.5 bg-purple-600/20 border border-purple-500/30 rounded-full text-xs text-purple-400">
+                {broadcastStyle === 'game' && '게임 방송'}
+                {broadcastStyle === 'talk' && '토크·잡담'}
+                {broadcastStyle === 'food' && '먹방'}
+                {broadcastStyle === 'music' && '음악·노래'}
+                {broadcastStyle === 'art' && '그림·창작'}
+                {broadcastStyle === 'other' && '기타'}
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {recommendedWidgets.map(w => (
+              <WidgetCard key={w.id} widget={w} plan={plan} onUpdate={fetchWidgets} />
+            ))}
+          </div>
+        </div>
+      )}
 
-      {/* Pro 유저: 위젯 추가 */}
+      {/* Other active widgets */}
+      {otherWidgets.length > 0 && (
+        <div className="mb-8">
+          <button
+            onClick={() => setShowAllWidgets(!showAllWidgets)}
+            className="flex items-center gap-2 mb-4 text-gray-400 hover:text-white transition-colors"
+          >
+            <h3 className="text-lg font-bold">전체 위젯</h3>
+            <span className="text-xs bg-gray-800 px-2 py-0.5 rounded-full">{otherWidgets.length}</span>
+            <svg
+              className={`w-4 h-4 transition-transform ${showAllWidgets ? 'rotate-180' : ''}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {showAllWidgets && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in slide-in-from-top-2 fade-in duration-200">
+              {otherWidgets.map(w => (
+                <WidgetCard key={w.id} widget={w} plan={plan} onUpdate={fetchWidgets} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* If no recommended section rendered, show all widgets flat */}
+      {recommendedWidgets.length === 0 && otherWidgets.length === 0 && widgets.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          {widgets.map(w => (
+            <WidgetCard key={w.id} widget={w} plan={plan} onUpdate={fetchWidgets} />
+          ))}
+        </div>
+      )}
+
+      {/* Pro: add missing widgets */}
       {isPro && (() => {
         const existingTypes = widgets.map(w => w.type);
         const missingTypes = ALL_WIDGET_TYPES.filter(t => !existingTypes.includes(t));
@@ -124,7 +187,7 @@ export default function WidgetsPage() {
         );
       })()}
 
-      {/* Free 유저: 잠금된 위젯 카드 */}
+      {/* Free: locked widget cards */}
       {!isPro && lockedTypes.length > 0 && (
         <div>
           <h3 className="text-lg font-bold mb-3 text-gray-400">Pro 전용 위젯</h3>
@@ -163,7 +226,7 @@ export default function WidgetsPage() {
       {isPro && <EventChainManager />}
       {isPro && <CollabBattleManager />}
 
-      {/* 잠금 위젯 미리보기: 데모 오버레이 */}
+      {/* Locked widget preview */}
       {previewType && (
         <LockedWidgetPreview type={previewType} onClose={() => setPreviewType(null)} />
       )}
