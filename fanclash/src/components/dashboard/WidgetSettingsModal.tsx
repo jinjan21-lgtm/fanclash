@@ -93,7 +93,7 @@ export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }:
     // Validate config with Zod
     const result = widgetConfigSchema.safeParse(finalConfig);
     if (!result.success) {
-      const firstError = result.error.errors[0];
+      const firstError = result.error.issues[0];
       toast(firstError?.message || '설정 값이 올바르지 않습니다', 'error');
       setSaving(false);
       return;
