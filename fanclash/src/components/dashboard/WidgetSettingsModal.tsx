@@ -27,6 +27,7 @@ import MeterSettings from './settings/MeterSettings';
 import QuizSettings from './settings/QuizSettings';
 import RPGSettings from './settings/RPGSettings';
 import StylePresets from './settings/StylePresets';
+import ThemeEditor from './settings/ThemeEditor';
 
 interface Props {
   widget: Widget;
@@ -249,7 +250,10 @@ export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }:
                 <a href="/dashboard/pricing" className="text-purple-400 underline">업그레이드</a>
               </div>
             ) : (
-              <StylePresets config={config} onChange={setConfig} />
+              <>
+                <StylePresets config={config} onChange={setConfig} />
+                <ThemeEditor config={config} onChange={setConfig} />
+              </>
             )}
           </div>
 
