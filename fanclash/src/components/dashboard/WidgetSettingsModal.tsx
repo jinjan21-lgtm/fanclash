@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
 import { isProFeature } from '@/lib/plan';
@@ -66,6 +66,15 @@ export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }:
   const { toast } = useToast();
   const [config, setConfig] = useState<Record<string, unknown>>(widget.config || {});
   const [saving, setSaving] = useState(false);
+
+  // ESC key to close modal
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
 
   // Goal-specific state
   const [milestones, setMilestones] = useState<{ amount: number; mission: string }[]>(
