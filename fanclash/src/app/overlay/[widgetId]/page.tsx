@@ -1,5 +1,5 @@
 'use client';
-import { use } from 'react';
+import { use, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useWidget } from '@/hooks/useWidget';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -65,9 +65,17 @@ export default function OverlayPage({ params }: { params: Promise<{ widgetId: st
     (widget.config as Record<string, unknown>)?.customCss as string ?? ''
   );
 
+  // Inject custom CSS via DOM API instead of dangerouslySetInnerHTML
+  useEffect(() => {
+    if (!customCss) return;
+    const style = document.createElement('style');
+    style.textContent = customCss;
+    document.head.appendChild(style);
+    return () => { document.head.removeChild(style); };
+  }, [customCss]);
+
   return (
     <ErrorBoundary fallback={<div className="bg-transparent" />}>
-      {customCss && <style dangerouslySetInnerHTML={{ __html: customCss }} />}
       <div className="widget-container">
         <WidgetComponent />
       </div>
