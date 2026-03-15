@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /overlay/
+Disallow: /api/
+Disallow: /admin/
+Sitemap: https://fanclash.vercel.app/sitemap.xml

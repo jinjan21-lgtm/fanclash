@@ -5,6 +5,7 @@ import WidgetCard from '@/components/dashboard/WidgetCard';
 import WidgetPreviewModal from '@/components/dashboard/WidgetPreviewModal';
 import { isWidgetLocked, FREE_ALLOWED_WIDGETS } from '@/lib/plan';
 import CollabBattleManager from '@/components/dashboard/CollabBattleManager';
+import EventChainManager from '@/components/dashboard/EventChainManager';
 import type { Widget, WidgetType } from '@/types';
 
 const ALL_WIDGET_TYPES: WidgetType[] = ['alert', 'ranking', 'throne', 'goal', 'affinity', 'battle', 'team_battle', 'timer', 'messages', 'roulette', 'music', 'gacha', 'physics', 'territory', 'weather', 'train', 'slots', 'meter', 'quiz', 'rpg'];
@@ -158,6 +159,7 @@ export default function WidgetsPage() {
         </div>
       )}
 
+      {isPro && <EventChainManager />}
       {isPro && <CollabBattleManager />}
 
       {/* 잠금 위젯 미리보기: 데모 오버레이 */}

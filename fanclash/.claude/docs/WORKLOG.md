@@ -1,5 +1,70 @@
 # 작업 일지
 
+## 2026-03-15 (세션 10)
+
+### 완료한 태스크
+- [x] 위젯 이벤트 체이닝 시스템 구현
+  - 상세:
+    1. src/lib/widget-events.ts — 이벤트 타입 정의 + 로컬 pub/sub 이벤트 버스 (싱글턴)
+    2. src/lib/widget-chains.ts — 6개 기본 체인 정의 (배틀→룰렛, RPG레벨업→가챠, 콤보10→슬롯, 미터MAX→블리자드, 목표달성→콤보리셋, 잭팟→특별알림)
+    3. EventChainManager.tsx — Pro 전용 토글 UI, Supabase 저장/로드
+    4. 이벤트 발신 위젯 수정: BattleArena(battle:finished), DonationRPG(rpg:levelup), DonationTrain(train:combo), DonationMeter(meter:max), DonationSlots(slots:jackpot), DonationGoal(goal:complete)
+    5. 이벤트 수신 위젯 수정: DonationRoulette(roulette:spin), DonationGacha(gacha:pull), DonationSlots(slots:spin), DonationWeather(weather:blizzard), DonationTrain(train:celebrate)
+    6. Cross-iframe 통신: Socket.IO relay (widget:event 발신, widget:chain-action 수신)
+    7. DB migration: 011_event_chains.sql (streamers.event_chains jsonb)
+    8. widgets/page.tsx에 EventChainManager 섹션 추가
+  - 파일: widget-events.ts, widget-chains.ts, EventChainManager.tsx, BattleArena.tsx, DonationRPG.tsx, DonationTrain.tsx, DonationMeter.tsx, DonationSlots.tsx, DonationGoal.tsx, DonationRoulette.tsx, DonationGacha.tsx, DonationWeather.tsx, widgets/page.tsx, 011_event_chains.sql
+  - 비고: 빌드 성공 확인, Pro 전용 기능
+
+---
+
+## 2026-03-15 (세션 9)
+
+### 완료한 태스크
+- [x] Hype overlay config wiring (Music/Gacha/Territory/Weather)
+  - DonationMusic: volume, showVisual, scaleType (pentatonic/major/minor 음계)
+  - DonationGacha: showHistory, maxHistory, minAmount 필터
+  - DonationTerritory: gridSize 파싱, showLeaderboard, minAmount 필터
+  - DonationWeather: particleDensity (low/medium/high), weatherWindow, screenShake 토글
+- [x] Zod form validation
+  - src/lib/schemas.ts 생성 (widget config, integration config 스키마)
+  - WidgetSettingsModal handleSave에 Zod 검증 적용
+  - zod 패키지 설치
+- [x] Modal focus trap + ESC close
+  - ConfirmModal: ESC 키 닫기, Tab 포커스 트랩, 취소 버튼 자동 포커스
+  - WidgetSettingsModal: ESC 키 닫기
+- [x] Server heartbeat for integrations
+  - IntegrationManager에 30초 heartbeat 추가
+  - 커넥터 연결 상태 확인 후 DB 동기화, 끊긴 연결 재시도
+- [x] Integration disconnect confirm modal
+  - IntegrationCard에 ConfirmModal 추가 (연동 해제 시 확인)
+- [x] Account deletion self-service
+  - /api/account/delete API 라우트 생성
+  - 설정 페이지에 계정 삭제 UI + ConfirmModal
+- [x] Remove dangerouslySetInnerHTML
+  - overlay/[widgetId]/page.tsx에서 useEffect DOM API로 CSS 주입 변경
+- [x] OG images placeholder
+  - public/og-image.svg 생성 (그라디언트 브랜딩)
+  - layout.tsx OG image 참조 업데이트
+
+---
+
+## 2026-03-15 (세션 8)
+
+### 완료한 태스크
+- [x] 팬 RPG 위젯 (rpg) 추가
+  - 상세: 후원금으로 캐릭터 레벨업, 장비 티어(나무/철/강철/전설), 칭호 시스템, 레벨업 애니메이션
+  - 파일: DonationRPG.tsx, RPGSettings.tsx, api/rpg/route.ts, 010_fan_rpg.sql
+  - 위젯 연동: types, overlay, demo, WidgetCard, WidgetSettingsModal, WidgetPreviewModal, widgets/page.tsx 모두 업데이트
+- [x] 팬 프로필 페이지 추가
+  - 상세: /fan/[streamerId]/[nickname] — 후원 통계, RPG 캐릭터, 가챠 컬렉션, 배틀 전적, 호감도 진행, 공유 버튼, OG 메타
+  - 파일: src/app/fan/[streamerId]/[nickname]/page.tsx, src/components/fan/FanProfileClient.tsx
+- [x] 도네이션 인사이트 추가
+  - 상세: Pro 전용, 최고 시간대/팬 충성도/주간 트렌드/최고 서포터 4가지 인사이트 카드
+  - 파일: src/components/dashboard/DonationInsights.tsx, src/app/dashboard/stats/page.tsx 수정
+
+---
+
 ## 2026-03-15 (세션 7)
 
 ### 완료한 태스크

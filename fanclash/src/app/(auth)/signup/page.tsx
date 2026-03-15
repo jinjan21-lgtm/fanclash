@@ -43,6 +43,14 @@ function SignupForm() {
         display_name: displayName,
         ...(referredBy && { referred_by: referredBy }),
       });
+      // Apply referral reward via API (server-side handles settings lookup)
+      if (referredBy) {
+        await fetch('/api/referral/reward', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ new_streamer_id: data.user.id, referrer_id: referredBy }),
+        });
+      }
     }
     setLoading(false);
     // Hard navigation to ensure middleware picks up new session cookies

@@ -4,7 +4,7 @@
 한국 스트리머를 위한 후원 기반 팬 참여 도구. 후원 금액에 따른 게이미피케이션 위젯을 OBS 오버레이로 제공.
 
 ## 목표
-- [x] 핵심 위젯 9종 (ranking, throne, goal, affinity, battle, team_battle, timer, messages, alert)
+- [x] 핵심 위젯 9종 + 확장 위젯 (ranking, throne, goal, affinity, battle, team_battle, timer, messages, alert, roulette, music, gacha, physics, territory, weather, train, slots, meter, quiz, rpg)
 - [x] 실시간 Socket.IO 연동
 - [x] 팬 후원 페이지
 - [x] 대시보드 (위젯 관리, 통계, 설정)

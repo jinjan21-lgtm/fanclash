@@ -201,7 +201,17 @@ export default function DonationRoulette({ widget, preview }: { widget: Widget; 
       enqueue({ fan_nickname: data.fan_nickname, amount: data.amount, message: data.message });
     };
     on('donation:new', handler);
-  }, [ready, enqueue]);
+    // Listen for chain actions
+    on('widget:chain-action' as any, (event: { action: string; data: Record<string, unknown> }) => {
+      if (event.action === 'roulette:spin') {
+        enqueue({
+          fan_nickname: (event.data?.winner as string) || '이벤트 체인',
+          amount: minAmount,
+          message: '자동 룰렛!',
+        });
+      }
+    });
+  }, [ready, enqueue, minAmount]);
 
   // ── Preview mode ─────────────────────────────────────────────────────────
   useEffect(() => {

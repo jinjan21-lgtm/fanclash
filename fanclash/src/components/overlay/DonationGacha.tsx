@@ -134,9 +134,15 @@ export default function DonationGacha({ widgetId, streamerId, config }: Donation
       socket.on('donation:new', (data: { fan_nickname: string; amount: number }) => {
         triggerGacha(data.amount, data.fan_nickname);
       });
+      // Listen for chain actions
+      socket.on('widget:chain-action' as any, (event: { action: string; data: Record<string, unknown> }) => {
+        if (event.action === 'gacha:pull') {
+          triggerGacha(minAmount, (event.data?.nickname as string) || '이벤트 체인');
+        }
+      });
     });
     return () => { socket?.disconnect(); };
-  }, [widgetId, triggerGacha]);
+  }, [widgetId, triggerGacha, minAmount]);
 
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ background: 'transparent' }}>

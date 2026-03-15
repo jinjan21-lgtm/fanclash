@@ -1,6 +1,6 @@
 # 남은 업무
 
-> 마지막 업데이트: 2026-03-12
+> 마지막 업데이트: 2026-03-15
 
 ## 긴급 (즉시 처리)
 - (없음)
@@ -31,10 +31,20 @@
   - 도네이션 시 자동 팀 배정 + 금액 반영
 
 ## 완료된 항목 (참고용)
+- [x] Hype overlay config wiring (Music/Gacha/Territory/Weather)
+- [x] Zod form validation (schemas + WidgetSettingsModal 검증)
+- [x] Modal focus trap + ESC close (ConfirmModal, WidgetSettingsModal)
+- [x] Server heartbeat for integrations (30s interval)
+- [x] Integration disconnect confirm modal
+- [x] Account deletion self-service (API + UI)
+- [x] Remove dangerouslySetInnerHTML (DOM API로 CSS 주입)
+- [x] OG images placeholder (SVG)
 - [x] 도네이션 처리 통합 (1회 후원 → 모든 위젯 연동)
 - [x] 이벤트 타이머 도네이션 연동 (시간 추가/차감/자동 시작)
 - [x] 배틀 관리 config 동기화 수정
 - [x] Free 요금제 변경: alert만 허용 + 잠금 위젯 미리보기 + 데모 오버레이
+- [x] 위젯 이벤트 체이닝 (6개 체인, Socket.IO relay, Pro 전용)
+- [x] 팬 RPG 위젯 + 팬 프로필 페이지 + 도네이션 인사이트
 - [x] 핵심 위젯 9종 → 10종 (룰렛 추가)
 - [x] 위젯 모션 대폭 강화 (MessageBoard, EventTimer, RankingBoard, TeamBattle)
 - [x] 프로덕션 코드 정리 (localhost 제거, CORS 강화, 환경변수 검증)

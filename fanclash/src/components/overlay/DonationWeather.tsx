@@ -107,6 +107,12 @@ export default function DonationWeather({ widgetId, config }: DonationWeatherPro
     return () => { delete (window as unknown as Record<string, unknown>).__donationWeather; };
   }, [addDonation]);
 
+  const forceBlizzard = useCallback(() => {
+    // Force blizzard stage for 30 seconds by injecting a large synthetic donation
+    donationsRef.current.push({ amount: 200000, time: Date.now() });
+    updateWeather();
+  }, [updateWeather]);
+
   // Socket.IO
   useEffect(() => {
     if (!widgetId) return;
@@ -119,9 +125,15 @@ export default function DonationWeather({ widgetId, config }: DonationWeatherPro
       socket.on('donation:new', (data: { fan_nickname: string; amount: number }) => {
         addDonation(data.amount, data.fan_nickname);
       });
+      // Listen for chain actions
+      socket.on('widget:chain-action' as any, (event: { action: string; data: Record<string, unknown> }) => {
+        if (event.action === 'weather:blizzard') {
+          forceBlizzard();
+        }
+      });
     });
     return () => { socket?.disconnect(); };
-  }, [widgetId, addDonation]);
+  }, [widgetId, addDonation, forceBlizzard]);
 
   return (
     <div

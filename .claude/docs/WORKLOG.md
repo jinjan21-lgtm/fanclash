@@ -1,5 +1,224 @@
 # 작업 일지
 
+## 2026-03-15 (크로스앱 연동 + 알림 + 어드민 + 문서 + 테마)
+
+### 완료한 태스크
+
+#### Feature 1: FanClash -> ClipForge 데이터 브릿지
+- [x] 도네이션 피크 타임스탬프 export API 생성
+  - 파일: fanclash/src/app/api/export/highlights/route.ts
+  - 상세: 1분 윈도우 기반 도네이션 그룹핑, 3+ 건수 또는 10000원 초과 감지, 인접 윈도우 병합
+- [x] ClipForge 새 클립 페이지에 FanClash 연동 UI 추가
+  - 파일: clipforge/src/app/dashboard/new/page.tsx
+  - 상세: 하이라이트 분석 완료 후 "FanClash 하이라이트 힌트" 안내 + 연동 버튼 (MVP placeholder)
+
+#### Feature 2: 알림 센터
+- [x] NotificationCenter 컴포넌트 생성
+  - 파일: fanclash/src/components/dashboard/NotificationCenter.tsx
+  - 상세: 벨 아이콘 드롭다운, 최대 20개 알림, 5종 타입(donation/battle/rpg/goal/error), 읽지않은 배지, 모두 읽음, localStorage 저장
+- [x] DashboardNotifications에서 커스텀 이벤트 dispatch 연동
+  - 파일: fanclash/src/components/dashboard/DashboardNotifications.tsx
+- [x] 대시보드 레이아웃 헤더에 NotificationCenter 배치
+  - 파일: fanclash/src/app/dashboard/layout.tsx
+
+#### Feature 3: Portal 어드민 대시보드
+- [x] Supabase 서버 클라이언트 설정
+  - 파일: portal/src/lib/supabase/server.ts
+- [x] /admin 페이지 생성 (3개 앱 통합 사용자 통계)
+  - 파일: portal/src/app/admin/page.tsx
+  - 상세: 총 사용자 카드, 앱별 사용자 카드, 7일 가입자 바 차트, 앱별 사용 현황 테이블
+
+#### Feature 4: API 문서 페이지
+- [x] /docs 정적 API 문서 페이지 생성
+  - 파일: fanclash/src/app/docs/page.tsx
+  - 상세: Socket.IO 수신 8종 + 발신 6종, REST API 5개 엔드포인트, 목차 사이드바, 다크 테마, 코드 블록
+
+#### Feature 5: 다크/라이트 테마 토글
+- [x] 3개 앱에 theme.ts 유틸리티 생성
+  - 파일: {fanclash,clipforge,shieldchat}/src/lib/theme.ts
+- [x] CSS 변수 추가 (globals.css) - 다크/라이트 모드 변수 + .light-theme 오버라이드
+  - 파일: {fanclash,clipforge,shieldchat}/src/app/globals.css
+- [x] ThemeToggle 컴포넌트 생성 + 각 앱 사이드바에 배치
+  - 파일: {fanclash,clipforge,shieldchat}/src/components/dashboard/ThemeToggle.tsx
+  - 파일: {fanclash,clipforge,shieldchat}/src/components/dashboard/Sidebar.tsx
+
+#### 빌드 확인
+- [x] 4개 앱 모두 빌드 성공 (FanClash, ClipForge, ShieldChat, Portal)
+
+---
+
+## 2026-03-15 (SEO + 자막 프리셋 + 감정 트렌드)
+
+### 완료한 태스크
+
+#### Feature 1: SEO + Lighthouse 최적화 (4개 앱)
+- [x] FanClash: robots.txt, sitemap.ts, 메타태그 보강 (canonical, JSON-LD SoftwareApplication), 시맨틱 HTML (header/main/footer/nav)
+  - 파일: public/robots.txt, src/app/sitemap.ts, src/app/layout.tsx, src/app/page.tsx
+- [x] ClipForge: robots.txt, sitemap.ts, 메타태그 보강 (metadataBase, canonical, twitter, robots), 시맨틱 HTML
+  - 파일: public/robots.txt, src/app/sitemap.ts, src/app/layout.tsx, src/app/page.tsx
+- [x] ShieldChat: robots.txt, sitemap.ts, 메타태그 보강 (metadataBase, canonical, OG, twitter, robots), 시맨틱 HTML
+  - 파일: public/robots.txt, src/app/sitemap.ts, src/app/layout.tsx, src/app/page.tsx
+- [x] Portal: robots.txt, sitemap.ts, 메타태그 보강 (metadataBase, canonical, keywords)
+  - 파일: public/robots.txt, src/app/sitemap.ts, src/app/layout.tsx
+
+#### Feature 2: ClipForge 자막 스타일 프리셋
+- [x] 5종 자막 프리셋 정의 (틱톡/쇼츠/릴스/게이밍/미니멀)
+  - 파일: clipforge/src/lib/subtitle-styles.ts
+- [x] SubtitlePreview 컴포넌트 (미니 프리뷰 + 클릭 선택)
+  - 파일: clipforge/src/components/dashboard/SubtitlePreview.tsx
+- [x] 새 클립 페이지에 자막 스타일 선택기 통합
+  - 파일: clipforge/src/app/dashboard/new/page.tsx
+
+#### Feature 3: ShieldChat 감정 트렌드 대시보드
+- [x] 트렌드 API (시간대별 분포, 7일 트렌드, 반복 공격자, 키워드 빈도)
+  - 파일: shieldchat/src/app/api/trends/route.ts
+- [x] TrendDashboard 클라이언트 컴포넌트 (CSS 기반 차트 4종)
+  - 파일: shieldchat/src/components/dashboard/TrendDashboard.tsx
+- [x] 대시보드 페이지에 TrendDashboard 통합
+  - 파일: shieldchat/src/app/dashboard/page.tsx
+
+#### 빌드 확인
+- [x] 4개 앱 모두 빌드 성공 (FanClash, ClipForge, ShieldChat, Portal)
+
+---
+
+## 2026-03-15 (크로스 프로덕트 + 공개 프로필 + 테마 에디터)
+
+### 완료한 태스크
+
+#### Feature 1: Cross-Product SSO 링크
+- [x] FanClash 설정 페이지에 ClipForge/ShieldChat 링크 추가
+  - 파일: fanclash/src/app/dashboard/settings/page.tsx
+- [x] ClipForge 설정 페이지에 FanClash/ShieldChat 링크 추가
+  - 파일: clipforge/src/app/dashboard/settings/page.tsx
+- [x] ShieldChat 설정 페이지에 FanClash/ClipForge 링크 추가
+  - 파일: shieldchat/src/app/dashboard/settings/page.tsx
+
+#### Feature 2: 스트리머 공개 프로필 페이지
+- [x] /streamer/[streamerId] 공개 프로필 페이지 생성
+  - 상세: OG 메타태그, 프로필 헤더, 4종 스탯 카드, 활성 위젯 뱃지, RPG 랭킹 TOP 5, 탑 서포터 5명, 가챠 통계, URL 복사/실시간 방송 링크, 가입 CTA
+  - 파일: fanclash/src/app/streamer/[streamerId]/page.tsx
+
+#### Feature 3: 위젯 테마 비주얼 에디터
+- [x] ThemeEditor 컴포넌트 생성 (Pro 전용)
+  - 상세: 라이브 미리보기, 배경색+투명도/테두리+두께/모서리/패딩/폰트/글자색/글로우 효과 컨트롤, CSS 자동 생성, 고급 CSS 직접 편집 토글
+  - 파일: fanclash/src/components/dashboard/settings/ThemeEditor.tsx
+- [x] WidgetSettingsModal에 ThemeEditor 통합 (StylePresets 아래)
+  - 파일: fanclash/src/components/dashboard/WidgetSettingsModal.tsx
+
+#### 빌드 확인
+- [x] 3개 앱 모두 빌드 성공 (FanClash, ClipForge, ShieldChat)
+
+---
+
+## 2026-03-15 (고도화)
+
+### 완료한 태스크
+
+#### 디밸롭 — 출시 준비 + 제품 완성도
+
+##### FanClash
+- [x] Socket.IO 이벤트 체인 서버 릴레이 (widget:event → widget:chain-action 브로드캐스트)
+  - 파일: server/index.ts, src/types/index.ts
+- [x] 실시간 관전 모드 (/live/[streamerId])
+  - 상세: 팬이 인증 없이 실시간 후원/랭킹/배틀/RPG/미터/콤보 구경, OG 메타태그, 공유 버튼
+  - 파일: src/app/live/[streamerId]/page.tsx, src/components/live/LiveSpectator.tsx
+- [x] 인터랙티브 데모 페이지 (/demo)
+  - 상세: 회원가입 없이 위젯 8종 체험, 테스트 후원 패널, iframe 기반
+  - 파일: src/app/demo/page.tsx
+- [x] PWA 매니페스트 (커맨드 패널 모바일 앱화)
+  - 파일: public/manifest.json, public/icon.svg, layout.tsx, command/page.tsx
+- [x] Playwright E2E 테스트 인프라 (4개 테스트 파일, 기본 스모크 테스트)
+  - 파일: playwright.config.ts, e2e/*.spec.ts
+
+##### MCN 통합 포털
+- [x] 진크루 브랜드 포털 사이트 (portal/)
+  - 상세: 3개 프로덕트 소개, CSS 애니메이션, 반응형, 다크 테마
+  - 파일: portal/ 전체
+
+##### 빌드 확인
+- [x] 4개 앱 모두 빌드 성공 (FanClash 30p, ClipForge 14p, ShieldChat 19p, Portal 4p)
+
+---
+
+#### FanClash — 위젯 간 이벤트 연동 시스템
+- [x] 이벤트 버스 + 체인 정의 (6종 기본 체인)
+  - 파일: src/lib/widget-events.ts, src/lib/widget-chains.ts
+- [x] 이벤트 발신 (6개 위젯: Battle, RPG, Train, Meter, Slots, Goal)
+  - 상세: Socket.IO widget:event로 크로스 iframe 통신
+- [x] 이벤트 수신 + 자동 액션 (5개 위젯: Roulette, Gacha, Slots, Weather, Train)
+  - 상세: widget:chain-action 수신 → 자동 스핀/뽑기/블리자드/축하 실행
+- [x] EventChainManager 대시보드 UI (Pro 전용)
+  - 파일: EventChainManager.tsx, widgets/page.tsx
+- [x] DB 마이그레이션 (streamers.event_chains jsonb)
+  - 파일: supabase/migrations/011_event_chains.sql
+- [x] 빌드 성공
+
+#### ClipForge — 시뮬레이션 → 실제 영상 처리 전환
+- [x] FFmpeg WASM 클라이언트 사이드 영상 처리 도입
+  - 상세: @ffmpeg/ffmpeg + @ffmpeg/util 설치, COOP/COEP 헤더 설정, CDN 기반 WASM 로드
+  - 파일: src/lib/video-processor.ts, next.config.ts, package.json
+- [x] Web Audio API 기반 실제 하이라이트 감지
+  - 상세: RMS 볼륨 분석, 1초 윈도우, 평균 2배 초과 피크 감지, 인접 구간 병합, 최대 10개
+  - 파일: src/lib/audio-analyzer.ts
+- [x] 새 클립 페이지 전면 재작성 (URL 입력 → 파일 업로드)
+  - 상세: 드래그앤드롭 + 파일 선택, 오디오 분석 프로그레스, 하이라이트 목록, 클립 생성/미리보기/다운로드
+  - 파일: src/app/dashboard/new/page.tsx
+- [x] 대시보드/클립 페이지/랜딩 페이지 업데이트
+  - 파일: dashboard/page.tsx, clips/page.tsx, page.tsx
+- [x] 목업 코드 제거 (generateMockHighlights, simulateJobProcessing, POST /api/jobs)
+  - 파일: src/types/index.ts, src/app/api/jobs/route.ts
+- [x] 빌드 성공
+
+#### ShieldChat — 실제 PDF 다운로드 구현
+- [x] html2canvas + jspdf 기반 실제 PDF 생성
+  - 상세: DOM 캡처 → PNG → 멀티페이지 A4 PDF, 한국어 완벽 렌더링
+  - 파일: src/lib/pdf-generator.ts, package.json
+- [x] 리포트 인쇄 페이지에 PDF 다운로드 버튼 추가
+  - 상세: "PDF 다운로드" 버튼 + 로딩 스피너 + 레이아웃 개선
+  - 파일: src/app/dashboard/reports/[id]/print/page.tsx
+- [x] 리포트 목록에서 직접 PDF 다운로드 링크
+  - 파일: src/app/dashboard/reports/page.tsx
+- [x] 빌드 성공
+
+---
+
+## 2026-03-15 (ShieldChat)
+
+### 완료한 태스크
+
+#### ShieldChat MVP 구축
+- [x] 프로젝트 스캐폴딩 (Next.js 16 + TypeScript + Tailwind + Supabase)
+  - 파일: shieldchat/ 전체
+- [x] DB 스키마 설계 (profiles, comments, reports + RLS + auto-profile trigger)
+  - 파일: supabase/migrations/001_schema.sql
+- [x] 한국어 독성 감지 엔진 (키워드 기반, 5 카테고리, 4 심각도)
+  - 파일: src/lib/toxicity.ts
+  - 상세: 욕설/협박/명예훼손/성희롱/차별 패턴 매칭, 가중치 기반 점수 산정, 축약형/우회 표현 포함
+- [x] Supabase 인증 (로그인/회원가입/콜백)
+  - 파일: src/app/login, signup, auth/callback
+- [x] 랜딩 페이지 (히어로 + 3단계 + 기능 카드 + CTA + 푸터)
+  - 파일: src/app/page.tsx
+- [x] 대시보드 (통계 카드 + 심각도 분포 차트 + 최근 위험 댓글)
+  - 파일: src/app/dashboard/page.tsx
+- [x] 댓글 추가 (텍스트 입력 + 일괄 입력 2모드)
+  - 파일: src/app/dashboard/comments/new/page.tsx
+- [x] 댓글 목록 (필터/정렬/벌크선택/리포트 추가)
+  - 파일: src/app/dashboard/comments/page.tsx
+- [x] 댓글 상세 (분석 결과 + 증거 보존 + 메모 + 삭제)
+  - 파일: src/app/dashboard/comments/[id]/page.tsx
+- [x] 리포트 관리 (목록 + 새 리포트 + PDF 인쇄 페이지)
+  - 파일: src/app/dashboard/reports/
+- [x] 법적 가이드 (5개 섹션: 신고/법률/고소장/증거/유용한 링크)
+  - 파일: src/app/dashboard/legal/page.tsx
+- [x] 설정/요금제/이용약관/개인정보처리방침
+- [x] API 라우트 (comments CRUD + reports CRUD + generate)
+  - 파일: src/app/api/comments/, src/app/api/reports/
+- [x] 다크 테마 (gray-950 + rose 액센트) + 모바일 반응형
+- [x] 빌드 성공 (19 라우트, 0 에러)
+
+---
+
 ## 2026-03-15 (ClipForge)
 
 ### 완료한 태스크
@@ -103,6 +322,21 @@
   - 파일: RankingBoard.tsx
 - [x] 모든 신규 위젯 앱 통합 (타입, 오버레이 라우팅, 데모, 설정, 라벨, 프리뷰)
 - [x] 빌드 성공, 78개 테스트 통과
+
+#### 잔여 개선 8건
+- [x] 하입 오버레이 config 완전 연동 (Music/Gacha/Territory/Weather)
+- [x] Zod 폼 검증 스키마 + WidgetSettingsModal 적용
+- [x] 모달 ESC 닫기 + 포커스 트랩 (ConfirmModal, WidgetSettingsModal)
+- [x] 서버 heartbeat (IntegrationManager 30초 간격 상태 확인)
+- [x] 연동 해제 확인 모달 (IntegrationCard)
+- [x] 계정 삭제 셀프서비스 (설정 페이지 + API)
+- [x] dangerouslySetInnerHTML 제거 → DOM API 삽입
+- [x] OG 이미지 SVG + 메타태그 정리
+
+#### Supabase 공유 프로젝트 설정
+- [x] ClipForge 테이블 접두사 cf_ 적용 (9개 파일)
+- [x] ShieldChat 테이블 접두사 sc_ 적용 (12개 파일)
+- [x] 분리 가이드 문서 작성 (.claude/docs/SUPABASE_SHARED.md)
 
 #### 신규 위젯 + 기능 배치 3
 - [x] 팬 RPG 위젯 (rpg)

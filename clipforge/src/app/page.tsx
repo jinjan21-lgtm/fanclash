@@ -18,7 +18,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-gray-950">
       {/* Header */}
       <header className="fixed top-0 w-full z-50 bg-gray-950/80 backdrop-blur-md border-b border-gray-800">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <nav className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between" aria-label="메인 네비게이션">
           <Link href="/" className="text-xl font-bold gradient-text">ClipForge</Link>
           <div className="flex items-center gap-4">
             <Link href="/login" className="text-gray-400 hover:text-white transition-colors text-sm">
@@ -28,11 +28,12 @@ export default function LandingPage() {
               무료로 시작하기
             </Link>
           </div>
-        </div>
+        </nav>
       </header>
 
+      <main>
       {/* Hero */}
-      <section className="pt-32 pb-20 px-6">
+      <section className="pt-32 pb-20 px-6" aria-label="히어로">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-block mb-6 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
             스트리머를 위한 숏폼 자동화
@@ -123,7 +124,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 px-6">
+      <section className="py-20 px-6" aria-label="시작하기">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">지금 바로 시작하세요</h2>
           <p className="text-gray-400 mb-8">
@@ -135,6 +136,7 @@ export default function LandingPage() {
           </Link>
         </div>
       </section>
+      </main>
 
       {/* Footer */}
       <footer className="border-t border-gray-800 py-12 px-6">

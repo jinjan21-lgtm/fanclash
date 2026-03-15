@@ -20,6 +20,7 @@ export default function DonationSlots({ widgetId, config }: DonationSlotsProps) 
   const [lastDonor, setLastDonor] = useState<string | null>(null);
   const spinningRef = useRef(false);
   const reelIntervals = useRef<ReturnType<typeof setInterval>[]>([]);
+  const socketRefLocal = useRef<ReturnType<typeof import('socket.io-client').io> | null>(null);
 
   const triggerSpin = useCallback((amount: number, nickname: string) => {
     if (amount < minAmount || spinningRef.current) return;
@@ -100,6 +101,11 @@ export default function DonationSlots({ widgetId, config }: DonationSlotsProps) 
               setResult('big');
               const m = missions[Math.floor(Math.random() * missions.length)];
               setMission(m);
+              // Emit jackpot event for event chaining
+              socketRefLocal.current?.emit('widget:event' as any, {
+                type: 'slots:jackpot',
+                data: { symbols: finalReels.map(r => SYMBOLS[r]), mission: m, nickname },
+              });
             } else if (shouldMatch2) {
               setResult('small');
             }
@@ -124,13 +130,20 @@ export default function DonationSlots({ widgetId, config }: DonationSlotsProps) 
     let socket: ReturnType<typeof import('socket.io-client').io>;
     import('socket.io-client').then(({ io }) => {
       socket = io(socketUrl);
+      socketRefLocal.current = socket;
       socket.on('connect', () => socket.emit('widget:subscribe', widgetId));
       socket.on('donation:new', (data: { fan_nickname: string; amount: number }) => {
         triggerSpin(data.amount, data.fan_nickname);
       });
+      // Listen for chain actions
+      socket.on('widget:chain-action' as any, (event: { action: string; data: Record<string, unknown> }) => {
+        if (event.action === 'slots:spin') {
+          triggerSpin(minAmount, (event.data?.nickname as string) || '이벤트 체인');
+        }
+      });
     });
-    return () => { socket?.disconnect(); };
-  }, [widgetId, triggerSpin]);
+    return () => { socket?.disconnect(); socketRefLocal.current = null; };
+  }, [widgetId, triggerSpin, minAmount]);
 
   // Clear result after delay
   useEffect(() => {

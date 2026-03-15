@@ -14,15 +14,26 @@ export default function DonationTrain({ widgetId, config }: DonationTrainProps) 
   const [comboCount, setComboCount] = useState(0);
   const [lastDonor, setLastDonor] = useState<string | null>(null);
   const [showDonor, setShowDonor] = useState(false);
+  const [celebrate, setCelebrate] = useState(false);
   const comboTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const donorTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const socketRef = useRef<ReturnType<typeof import('socket.io-client').io> | null>(null);
 
   const intensityScale = effectIntensity === 'low' ? 0.5 : effectIntensity === 'high' ? 1.5 : 1;
 
   const triggerDonation = useCallback((amount: number, nickname: string) => {
     if (amount < minAmount) return;
 
-    setComboCount(prev => prev + 1);
+    setComboCount(prev => {
+      const newCount = prev + 1;
+      // Emit combo event for event chaining
+      socketRef.current?.emit('widget:event' as any, {
+        type: 'train:combo',
+        data: { comboCount: newCount },
+        streamerId: undefined, // Will be filled by server from widget subscription
+      });
+      return newCount;
+    });
     setLastDonor(nickname);
     setShowDonor(true);
 
@@ -52,12 +63,24 @@ export default function DonationTrain({ widgetId, config }: DonationTrainProps) 
     let socket: ReturnType<typeof import('socket.io-client').io>;
     import('socket.io-client').then(({ io }) => {
       socket = io(socketUrl);
+      socketRef.current = socket;
       socket.on('connect', () => socket.emit('widget:subscribe', widgetId));
       socket.on('donation:new', (data: { fan_nickname: string; amount: number }) => {
         triggerDonation(data.amount, data.fan_nickname);
       });
+      // Listen for chain actions
+      socket.on('widget:chain-action' as any, (event: { action: string; data: Record<string, unknown> }) => {
+        if (event.action === 'train:celebrate') {
+          // Special celebration effect + combo reset
+          setCelebrate(true);
+          setTimeout(() => {
+            setCelebrate(false);
+            setComboCount(0);
+          }, 3000);
+        }
+      });
     });
-    return () => { socket?.disconnect(); };
+    return () => { socket?.disconnect(); socketRef.current = null; };
   }, [widgetId, triggerDonation]);
 
   // Cleanup timers
@@ -103,6 +126,26 @@ export default function DonationTrain({ widgetId, config }: DonationTrainProps) 
           }}
         />
       ))}
+
+      {/* Celebrate effect from event chain */}
+      {celebrate && (
+        <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+          <div className="text-5xl font-black text-yellow-300 celebrate-text"
+            style={{ textShadow: '0 0 40px rgba(255,215,0,0.9), 0 0 80px rgba(255,165,0,0.5)' }}>
+            CELEBRATION!
+          </div>
+          {Array.from({ length: 15 }).map((_, i) => (
+            <div key={i} className="absolute celebrate-sparkle" style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 0.5}s`,
+              fontSize: '24px',
+            }}>
+              {['🎉', '🎊', '✨', '🌟'][i % 4]}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Combo display */}
       {comboCount > 0 && (
@@ -178,6 +221,24 @@ export default function DonationTrain({ widgetId, config }: DonationTrainProps) 
           20% { opacity: 1; transform: translateY(0); }
           80% { opacity: 1; }
           100% { opacity: 0; }
+        }
+        .celebrate-text {
+          animation: celebrateText 3s ease-out forwards;
+        }
+        @keyframes celebrateText {
+          0% { transform: scale(0.5); opacity: 0; }
+          20% { transform: scale(1.3); opacity: 1; }
+          40% { transform: scale(1); }
+          80% { opacity: 1; }
+          100% { opacity: 0; transform: translateY(-20px); }
+        }
+        .celebrate-sparkle {
+          animation: celebrateSparkle 1.5s ease-out forwards;
+        }
+        @keyframes celebrateSparkle {
+          0% { transform: scale(0) rotate(0deg); opacity: 1; }
+          50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
+          100% { transform: scale(0) rotate(360deg); opacity: 0; }
         }
       `}</style>
     </div>

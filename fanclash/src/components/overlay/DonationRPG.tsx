@@ -94,6 +94,8 @@ export default function DonationRPG({ widgetId, config }: DonationRPGProps) {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const pendingXPRef = useRef(0);
   const streamerIdRef = useRef<string | null>(null);
+  const levelUpEventRef = useRef<{ nickname: string; level: number } | null>(null);
+  const socketRef = useRef<ReturnType<typeof import('socket.io-client').io> | null>(null);
 
   const processXPGain = useCallback((amount: number, nickname: string) => {
     const xpGained = Math.floor((amount / 100) * xpRate);
@@ -123,6 +125,8 @@ export default function DonationRPG({ widgetId, config }: DonationRPGProps) {
       if (didLevelUp) {
         setLevelUpAnim(true);
         setTimeout(() => setLevelUpAnim(false), 3000);
+        // Emit widget event for event chaining (deferred to allow socket ref to be set)
+        levelUpEventRef.current = { nickname, level: newLevel };
       }
 
       return {
@@ -169,12 +173,29 @@ export default function DonationRPG({ widgetId, config }: DonationRPGProps) {
     let socket: ReturnType<typeof import('socket.io-client').io>;
     import('socket.io-client').then(({ io }) => {
       socket = io(socketUrl);
+      socketRef.current = socket;
       socket.on('connect', () => socket.emit('widget:subscribe', widgetId));
       socket.on('donation:new', (data: { fan_nickname: string; amount: number }) => {
         processXPGain(data.amount, data.fan_nickname);
+        // Emit level-up event if one was triggered
+        setTimeout(() => {
+          if (levelUpEventRef.current) {
+            const { nickname, level } = levelUpEventRef.current;
+            socket.emit('widget:event' as any, {
+              type: 'rpg:levelup',
+              data: { nickname, level },
+              streamerId: streamerIdRef.current,
+            });
+            levelUpEventRef.current = null;
+          }
+        }, 50);
+      });
+      // Listen for chain actions (e.g., quiz:correct → RPG XP bonus)
+      socket.on('widget:chain-action' as any, (event: { action: string; data: Record<string, unknown> }) => {
+        // No inbound chain actions for RPG currently
       });
     });
-    return () => { socket?.disconnect(); };
+    return () => { socket?.disconnect(); socketRef.current = null; };
   }, [widgetId, processXPGain]);
 
   // Load streamer_id from widget

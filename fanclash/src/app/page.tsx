@@ -41,7 +41,8 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white overflow-hidden">
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-white/5">
+      <header>
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-white/5" aria-label="메인 네비게이션">
         <div className="flex justify-between items-center px-6 py-4 max-w-6xl mx-auto">
           <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
             FanClash
@@ -54,9 +55,11 @@ export default function LandingPage() {
           </div>
         </div>
       </nav>
+      </header>
 
+      <main>
       {/* Hero */}
-      <section className="relative pt-32 pb-24 px-6">
+      <section className="relative pt-32 pb-24 px-6" aria-label="히어로">
         {/* Background effects */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-1/4 w-96 h-96 bg-purple-600/15 rounded-full blur-[120px]" />
@@ -262,7 +265,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-24 px-6 relative">
+      <section className="py-24 px-6 relative" aria-label="시작하기">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute bottom-0 left-1/3 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px]" />
           <div className="absolute bottom-20 right-1/3 w-80 h-80 bg-pink-600/8 rounded-full blur-[100px]" />
@@ -284,20 +287,30 @@ export default function LandingPage() {
           </div>
         </AnimatedSection>
       </section>
+      </main>
 
       {/* Footer */}
       <footer className="border-t border-white/5 py-12 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div>
-            <span className="text-lg font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">FanClash</span>
-            <p className="text-gray-500 text-sm mt-1">스트리머를 위한 인터랙티브 후원 플랫폼</p>
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-8">
+            <div>
+              <span className="text-lg font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">FanClash</span>
+              <p className="text-gray-500 text-sm mt-1">스트리머를 위한 인터랙티브 후원 도구</p>
+            </div>
+            <div className="flex gap-6 text-sm text-gray-500">
+              <Link href="/login" className="hover:text-gray-300 transition-colors">로그인</Link>
+              <Link href="/signup" className="hover:text-gray-300 transition-colors">회원가입</Link>
+              <Link href="/dashboard/pricing" className="hover:text-gray-300 transition-colors">요금제</Link>
+              <Link href="/privacy" className="hover:text-gray-300 transition-colors">개인정보 처리방침</Link>
+              <Link href="/terms" className="hover:text-gray-300 transition-colors">이용약관</Link>
+            </div>
           </div>
-          <div className="flex gap-6 text-sm text-gray-500">
-            <Link href="/login" className="hover:text-gray-300 transition-colors">로그인</Link>
-            <Link href="/signup" className="hover:text-gray-300 transition-colors">회원가입</Link>
-            <Link href="/dashboard/pricing" className="hover:text-gray-300 transition-colors">요금제</Link>
+          <div className="border-t border-white/5 pt-6 text-xs text-gray-600 space-y-1">
+            <p>상호: 진크루 | 대표: 이진형 | 사업자등록번호: 559-26-01952</p>
+            <p>주소: 경기도 김포시 풍무동 69-4 | 통신판매업 신고: 준비 중</p>
+            <p>연락처: 010-7146-3780 | 이메일: jinjan21@naver.com</p>
+            <p className="mt-3">&copy; 2026 진크루. All rights reserved.</p>
           </div>
-          <p className="text-gray-600 text-xs">&copy; 2026 FanClash. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -13,8 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://jincrew.vercel.app"),
   title: "진크루 — 크리에이터 프로덕트",
   description: "크리에이터를 위한 올인원 툴킷. FanClash, ClipForge, ShieldChat으로 방송을 더 강력하게.",
+  keywords: ["크리에이터", "스트리머", "방송 도구", "진크루", "FanClash", "ClipForge", "ShieldChat"],
+  alternates: {
+    canonical: "https://jincrew.vercel.app",
+  },
   openGraph: {
     type: "website",
     locale: "ko_KR",

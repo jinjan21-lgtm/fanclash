@@ -60,6 +60,11 @@ export async function GET(request: NextRequest) {
           display_name: displayName,
           ...(referredBy && { referred_by: referredBy }),
         });
+        // Apply referral reward
+        if (referredBy) {
+          const { applyReferralReward } = await import('@/lib/referral');
+          await applyReferralReward(supabase, data.user.id, referredBy);
+        }
       }
     }
   }

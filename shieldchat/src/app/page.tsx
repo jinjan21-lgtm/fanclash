@@ -33,7 +33,8 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gray-950">
       {/* Nav */}
-      <nav className="fixed top-0 w-full z-50 bg-gray-950/80 backdrop-blur border-b border-gray-800">
+      <header>
+      <nav className="fixed top-0 w-full z-50 bg-gray-950/80 backdrop-blur border-b border-gray-800" aria-label="메인 네비게이션">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="text-xl font-bold text-rose-500">
             ShieldChat
@@ -48,9 +49,11 @@ export default function LandingPage() {
           </div>
         </div>
       </nav>
+      </header>
 
+      <main>
       {/* Hero */}
-      <section className="pt-32 pb-20 px-6">
+      <section className="pt-32 pb-20 px-6" aria-label="히어로">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-rose-500/10 text-rose-400 text-sm px-4 py-1.5 rounded-full mb-6 border border-rose-500/20">
             크리에이터를 위한 악플 방어 도구
@@ -120,7 +123,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 px-6 border-t border-gray-800">
+      <section className="py-20 px-6 border-t border-gray-800" aria-label="시작하기">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
             지금 바로 시작하세요
@@ -136,6 +139,7 @@ export default function LandingPage() {
           </Link>
         </div>
       </section>
+      </main>
 
       {/* Footer */}
       <footer className="border-t border-gray-800 py-10 px-6">

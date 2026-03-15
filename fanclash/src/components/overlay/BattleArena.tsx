@@ -72,6 +72,12 @@ export default function BattleArena({ widget, preview }: { widget: Widget; previ
     const finishHandler = (data: any) => {
       setWinner(data);
       playSound((widget.config as any)?.soundUrl);
+      // Emit widget event for event chaining
+      socketRef.current?.emit('widget:event' as any, {
+        type: 'battle:finished',
+        data: { winner: data.winner, benefit: data.benefit },
+        streamerId: widget.streamer_id,
+      });
       setTimeout(() => { setWinner(null); setBattle(null); setParticipants([]); prevAmounts.current = {}; }, 8000);
     };
     const tournamentHandler = (data: any) => {

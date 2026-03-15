@@ -14,20 +14,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://fanclash.co.kr"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://fanclash.vercel.app"),
   title: {
     default: "FanClash — 스트리머 팬 인터랙션 도구",
     template: "%s | FanClash",
   },
-  description: "후원 랭킹, 배틀, 룰렛 등 방송 위젯으로 시청자 참여를 극대화하세요. 투네이션, 틱톡, 치지직, 숲 연동.",
-  keywords: ["스트리머", "방송 위젯", "후원 랭킹", "도네이션 배틀", "OBS 위젯", "투네이션", "치지직", "숲", "틱톡 라이브"],
+  description: "후원 랭킹, 배틀, 룰렛 등 방송 위젯으로 시청자 참여를 극대화하세요. 투네이션, 틱톡, 치지직, 숲 연동. OBS 브라우저 소스로 간편 설정.",
+  keywords: ["스트리머", "방송 위젯", "후원 랭킹", "도네이션 배틀", "OBS 위젯", "투네이션", "치지직", "숲", "틱톡 라이브", "스트리머 도구", "팬 인터랙션"],
+  alternates: {
+    canonical: "https://fanclash.vercel.app",
+  },
   openGraph: {
     type: "website",
     locale: "ko_KR",
     siteName: "FanClash",
     title: "FanClash — 스트리머 팬 인터랙션 도구",
     description: "후원 랭킹, 배틀, 룰렛 등 방송 위젯으로 시청자 참여를 극대화하세요.",
-    images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "FanClash" }],
+    images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "FanClash — 스트리머 팬 인터랙션 도구" }],
   },
   twitter: {
     card: "summary_large_image",
@@ -51,6 +54,30 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="apple-touch-icon" href="/icon.svg" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: "FanClash",
+              applicationCategory: "EntertainmentApplication",
+              operatingSystem: "Web",
+              description: "후원 랭킹, 배틀, 룰렛 등 방송 위젯으로 시청자 참여를 극대화하는 스트리머 인터랙션 도구",
+              url: "https://fanclash.vercel.app",
+              offers: {
+                "@type": "Offer",
+                price: "0",
+                priceCurrency: "KRW",
+                description: "무료 플랜 제공",
+              },
+              author: {
+                "@type": "Organization",
+                name: "진크루",
+              },
+            }),
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

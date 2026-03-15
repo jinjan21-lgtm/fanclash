@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import Link from 'next/link';
 import { SEVERITY_LABELS, CATEGORY_LABELS } from '@/lib/toxicity';
 import type { Severity, Category } from '@/lib/toxicity';
+import TrendDashboard from '@/components/dashboard/TrendDashboard';
 
 export const metadata = { title: '대시보드' };
 
@@ -158,6 +159,9 @@ export default async function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Trend Dashboard */}
+      <TrendDashboard />
     </div>
   );
 }

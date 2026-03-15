@@ -24,6 +24,8 @@ export default function DonationMeter({ widgetId, config }: DonationMeterProps) 
   const [shake, setShake] = useState(false);
   const donationsRef = useRef<{ amount: number; time: number }[]>([]);
   const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
+  const socketRef = useRef<ReturnType<typeof import('socket.io-client').io> | null>(null);
+  const maxEmittedRef = useRef(false);
 
   const updateMeter = useCallback(() => {
     const now = Date.now();
@@ -37,6 +39,16 @@ export default function DonationMeter({ widgetId, config }: DonationMeterProps) 
     if (pct >= 0.8) {
       setShake(true);
       setTimeout(() => setShake(false), 200);
+      // Emit meter:max event once when crossing threshold
+      if (!maxEmittedRef.current) {
+        maxEmittedRef.current = true;
+        socketRef.current?.emit('widget:event' as any, {
+          type: 'meter:max',
+          data: { totalAmount: total, percentage: pct },
+        });
+      }
+    } else {
+      maxEmittedRef.current = false;
     }
   }, [windowMinutes, maxAmount]);
 
@@ -64,12 +76,13 @@ export default function DonationMeter({ widgetId, config }: DonationMeterProps) 
     let socket: ReturnType<typeof import('socket.io-client').io>;
     import('socket.io-client').then(({ io }) => {
       socket = io(socketUrl);
+      socketRef.current = socket;
       socket.on('connect', () => socket.emit('widget:subscribe', widgetId));
       socket.on('donation:new', (data: { fan_nickname: string; amount: number }) => {
         addDonation(data.amount, data.fan_nickname);
       });
     });
-    return () => { socket?.disconnect(); };
+    return () => { socket?.disconnect(); socketRef.current = null; };
   }, [widgetId, addDonation]);
 
   const currentStage = STAGES.find(s => percentage >= s.min && percentage < s.max) || STAGES[STAGES.length - 1];

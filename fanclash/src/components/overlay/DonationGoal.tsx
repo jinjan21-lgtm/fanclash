@@ -62,6 +62,12 @@ export default function DonationGoal({ widget, preview }: { widget: Widget; prev
         if (prev < m.amount && data.current_amount >= m.amount) {
           setJustReached(m);
           setTimeout(() => setJustReached(null), 5000);
+          // Emit goal:complete event for event chaining
+          socketRef.current?.emit('widget:event' as any, {
+            type: 'goal:complete',
+            data: { mission: m.mission, amount: m.amount, currentAmount: data.current_amount },
+            streamerId: widget.streamer_id,
+          });
         }
       }
     };
