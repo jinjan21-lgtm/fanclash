@@ -192,6 +192,14 @@ export default function EventTimer({ widget, preview }: { widget: Widget; previe
     }
   }, [widget.id, totalSeconds]);
 
+  // Auto-start in preview mode
+  useEffect(() => {
+    if (preview) {
+      setRunning(true);
+      setTimeLeft(totalSeconds);
+    }
+  }, [preview, totalSeconds]);
+
   // Donation integration via Socket.IO
   useEffect(() => {
     if (donationMode === 'none' || preview) return;

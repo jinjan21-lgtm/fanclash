@@ -47,6 +47,20 @@ export default function AlertSettings({ config, onChange }: { config: Record<str
           {config.ttsEnabled ? 'ON' : 'OFF'}
         </button>
       </div>
+      {config.ttsEnabled && (
+        <div>
+          <label className="block text-sm text-gray-400 mb-1">TTS 음성</label>
+          <select
+            value={(config.ttsVoice as string) || 'ko-KR'}
+            onChange={e => onChange({ ...config, ttsVoice: e.target.value })}
+            className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm"
+          >
+            <option value="ko-KR">한국어 (기본)</option>
+            <option value="en-US">영어</option>
+            <option value="ja-JP">일본어</option>
+          </select>
+        </div>
+      )}
     </>
   );
 }

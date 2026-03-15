@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSocket } from '@/hooks/useSocket';
 import { themes } from '@/lib/themes';
 import type { Widget } from '@/types';
-import { playSound } from '@/lib/sound';
+import { playBeep } from '@/lib/sound';
 
 export default function ThroneAlert({ widget, preview }: { widget: Widget; preview?: boolean }) {
   const [alert, setAlert] = useState<{ previous: string; current: string } | null>(null);
@@ -20,7 +20,10 @@ export default function ThroneAlert({ widget, preview }: { widget: Widget; previ
       if (!data?.previous || !data?.current) return;
       setAlert({ previous: data.previous, current: data.current });
       setThroneCount(prev => prev + 1);
-      playSound((widget.config as any)?.soundUrl);
+      const soundSetting = (widget.config as any)?.sound || 'default';
+      if (soundSetting !== 'none') {
+        playBeep(soundSetting === 'fanfare' ? 'fanfare' : 'default');
+      }
       const id = setTimeout(() => {
         timeoutIdsRef.current.delete(id);
         setAlert(null);
