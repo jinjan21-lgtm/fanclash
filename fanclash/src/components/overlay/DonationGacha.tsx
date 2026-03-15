@@ -144,10 +144,12 @@ export default function DonationGacha({ widgetId, streamerId, config }: Donation
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
     if (!socketUrl) return;
 
-    let socket: ReturnType<typeof import('socket.io-client').io>;
+    let socket: ReturnType<typeof import('socket.io-client').io> | null = null;
+    let unmounted = false;
     import('socket.io-client').then(({ io }) => {
+      if (unmounted) return; // Don't init if already unmounted
       socket = io(socketUrl);
-      socket.on('connect', () => socket.emit('widget:subscribe', widgetId));
+      socket.on('connect', () => socket!.emit('widget:subscribe', widgetId));
       socket.on('donation:new', (data: { fan_nickname: string; amount: number }) => {
         triggerGacha(data.amount, data.fan_nickname);
       });
@@ -158,7 +160,7 @@ export default function DonationGacha({ widgetId, streamerId, config }: Donation
         }
       });
     }).catch(err => console.error('Socket.IO init failed:', err));
-    return () => { socket?.disconnect(); };
+    return () => { unmounted = true; socket?.disconnect(); };
   }, [widgetId, triggerGacha, minAmount]);
 
   return (
