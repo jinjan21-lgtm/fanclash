@@ -15,6 +15,11 @@ import TimerSettings from './settings/TimerSettings';
 import TeamBattleSettings from './settings/TeamBattleSettings';
 import RouletteSettings from './settings/RouletteSettings';
 import MessagesSettings from './settings/MessagesSettings';
+import MusicSettings from './settings/MusicSettings';
+import GachaSettings from './settings/GachaSettings';
+import PhysicsSettings from './settings/PhysicsSettings';
+import TerritorySettings from './settings/TerritorySettings';
+import WeatherSettings from './settings/WeatherSettings';
 import StylePresets from './settings/StylePresets';
 
 interface Props {
@@ -188,6 +193,11 @@ export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }:
             {widget.type === 'timer' && <TimerSettings config={config} onChange={setConfig} />}
             {widget.type === 'messages' && <MessagesSettings config={config} onChange={setConfig} />}
             {widget.type === 'roulette' && <RouletteSettings config={config} onChange={setConfig} />}
+            {widget.type === 'music' && <MusicSettings config={config} onChange={setConfig} />}
+            {widget.type === 'gacha' && <GachaSettings config={config} onChange={setConfig} />}
+            {widget.type === 'physics' && <PhysicsSettings config={config} onChange={setConfig} />}
+            {widget.type === 'territory' && <TerritorySettings config={config} onChange={setConfig} />}
+            {widget.type === 'weather' && <WeatherSettings config={config} onChange={setConfig} />}
           </div>
 
           {/* Widget Style (Pro only) */}

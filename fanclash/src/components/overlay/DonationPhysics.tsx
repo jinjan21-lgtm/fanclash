@@ -6,7 +6,7 @@ const EMOJIS = ['⭐', '💜', '🔥', '💎', '🎉', '❤️', '✨', '🌟', 
 
 interface DonationPhysicsProps {
   widgetId?: string;
-  config?: { maxObjects?: number };
+  config?: { maxObjects?: number; gravity?: string; emojiSize?: string };
 }
 
 export default function DonationPhysics({ widgetId, config }: DonationPhysicsProps) {
@@ -27,7 +27,9 @@ export default function DonationPhysics({ widgetId, config }: DonationPhysicsPro
     canvas.width = width;
     canvas.height = height;
 
-    const engine = Matter.Engine.create({ gravity: { x: 0, y: 1.5 } });
+    const gravityValues: Record<string, number> = { low: 0.8, medium: 1.5, high: 3.0 };
+    const gravityY = gravityValues[config?.gravity || 'medium'] || 1.5;
+    const engine = Matter.Engine.create({ gravity: { x: 0, y: gravityY } });
     engineRef.current = engine;
 
     // Walls (invisible)
@@ -103,8 +105,10 @@ export default function DonationPhysics({ widgetId, config }: DonationPhysicsPro
     const canvas = canvasRef.current;
     if (!engine || !canvas) return;
 
-    // Size based on amount (15-60 radius)
-    const radius = Math.min(15 + Math.log10(Math.max(amount, 1000)) * 12, 60);
+    // Size based on amount (15-60 radius) or config override
+    const radius = config?.emojiSize === 'small' ? 15
+      : config?.emojiSize === 'large' ? 40
+      : Math.min(15 + Math.log10(Math.max(amount, 1000)) * 12, 60);
 
     // Color based on amount
     let color = '#6b7280';
