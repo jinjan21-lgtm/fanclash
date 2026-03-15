@@ -206,6 +206,30 @@ export default function SettingsPage() {
           </button>
         </div>
 
+        {/* 진크루 서비스 */}
+        <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+          <h3 className="font-bold text-lg mb-4">진크루 서비스</h3>
+          <p className="text-gray-400 text-sm mb-4">같은 계정으로 모든 서비스를 이용할 수 있습니다</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <a href="https://clipforge.vercel.app" target="_blank"
+              className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg hover:bg-gray-700">
+              <span className="text-2xl">🎬</span>
+              <div>
+                <p className="font-medium text-emerald-400">ClipForge</p>
+                <p className="text-xs text-gray-500">방송 하이라이트 → 숏폼</p>
+              </div>
+            </a>
+            <a href="https://shieldchat.vercel.app" target="_blank"
+              className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg hover:bg-gray-700">
+              <span className="text-2xl">🛡️</span>
+              <div>
+                <p className="font-medium text-rose-400">ShieldChat</p>
+                <p className="text-xs text-gray-500">악성 댓글 방어</p>
+              </div>
+            </a>
+          </div>
+        </div>
+
         {/* Danger zone */}
         <div className="bg-gray-900 rounded-xl p-6 border border-red-900/50">
           <h3 className="font-bold text-lg mb-2 text-red-400">계정 삭제</h3>

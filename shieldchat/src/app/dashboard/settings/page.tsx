@@ -124,13 +124,37 @@ export default function SettingsPage() {
       </div>
 
       {/* Usage */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold text-white mb-4">이용 현황</h2>
         <div className="text-sm text-gray-400">
           <p>이번 달 리포트 생성: {profile?.reports_used_this_month ?? 0}건</p>
           <p className="text-gray-600 text-xs mt-1">
             가입일: {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('ko-KR') : '-'}
           </p>
+        </div>
+      </div>
+
+      {/* 진크루 서비스 */}
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">진크루 서비스</h2>
+        <p className="text-gray-400 text-sm mb-4">같은 계정으로 모든 서비스를 이용할 수 있습니다</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <a href="https://fanclash.vercel.app" target="_blank"
+            className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition">
+            <span className="text-2xl">🎮</span>
+            <div>
+              <p className="font-medium text-purple-400">FanClash</p>
+              <p className="text-xs text-gray-500">도네이션 이벤트 엔터테인먼트</p>
+            </div>
+          </a>
+          <a href="https://clipforge.vercel.app" target="_blank"
+            className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition">
+            <span className="text-2xl">🎬</span>
+            <div>
+              <p className="font-medium text-emerald-400">ClipForge</p>
+              <p className="text-xs text-gray-500">방송 하이라이트 → 숏폼</p>
+            </div>
+          </a>
         </div>
       </div>
     </div>
