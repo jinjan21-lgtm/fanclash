@@ -19,6 +19,10 @@ export default function SettingsPage() {
   const [copied, setCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [discordWebhookUrl, setDiscordWebhookUrl] = useState('');
+  const [discordConfig, setDiscordConfig] = useState({ donations: true, battles: true, missions: true, achievements: true });
+  const [savingDiscord, setSavingDiscord] = useState(false);
+  const [testingDiscord, setTestingDiscord] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -32,6 +36,8 @@ export default function SettingsPage() {
         setChannelUrl(streamer.channel_url || '');
         setPlan(streamer.plan || 'free');
         setReferralCode(streamer.referral_code || '');
+        setDiscordWebhookUrl(streamer.discord_webhook_url || '');
+        if (streamer.discord_config) setDiscordConfig(streamer.discord_config);
       }
       // Count referrals
       const { count } = await supabase
@@ -71,6 +77,43 @@ export default function SettingsPage() {
     }
     setDeleting(false);
     setShowDeleteConfirm(false);
+  };
+
+  const handleSaveDiscord = async () => {
+    setSavingDiscord(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from('streamers').update({
+      discord_webhook_url: discordWebhookUrl || null,
+      discord_config: discordConfig,
+    }).eq('id', user.id);
+    setSavingDiscord(false);
+    toast('디스코드 설정이 저장되었습니다');
+  };
+
+  const handleTestDiscord = async () => {
+    if (!discordWebhookUrl) { toast('Webhook URL을 입력해주세요', 'error'); return; }
+    setTestingDiscord(true);
+    try {
+      const res = await fetch('/api/discord/webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          webhookUrl: discordWebhookUrl,
+          title: 'FanClash 테스트 메시지',
+          description: 'FanClash 디스코드 알림이 정상적으로 설정되었습니다!',
+        }),
+      });
+      if (res.ok) {
+        toast('테스트 메시지를 전송했습니다! 디스코드를 확인하세요');
+      } else {
+        const data = await res.json();
+        toast(data.error || '전송에 실패했습니다', 'error');
+      }
+    } catch {
+      toast('전송 중 오류가 발생했습니다', 'error');
+    }
+    setTestingDiscord(false);
   };
 
   const handlePasswordReset = async () => {
@@ -204,6 +247,65 @@ export default function SettingsPage() {
           >
             비밀번호 재설정 이메일 보내기
           </button>
+        </div>
+
+        {/* Discord notification */}
+        <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+          <h3 className="font-bold text-lg mb-2">디스코드 알림</h3>
+          <p className="text-gray-400 text-sm mb-4">디스코드 채널에 자동으로 알림을 보냅니다</p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Webhook URL</label>
+              <input
+                type="url"
+                value={discordWebhookUrl}
+                onChange={e => setDiscordWebhookUrl(e.target.value)}
+                placeholder="https://discord.com/api/webhooks/..."
+                className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
+              />
+              <p className="text-xs text-gray-600 mt-1">디스코드 채널 설정 → 연동 → 웹훅 → 새 웹훅에서 URL을 복사하세요</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-400">알림 종류</p>
+              {([
+                { key: 'donations', label: '새 후원 알림' },
+                { key: 'battles', label: '배틀 결과' },
+                { key: 'missions', label: '미션 달성' },
+                { key: 'achievements', label: '업적 달성' },
+              ] as const).map(item => (
+                <label key={item.key} className="flex items-center justify-between py-1.5">
+                  <span className="text-sm">{item.label}</span>
+                  <button
+                    type="button"
+                    onClick={() => setDiscordConfig(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                    className={`w-10 h-5 rounded-full transition-colors relative ${
+                      discordConfig[item.key] ? 'bg-purple-600' : 'bg-gray-700'
+                    }`}
+                  >
+                    <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${
+                      discordConfig[item.key] ? 'left-5' : 'left-0.5'
+                    }`} />
+                  </button>
+                </label>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSaveDiscord}
+                disabled={savingDiscord}
+                className="flex-1 py-2.5 bg-purple-600 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 text-sm"
+              >
+                {savingDiscord ? '저장 중...' : '저장'}
+              </button>
+              <button
+                onClick={handleTestDiscord}
+                disabled={testingDiscord || !discordWebhookUrl}
+                className="px-4 py-2.5 bg-gray-800 border border-gray-600 rounded-lg text-sm hover:bg-gray-700 disabled:opacity-50"
+              >
+                {testingDiscord ? '전송 중...' : '테스트 메시지 보내기'}
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* 진크루 서비스 */}
