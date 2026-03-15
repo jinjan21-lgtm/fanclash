@@ -3,6 +3,8 @@
 import { useState, useRef, useCallback } from 'react';
 import { analyzeAudio, formatTime } from '@/lib/audio-analyzer';
 import type { AudioHighlight } from '@/lib/audio-analyzer';
+import SubtitlePreview from '@/components/dashboard/SubtitlePreview';
+import type { SubtitleStyle } from '@/lib/subtitle-styles';
 
 interface GeneratedClip {
   id: string;
@@ -26,6 +28,7 @@ export default function NewJobPage() {
   const [previewClip, setPreviewClip] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [dragOver, setDragOver] = useState(false);
+  const [subtitleStyle, setSubtitleStyle] = useState<SubtitleStyle | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(async (selectedFile: File) => {
@@ -344,6 +347,21 @@ export default function NewJobPage() {
         </div>
       )}
 
+      {/* Subtitle Style Selector */}
+      {analysisState === 'done' && highlights.length > 0 && (
+        <div className="mb-8 bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <SubtitlePreview
+            selectedId={subtitleStyle?.id ?? null}
+            onSelect={setSubtitleStyle}
+          />
+          {subtitleStyle && (
+            <p className="mt-3 text-xs text-gray-500">
+              선택된 스타일: <span className="text-emerald-400">{subtitleStyle.name}</span> — 클립 메타데이터에 저장됩니다
+            </p>
+          )}
+        </div>
+      )}
+
       {/* No highlights */}
       {analysisState === 'done' && highlights.length === 0 && (
         <div className="text-center py-12 text-gray-500 mb-8">
@@ -407,6 +425,32 @@ export default function NewJobPage() {
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* FanClash Highlight Hints */}
+      {analysisState === 'done' && highlights.length > 0 && (
+        <div className="bg-purple-900/10 border border-purple-500/20 rounded-xl p-4 mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
+              <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-purple-300">FanClash 하이라이트 힌트</h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                FanClash 도네이션 피크 데이터로 하이라이트 정확도를 높일 수 있습니다
+              </p>
+            </div>
+            <button
+              disabled
+              className="text-xs px-3 py-2 rounded-lg bg-purple-600/20 text-purple-400 border border-purple-500/20 cursor-not-allowed opacity-60"
+              title="FanClash 계정 연동 후 사용 가능"
+            >
+              FanClash 연동
+            </button>
           </div>
         </div>
       )}
