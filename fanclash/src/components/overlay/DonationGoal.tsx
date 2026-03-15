@@ -18,6 +18,7 @@ export default function DonationGoal({ widget, preview }: { widget: Widget; prev
   const [justReached, setJustReached] = useState<{ amount: number; mission: string } | null>(null);
   const [amountBump, setAmountBump] = useState(false);
   const prevAmountRef = useRef(0);
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
   const [hasData, setHasData] = useState(false);
@@ -32,10 +33,12 @@ export default function DonationGoal({ widget, preview }: { widget: Widget; prev
       .eq('streamer_id', widget.streamer_id)
       .eq('active', true)
       .single()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) { console.error('DonationGoal query failed:', error); return; }
         if (data) {
           setCurrentAmount(data.current_amount);
-          setMilestones(data.milestones);
+          const sorted = [...(data.milestones || [])].sort((a: { amount: number }, b: { amount: number }) => a.amount - b.amount);
+          setMilestones(sorted);
           prevAmountRef.current = data.current_amount;
           setHasData(true);
         }
@@ -54,14 +57,22 @@ export default function DonationGoal({ widget, preview }: { widget: Widget; prev
       // Amount changed — trigger bump
       if (data.current_amount > prev) {
         setAmountBump(true);
-        setTimeout(() => setAmountBump(false), 600);
+        const bumpId = setTimeout(() => {
+          timeoutIdsRef.current.delete(bumpId);
+          setAmountBump(false);
+        }, 600);
+        timeoutIdsRef.current.add(bumpId);
       }
 
       // Milestone reached
       for (const m of data.milestones) {
         if (prev < m.amount && data.current_amount >= m.amount) {
           setJustReached(m);
-          setTimeout(() => setJustReached(null), 5000);
+          const reachedId = setTimeout(() => {
+            timeoutIdsRef.current.delete(reachedId);
+            setJustReached(null);
+          }, 5000);
+          timeoutIdsRef.current.add(reachedId);
           // Emit goal:complete event for event chaining
           socketRef.current?.emit('widget:event' as any, {
             type: 'goal:complete',
@@ -74,6 +85,14 @@ export default function DonationGoal({ widget, preview }: { widget: Widget; prev
     on('goal:update', handler);
   }, [ready]);
 
+  // Cleanup timeouts
+  useEffect(() => {
+    return () => {
+      timeoutIdsRef.current.forEach(id => clearTimeout(id));
+      timeoutIdsRef.current.clear();
+    };
+  }, []);
+
   // Show demo data in preview mode
   useEffect(() => {
     if (preview && !hasData) {
@@ -83,7 +102,7 @@ export default function DonationGoal({ widget, preview }: { widget: Widget; prev
   }, [preview, hasData]);
 
   const maxMilestone = milestones.length > 0 ? milestones[milestones.length - 1].amount : 100000;
-  const percentage = Math.min((currentAmount / maxMilestone) * 100, 100);
+  const percentage = maxMilestone > 0 ? Math.min((currentAmount / maxMilestone) * 100, 100) : 0;
 
   return (
     <div className={`p-4 ${theme.bg} ${theme.fontClass}`}>

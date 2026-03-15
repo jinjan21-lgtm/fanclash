@@ -208,6 +208,7 @@ export default function RankingBoard({ widget, preview }: { widget: Widget; prev
   const [newNick, setNewNick] = useState<string | null>(null);
   const [crownChanged, setCrownChanged] = useState(false);
   const prevRef = useRef<RankEntry[]>([]);
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
   const [hasData, setHasData] = useState(false);
@@ -222,7 +223,8 @@ export default function RankingBoard({ widget, preview }: { widget: Widget; prev
       .eq('streamer_id', widget.streamer_id)
       .order('total_donated', { ascending: false })
       .limit(10)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) { console.error('RankingBoard query failed:', error); return; }
         if (data && data.length > 0) {
           const initial = data.map(d => ({ nickname: d.nickname, total: d.total_donated }));
           setRankings(initial);
@@ -244,7 +246,11 @@ export default function RankingBoard({ widget, preview }: { widget: Widget; prev
       const newFirst = newRankings[0]?.nickname;
       if (prevFirst && newFirst && prevFirst !== newFirst) {
         setCrownChanged(true);
-        setTimeout(() => setCrownChanged(false), 3000);
+        const crownId = setTimeout(() => {
+          timeoutIdsRef.current.delete(crownId);
+          setCrownChanged(false);
+        }, 3000);
+        timeoutIdsRef.current.add(crownId);
       }
 
       for (const entry of newRankings) {
@@ -252,14 +258,24 @@ export default function RankingBoard({ widget, preview }: { widget: Widget; prev
         if (!prev) {
           // Brand new entry — golden glow for 3 seconds
           setNewNick(entry.nickname);
-          setTimeout(() => setNewNick(null), 3000);
+          const newId = setTimeout(() => {
+            timeoutIdsRef.current.delete(newId);
+            setNewNick(null);
+          }, 3000);
+          timeoutIdsRef.current.add(newId);
           setFlashNick(entry.nickname);
-          setTimeout(() => setFlashNick(null), 1200);
-          break;
+          const flashId = setTimeout(() => {
+            timeoutIdsRef.current.delete(flashId);
+            setFlashNick(null);
+          }, 1200);
+          timeoutIdsRef.current.add(flashId);
         } else if (entry.total > prev.total) {
           setFlashNick(entry.nickname);
-          setTimeout(() => setFlashNick(null), 1200);
-          break;
+          const flashId2 = setTimeout(() => {
+            timeoutIdsRef.current.delete(flashId2);
+            setFlashNick(null);
+          }, 1200);
+          timeoutIdsRef.current.add(flashId2);
         }
       }
       prevRef.current = newRankings;
@@ -268,6 +284,14 @@ export default function RankingBoard({ widget, preview }: { widget: Widget; prev
     };
     on('ranking:update', handler);
   }, [ready]);
+
+  // Cleanup timeouts
+  useEffect(() => {
+    return () => {
+      timeoutIdsRef.current.forEach(id => clearTimeout(id));
+      timeoutIdsRef.current.clear();
+    };
+  }, []);
 
   // Show demo data in preview mode when no real data
   useEffect(() => {

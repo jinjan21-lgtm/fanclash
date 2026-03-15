@@ -59,6 +59,7 @@ export default function DonationGacha({ widgetId, streamerId, config }: Donation
   const [screenFlash, setScreenFlash] = useState<string | null>(null);
   const [collection, setCollection] = useState<CollectionCounts>({ N: 0, R: 0, SR: 0, SSR: 0, UR: 0 });
   const resultId = useRef(0);
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const showHistory = (config?.showHistory as boolean) ?? true;
   const maxHistory = (config?.maxHistory as number) ?? 10;
   const showCollection = (config?.showCollection as boolean) ?? true;
@@ -83,7 +84,11 @@ export default function DonationGacha({ widgetId, streamerId, config }: Donation
     // Screen flash for SR+
     if (grade.screenEffect) {
       setScreenFlash(grade.color);
-      setTimeout(() => setScreenFlash(null), 500);
+      const flashId = setTimeout(() => {
+        timeoutIdsRef.current.delete(flashId);
+        setScreenFlash(null);
+      }, 500);
+      timeoutIdsRef.current.add(flashId);
     }
 
     // Update local collection count
@@ -106,14 +111,26 @@ export default function DonationGacha({ widgetId, streamerId, config }: Donation
     }
 
     // Add to history after animation
-    setTimeout(() => {
+    const histId = setTimeout(() => {
+      timeoutIdsRef.current.delete(histId);
       setResults(prev => [result, ...prev].slice(0, maxHistory));
-      setTimeout(() => {
+      const doneId = setTimeout(() => {
+        timeoutIdsRef.current.delete(doneId);
         setIsAnimating(false);
         setCurrentPull(null);
       }, 2000);
+      timeoutIdsRef.current.add(doneId);
     }, 1500);
+    timeoutIdsRef.current.add(histId);
   }, [isAnimating, maxHistory, minAmount, streamerId, widgetId]);
+
+  // Cleanup timeouts
+  useEffect(() => {
+    return () => {
+      timeoutIdsRef.current.forEach(id => clearTimeout(id));
+      timeoutIdsRef.current.clear();
+    };
+  }, []);
 
   // Expose for demo/socket
   useEffect(() => {
@@ -140,7 +157,7 @@ export default function DonationGacha({ widgetId, streamerId, config }: Donation
           triggerGacha(minAmount, (event.data?.nickname as string) || '이벤트 체인');
         }
       });
-    });
+    }).catch(err => console.error('Socket.IO init failed:', err));
     return () => { socket?.disconnect(); };
   }, [widgetId, triggerGacha, minAmount]);
 

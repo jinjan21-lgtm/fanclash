@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSocket } from '@/hooks/useSocket';
 import { themes } from '@/lib/themes';
@@ -17,6 +17,7 @@ const LEVEL_COLORS = [
 
 export default function AffinityBadge({ widget, preview }: { widget: Widget; preview?: boolean }) {
   const [levelUp, setLevelUp] = useState<{ nickname: string; level: number; title: string } | null>(null);
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
 
@@ -25,10 +26,22 @@ export default function AffinityBadge({ widget, preview }: { widget: Widget; pre
     const handler = (data: any) => {
       setLevelUp(data);
       playSound((widget.config as any)?.soundUrl);
-      setTimeout(() => setLevelUp(null), 5000);
+      const id = setTimeout(() => {
+        timeoutIdsRef.current.delete(id);
+        setLevelUp(null);
+      }, 5000);
+      timeoutIdsRef.current.add(id);
     };
     on('affinity:levelup', handler);
   }, [ready]);
+
+  // Cleanup timeouts
+  useEffect(() => {
+    return () => {
+      timeoutIdsRef.current.forEach(id => clearTimeout(id));
+      timeoutIdsRef.current.clear();
+    };
+  }, []);
 
   // Show demo data in preview mode
   useEffect(() => {
@@ -36,6 +49,8 @@ export default function AffinityBadge({ widget, preview }: { widget: Widget; pre
       setLevelUp({ nickname: '별빛소나기', level: 3, title: '첫사랑' });
     }
   }, [preview]);
+
+  const safeLevel = levelUp ? Math.min(Math.max(levelUp.level, 0), LEVEL_COLORS.length - 1) : 0;
 
   return (
     <div className={`${theme.bg} ${theme.fontClass}`}>
@@ -50,7 +65,7 @@ export default function AffinityBadge({ widget, preview }: { widget: Widget; pre
           >
             {/* Glow ring behind card */}
             <motion.div
-              className={`absolute -inset-3 rounded-3xl bg-gradient-to-r ${LEVEL_COLORS[levelUp.level] || LEVEL_COLORS[4]} opacity-30 blur-xl`}
+              className={`absolute -inset-3 rounded-3xl bg-gradient-to-r ${LEVEL_COLORS[safeLevel]} opacity-30 blur-xl`}
               animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
               transition={{ repeat: Infinity, duration: 2 }}
             />
@@ -84,7 +99,7 @@ export default function AffinityBadge({ widget, preview }: { widget: Widget; pre
                   transition={{ repeat: 2, duration: 0.8 }}
                   className="inline-block"
                 >
-                  {LEVEL_EMOJIS[levelUp.level] || '💎'}
+                  {LEVEL_EMOJIS[safeLevel]}
                 </motion.span>
               </motion.div>
 
@@ -93,7 +108,7 @@ export default function AffinityBadge({ widget, preview }: { widget: Widget; pre
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className={`font-bold text-lg bg-gradient-to-r ${LEVEL_COLORS[levelUp.level] || LEVEL_COLORS[4]} bg-clip-text text-transparent`}
+                className={`font-bold text-lg bg-gradient-to-r ${LEVEL_COLORS[safeLevel]} bg-clip-text text-transparent`}
               >
                 레벨 업!
               </motion.p>
@@ -113,7 +128,7 @@ export default function AffinityBadge({ widget, preview }: { widget: Widget; pre
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 400, delay: 0.6 }}
-                className={`inline-block mt-2 px-4 py-1 rounded-full bg-gradient-to-r ${LEVEL_COLORS[levelUp.level] || LEVEL_COLORS[4]}`}
+                className={`inline-block mt-2 px-4 py-1 rounded-full bg-gradient-to-r ${LEVEL_COLORS[safeLevel]}`}
               >
                 <span className="text-white font-bold text-sm">{levelUp.title}</span>
               </motion.div>
@@ -127,7 +142,7 @@ export default function AffinityBadge({ widget, preview }: { widget: Widget; pre
               >
                 {[...Array(5)].map((_, i) => (
                   <div key={i} className={`w-2 h-2 rounded-full ${
-                    i <= levelUp.level ? 'bg-yellow-400' : 'bg-gray-600'
+                    i <= safeLevel ? 'bg-yellow-400' : 'bg-gray-600'
                   }`} />
                 ))}
               </motion.div>

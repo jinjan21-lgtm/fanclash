@@ -73,6 +73,7 @@ export default function DonationAlert({ widget, preview }: { widget: Widget; pre
   const [current, setCurrent] = useState<AlertData | null>(null);
   const queueRef = useRef<AlertData[]>([]);
   const busyRef = useRef(false);
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
 
@@ -103,11 +104,17 @@ export default function DonationAlert({ widget, preview }: { widget: Widget; pre
     }
 
     // Auto-dismiss
-    setTimeout(() => {
+    const dismissId = setTimeout(() => {
+      timeoutIdsRef.current.delete(dismissId);
       setCurrent(null);
       // Small gap between queued alerts
-      setTimeout(showNext, 400);
+      const gapId = setTimeout(() => {
+        timeoutIdsRef.current.delete(gapId);
+        showNext();
+      }, 400);
+      timeoutIdsRef.current.add(gapId);
     }, alertDuration);
+    timeoutIdsRef.current.add(dismissId);
   }, [alertDuration, cfg.soundUrl, ttsEnabled, ttsVoice]);
 
   const enqueue = useCallback(
@@ -127,6 +134,14 @@ export default function DonationAlert({ widget, preview }: { widget: Widget; pre
     };
     on('donation:new', handler);
   }, [ready, enqueue]);
+
+  // Cleanup timeouts
+  useEffect(() => {
+    return () => {
+      timeoutIdsRef.current.forEach(id => clearTimeout(id));
+      timeoutIdsRef.current.clear();
+    };
+  }, []);
 
   // Preview mode
   useEffect(() => {

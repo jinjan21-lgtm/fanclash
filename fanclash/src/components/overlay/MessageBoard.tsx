@@ -42,7 +42,8 @@ export default function MessageBoard({ widget, preview }: { widget: Widget; prev
       .not('message', 'eq', '')
       .order('created_at', { ascending: false })
       .limit(maxVisible)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) { console.error('MessageBoard query failed:', error); return; }
         if (data && data.length > 0) {
           const loaded = data.reverse().map(d => ({
             nickname: d.fan_nickname,

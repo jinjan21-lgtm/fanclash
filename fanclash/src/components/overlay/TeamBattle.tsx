@@ -245,6 +245,7 @@ export default function TeamBattle({ widget, preview }: { widget: Widget; previe
   const [prevTotals, setPrevTotals] = useState<Record<number, number>>({});
   const [flashIdx, setFlashIdx] = useState<number | null>(null);
   const [hasData, setHasData] = useState(false);
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
 
@@ -260,7 +261,8 @@ export default function TeamBattle({ widget, preview }: { widget: Widget; previe
       .order('created_at', { ascending: false })
       .limit(1)
       .single()
-      .then(async ({ data: battleData }) => {
+      .then(async ({ data: battleData, error }) => {
+        if (error) { console.error('TeamBattle query failed:', error); return; }
         if (!battleData) return;
         setTeamNames(battleData.team_names || []);
         const { data: members } = await supabase
@@ -294,7 +296,11 @@ export default function TeamBattle({ widget, preview }: { widget: Widget; previe
         const prev = prevTotals[Number(idx)] || 0;
         if (team.total > prev) {
           setFlashIdx(Number(idx));
-          setTimeout(() => setFlashIdx(null), 1200);
+          const flashId = setTimeout(() => {
+            timeoutIdsRef.current.delete(flashId);
+            setFlashIdx(null);
+          }, 1200);
+          timeoutIdsRef.current.add(flashId);
         }
       }
       const totals: Record<number, number> = {};
@@ -308,6 +314,14 @@ export default function TeamBattle({ widget, preview }: { widget: Widget; previe
     };
     on('team_battle:update', handler);
   }, [ready, prevTotals]);
+
+  // Cleanup timeouts
+  useEffect(() => {
+    return () => {
+      timeoutIdsRef.current.forEach(id => clearTimeout(id));
+      timeoutIdsRef.current.clear();
+    };
+  }, []);
 
   // Show demo data in preview mode
   useEffect(() => {
@@ -325,8 +339,8 @@ export default function TeamBattle({ widget, preview }: { widget: Widget; previe
 
   // Compute closeness for VS intensity (0 = one-sided, 1 = perfectly tied)
   const teamEntries = Object.entries(teams);
-  const closeness = teamEntries.length >= 2
-    ? 1 - Math.abs((teamEntries[0][1].total || 0) - (teamEntries[1][1].total || 0)) / Math.max(maxTotal, 1)
+  const closeness = teamEntries.length >= 2 && maxTotal > 0
+    ? 1 - Math.abs((teamEntries[0][1].total || 0) - (teamEntries[1][1].total || 0)) / maxTotal
     : 0;
 
   // Percentages for donut

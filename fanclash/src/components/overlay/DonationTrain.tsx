@@ -7,9 +7,9 @@ interface DonationTrainProps {
 }
 
 export default function DonationTrain({ widgetId, config }: DonationTrainProps) {
-  const comboWindow = ((config?.comboWindow as number) || 30) * 1000;
-  const minAmount = (config?.minAmount as number) || 1000;
-  const effectIntensity = (config?.effectIntensity as string) || 'medium';
+  const comboWindow = (typeof config?.comboWindow === 'number' ? config.comboWindow : 30) * 1000;
+  const minAmount = typeof config?.minAmount === 'number' ? config.minAmount : 1000;
+  const effectIntensity = typeof config?.effectIntensity === 'string' ? config.effectIntensity : 'medium';
 
   const [comboCount, setComboCount] = useState(0);
   const [lastDonor, setLastDonor] = useState<string | null>(null);
@@ -17,6 +17,7 @@ export default function DonationTrain({ widgetId, config }: DonationTrainProps) 
   const [celebrate, setCelebrate] = useState(false);
   const comboTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const donorTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const socketRef = useRef<ReturnType<typeof import('socket.io-client').io> | null>(null);
 
   const intensityScale = effectIntensity === 'low' ? 0.5 : effectIntensity === 'high' ? 1.5 : 1;
@@ -73,13 +74,15 @@ export default function DonationTrain({ widgetId, config }: DonationTrainProps) 
         if (event.action === 'train:celebrate') {
           // Special celebration effect + combo reset
           setCelebrate(true);
-          setTimeout(() => {
+          const celId = setTimeout(() => {
+            timeoutIdsRef.current.delete(celId);
             setCelebrate(false);
             setComboCount(0);
           }, 3000);
+          timeoutIdsRef.current.add(celId);
         }
       });
-    });
+    }).catch(err => console.error('Socket.IO init failed:', err));
     return () => { socket?.disconnect(); socketRef.current = null; };
   }, [widgetId, triggerDonation]);
 
@@ -88,6 +91,8 @@ export default function DonationTrain({ widgetId, config }: DonationTrainProps) 
     return () => {
       clearTimeout(comboTimerRef.current);
       clearTimeout(donorTimerRef.current);
+      timeoutIdsRef.current.forEach(id => clearTimeout(id));
+      timeoutIdsRef.current.clear();
     };
   }, []);
 

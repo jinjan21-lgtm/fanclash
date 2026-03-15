@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSocket } from '@/hooks/useSocket';
 import { themes } from '@/lib/themes';
@@ -9,6 +9,7 @@ import { playSound } from '@/lib/sound';
 export default function ThroneAlert({ widget, preview }: { widget: Widget; preview?: boolean }) {
   const [alert, setAlert] = useState<{ previous: string; current: string } | null>(null);
   const [throneCount, setThroneCount] = useState(0);
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
   const duration = ((widget.config as any)?.alertDuration as number) || 5;
@@ -16,13 +17,26 @@ export default function ThroneAlert({ widget, preview }: { widget: Widget; previ
   useEffect(() => {
     if (!ready) return;
     const handler = (data: any) => {
+      if (!data?.previous || !data?.current) return;
       setAlert({ previous: data.previous, current: data.current });
       setThroneCount(prev => prev + 1);
       playSound((widget.config as any)?.soundUrl);
-      setTimeout(() => setAlert(null), duration * 1000);
+      const id = setTimeout(() => {
+        timeoutIdsRef.current.delete(id);
+        setAlert(null);
+      }, duration * 1000);
+      timeoutIdsRef.current.add(id);
     };
     on('throne:change', handler);
   }, [ready, duration]);
+
+  // Cleanup timeouts
+  useEffect(() => {
+    return () => {
+      timeoutIdsRef.current.forEach(id => clearTimeout(id));
+      timeoutIdsRef.current.clear();
+    };
+  }, []);
 
   // Show demo alert in preview mode
   useEffect(() => {
