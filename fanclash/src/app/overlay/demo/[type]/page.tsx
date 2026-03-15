@@ -21,6 +21,7 @@ import DonationSlots from '@/components/overlay/DonationSlots';
 import DonationMeter from '@/components/overlay/DonationMeter';
 import DonationQuiz from '@/components/overlay/DonationQuiz';
 import DonationRPG from '@/components/overlay/DonationRPG';
+import DonationMission from '@/components/overlay/DonationMission';
 import { useEffect, useRef } from 'react';
 import type { Widget, WidgetType } from '@/types';
 
@@ -324,6 +325,59 @@ function DonationRPGDemo() {
   return <DonationRPG config={{ xpRate: 5 }} />;
 }
 
+// Demo component for DonationMission — simulates missions with progress
+function DonationMissionDemo() {
+  const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
+  const DEMO_NAMES = ['별빛팬', '후원왕', '새벽감성', '치킨러버', '고래밥', '불꽃소녀', '달빛기사'];
+  const DEMO_AMOUNTS = [1000, 2000, 3000, 5000, 10000];
+
+  useEffect(() => {
+    // Add a demo mission after 500ms
+    const timeout = setTimeout(() => {
+      const mission = (window as unknown as Record<string, { addMission: (m: Record<string, unknown>) => void; handleDonation: (a: number, n: string) => void }>).__donationMission;
+      if (mission?.addMission) {
+        mission.addMission({
+          id: 'demo-1',
+          title: '100명의 후원자 모으기',
+          goal_type: 'donation_count',
+          goal_value: 20,
+          current_value: 12,
+          reward: '노래 한 곡',
+          time_limit_minutes: 60,
+          started_at: new Date().toISOString(),
+          status: 'active',
+        });
+        mission.addMission({
+          id: 'demo-2',
+          title: '총 후원 50,000원 달성',
+          goal_type: 'total_amount',
+          goal_value: 50000,
+          current_value: 25000,
+          reward: '게임 한 판',
+          status: 'active',
+          started_at: new Date().toISOString(),
+        });
+      }
+
+      // Simulate donations
+      intervalRef.current = setInterval(() => {
+        if (mission?.handleDonation) {
+          const name = DEMO_NAMES[Math.floor(Math.random() * DEMO_NAMES.length)];
+          const amount = DEMO_AMOUNTS[Math.floor(Math.random() * DEMO_AMOUNTS.length)];
+          mission.handleDonation(amount, name);
+        }
+      }, 2000 + Math.random() * 2000);
+    }, 500);
+
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(intervalRef.current);
+    };
+  }, []);
+
+  return <DonationMission config={{ showReward: true, maxVisible: 3 }} />;
+}
+
 const DEMO_WIDGET: Omit<Widget, 'type'> = {
   id: 'demo',
   streamer_id: 'demo',
@@ -361,6 +415,7 @@ export default function DemoOverlayPage({ params }: { params: Promise<{ type: st
       case 'meter': return <DonationMeterDemo />;
       case 'quiz': return <DonationQuizDemo />;
       case 'rpg': return <DonationRPGDemo />;
+      case 'mission': return <DonationMissionDemo />;
       default: return null;
     }
   };

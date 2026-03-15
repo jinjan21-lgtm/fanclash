@@ -26,6 +26,7 @@ import SlotsSettings from './settings/SlotsSettings';
 import MeterSettings from './settings/MeterSettings';
 import QuizSettings from './settings/QuizSettings';
 import RPGSettings from './settings/RPGSettings';
+import MissionSettings from './settings/MissionSettings';
 import StylePresets from './settings/StylePresets';
 import ThemeEditor from './settings/ThemeEditor';
 
@@ -58,6 +59,7 @@ function getDefaultTitle(type: WidgetType): string {
     meter: '핫/콜드 미터',
     quiz: '팬 퀴즈',
     rpg: '팬 RPG',
+    mission: '팬 미션',
   };
   return defaults[type];
 }
@@ -234,6 +236,7 @@ export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }:
             {widget.type === 'meter' && <MeterSettings config={config} onChange={setConfig} />}
             {widget.type === 'quiz' && <QuizSettings config={config} onChange={setConfig} />}
             {widget.type === 'rpg' && <RPGSettings config={config} onChange={setConfig} />}
+            {widget.type === 'mission' && <MissionSettings config={config} onChange={setConfig} />}
           </div>
 
           {/* Widget Style (Pro only) */}

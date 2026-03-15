@@ -7,6 +7,7 @@ import WidgetPreviewModal from './WidgetPreviewModal';
 import OBSGuideModal from './OBSGuideModal';
 import BattleControl from './BattleControl';
 import QuizControl from './QuizControl';
+import MissionControl from './MissionControl';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 
 const WIDGET_LABELS: Record<WidgetType, { name: string; desc: string }> = {
@@ -30,6 +31,7 @@ const WIDGET_LABELS: Record<WidgetType, { name: string; desc: string }> = {
   meter: { name: '핫/콜드 미터', desc: '실시간 후원 온도 게이지' },
   quiz: { name: '팬 퀴즈', desc: '도네이션 메시지로 퀴즈 맞추기' },
   rpg: { name: '팬 RPG', desc: '후원으로 캐릭터 레벨업 + 장비 성장' },
+  mission: { name: '팬 미션', desc: '팬들이 함께 달성하는 공동 미션' },
 };
 
 export default function WidgetCard({ widget, plan, onUpdate }: { widget: Widget; plan?: string; onUpdate: () => void }) {
@@ -43,8 +45,10 @@ export default function WidgetCard({ widget, plan, onUpdate }: { widget: Widget;
   const [copied, setCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showQuizControl, setShowQuizControl] = useState(false);
+  const [showMissionControl, setShowMissionControl] = useState(false);
   const isBattleType = widget.type === 'battle' || widget.type === 'team_battle';
   const isQuizType = widget.type === 'quiz';
+  const isMissionType = widget.type === 'mission';
 
   const toggleEnabled = async () => {
     await supabase.from('widgets').update({ enabled: !widget.enabled }).eq('id', widget.id);
@@ -93,6 +97,11 @@ export default function WidgetCard({ widget, plan, onUpdate }: { widget: Widget;
             <button onClick={() => setShowQuizControl(true)}
               className="flex-1 py-2 bg-purple-600 rounded-lg text-sm hover:bg-purple-700 font-medium">
               퀴즈 관리
+            </button>
+          ) : isMissionType ? (
+            <button onClick={() => setShowMissionControl(true)}
+              className="flex-1 py-2 bg-purple-600 rounded-lg text-sm hover:bg-purple-700 font-medium">
+              미션 관리
             </button>
           ) : (
             <button onClick={() => setShowSettings(true)}
@@ -178,6 +187,18 @@ export default function WidgetCard({ widget, plan, onUpdate }: { widget: Widget;
               <button onClick={() => setShowQuizControl(false)} className="text-gray-400 hover:text-white text-2xl">&times;</button>
             </div>
             <QuizControl widget={widget} onUpdate={onUpdate} />
+          </div>
+        </div>
+      )}
+      {showMissionControl && isMissionType && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowMissionControl(false)}>
+          <div className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto p-6"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">미션 관리</h3>
+              <button onClick={() => setShowMissionControl(false)} className="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <MissionControl widget={widget} onUpdate={onUpdate} />
           </div>
         </div>
       )}
@@ -280,6 +301,10 @@ function ConfigSummary({ widget }: { widget: Widget }) {
     case 'rpg':
       if (config.xpRate) items.push(`XP ${config.xpRate}x`);
       if (config.showEquipment === false) items.push('장비 숨김');
+      break;
+    case 'mission':
+      if (config.maxVisible) items.push(`최대 ${config.maxVisible}개 표시`);
+      if (config.showReward === false) items.push('보상 숨김');
       break;
   }
 

@@ -23,6 +23,7 @@ const PREVIEW_SIZES: Record<WidgetType, { w: number; h: number }> = {
   meter: { w: 400, h: 500 },
   quiz: { w: 500, h: 400 },
   rpg: { w: 400, h: 500 },
+  mission: { w: 500, h: 400 },
 };
 
 interface Props {
