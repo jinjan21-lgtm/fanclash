@@ -1,5 +1,78 @@
 # 작업 일지
 
+## 2026-03-15 (온보딩 + 테스트 시뮬레이터 + 디스코드 웹훅)
+
+### 완료한 태스크
+
+#### Feature 1: 온보딩 위자드
+- [x] /dashboard/onboarding 3단계 가이드 페이지 생성
+  - 상세: Step 1 플랫폼 연동 (5개 플랫폼 카드, 키/토큰 입력), Step 2 위젯 선택 (6개 인기 위젯 체크박스, 전부추가), Step 3 OBS 설정 (단계별 가이드, 위젯별 URL 원클릭 복사, 추천 크기)
+  - 파일: fanclash/src/app/dashboard/onboarding/page.tsx
+- [x] 대시보드 메인에 온보딩 배너 추가 (위젯 0개 + 연동 0개일 때 표시)
+  - 파일: fanclash/src/app/dashboard/page.tsx
+- [x] 완료 시 localStorage 플래그 설정 (fanclash_onboarding_complete)
+
+#### Feature 2: 테스트 도네이션 시뮬레이터
+- [x] /dashboard/test 전용 테스트 페이지 생성
+  - 상세: 수동 테스트 (닉네임/금액/메시지 + 프리셋 버튼), 연속 테스트 (1/3/5초 간격, 5/10/무한 횟수), 랜덤 닉네임 8종, 가중치 랜덤 금액, 위젯 데모 iframe 미리보기 (10개 탭), 전송 기록
+  - 파일: fanclash/src/app/dashboard/test/page.tsx
+- [x] 사이드바 "테스트 후원" → "테스트" 변경, /dashboard/test로 링크
+  - 파일: fanclash/src/components/dashboard/Sidebar.tsx
+
+#### Feature 3: 디스코드 웹훅 연동
+- [x] DB 마이그레이션 (discord_webhook_url, discord_config jsonb)
+  - 파일: fanclash/supabase/migrations/014_discord_webhook.sql
+- [x] 디스코드 알림 유틸리티 (sendDiscordNotification)
+  - 파일: fanclash/src/lib/discord.ts
+- [x] API 라우트 (POST /api/discord/webhook)
+  - 파일: fanclash/src/app/api/discord/webhook/route.ts
+- [x] 설정 페이지에 "디스코드 알림" 섹션 추가
+  - 상세: Webhook URL 입력, 4종 알림 토글 (후원/배틀/미션/업적), 저장, 테스트 메시지 전송
+  - 파일: fanclash/src/app/dashboard/settings/page.tsx
+
+#### 빌드 확인
+- [x] 빌드 성공 (0 에러)
+
+---
+
+## 2026-03-15 (프로덕트 머지: ClipForge + ShieldChat → FanClash)
+
+### 완료한 태스크
+
+#### 클립 메이커 통합 (구 ClipForge)
+- [x] 핵심 라이브러리 이동 (video-processor, audio-analyzer, subtitle-styles)
+- [x] /dashboard/clips — 클립 목록 + 관리
+- [x] /dashboard/clips/new — 파일 업로드 → 하이라이트 감지 → 클립 추출 → 다운로드
+- [x] COEP/COOP 헤더 (clips 라우트 전용, auth 영향 없음)
+- [x] 자막 스타일 프리셋 선택 UI
+
+#### 댓글 방어 통합 (구 ShieldChat)
+- [x] 핵심 라이브러리 이동 (toxicity, pdf-generator)
+- [x] /dashboard/shield — 개요 통계 + 심각도 분포
+- [x] /dashboard/shield/comments — 목록/추가/분석
+- [x] /dashboard/shield/reports — 리포트 생성 + PDF 다운로드
+- [x] /dashboard/shield/legal — 법적 대응 가이드 5개 섹션
+
+#### 통합 UI
+- [x] 사이드바에 "크리에이터 도구" 섹션 추가 (클립/댓글방어/법적가이드)
+- [x] 랜딩 페이지 "올인원" 섹션 추가
+- [x] Pro 요금제에 클립+댓글방어 포함
+- [x] ComingSoon 컴포넌트 (준비 중 플레이스홀더)
+
+#### 준비 중 표기
+- Whisper API 자막 → 준비 중
+- YouTube 댓글 자동 수집 → 준비 중
+- Claude API 문맥 분석 → 준비 중
+- 도네이션 피크 자동 연동 → 준비 중
+
+#### 문서
+- [x] docs/INTEGRATION_STATUS.md — 작동/미작동 기능 상세 문서
+
+#### 빌드 + 배포
+- [x] FanClash 44페이지 빌드 성공, GitHub push → 자동 배포
+
+---
+
 ## 2026-03-15 (팬 미션 + 크리에이터 탐색 + 업적 시스템)
 
 ### 완료한 태스크

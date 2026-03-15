@@ -1,6 +1,6 @@
 # 남은 업무
 
-> 마지막 업데이트: 2026-03-15 (팬 미션 + 크리에이터 탐색 + 업적 시스템)
+> 마지막 업데이트: 2026-03-15 (온보딩 + 테스트 시뮬레이터 + 디스코드 웹훅)
 
 ## 보류 (블로커 있음)
 - [ ] Toss Payments 구독 결제 연동 (3개 프로덕트)
@@ -17,6 +17,11 @@
 - [ ] ShieldChat YouTube 댓글 자동 수집 (YouTube Data API — 무료 할당량 내)
 
 ## 보통 (코드)
+- [x] FanClash 온보딩 위자드 (3단계 가이드) <- 완료
+- [x] FanClash 테스트 도네이션 시뮬레이터 <- 완료
+- [x] FanClash 디스코드 웹훅 연동 <- 완료
+- [ ] FanClash 디스코드 알림 서버사이드 자동 발송 (도네이션 처리 시 webhook 호출)
+  - 참고: discord.ts 유틸리티 준비 완료, 서버 사이드 donation processor 연동 필요
 - [x] FanClash 팬 미션 시스템 (mission 위젯, overlay, control, API) <- 완료
 - [x] FanClash 크리에이터 둘러보기 페이지 (/explore) <- 완료
 - [x] FanClash 업적/뱃지 시스템 (20개 업적, API, 팬 프로필 표시) <- 완료
