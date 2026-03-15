@@ -11,10 +11,14 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.99.0",
     "dotenv": "^17.3.1",
     "framer-motion": "^12.35.2",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.0",
     "matter-js": "^0.20.0",
     "next": "16.1.6",
     "react": "19.2.3",
