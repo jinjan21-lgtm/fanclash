@@ -30,7 +30,18 @@
   - 팀배틀 생성/시작/종료 서버 로직 + team_battle:update emit
   - 도네이션 시 자동 팀 배정 + 금액 반영
 
+## 낮음 (클립/쉴드 통합 후속)
+- [ ] ClipForge/ShieldChat → FanClash 리다이렉트 설정 (원본 앱에서 /dashboard/clips, /dashboard/shield로)
+- [ ] Whisper API 자막 생성 연동 (OpenAI API 키 필요)
+- [ ] YouTube 댓글 자동 수집 (YouTube Data API 키 필요)
+- [ ] Claude API 문맥 기반 독성 분석 (Anthropic API 키 필요)
+- [ ] 도네이션 피크 → 클립 하이라이트 힌트 자동 연동
+- [ ] 클립 Supabase Storage 업로드 + cf_clips DB 저장
+- [ ] 소셜 미디어 직접 업로드 (TikTok/YouTube API)
+
 ## 완료된 항목 (참고용)
+- [x] ClipForge → FanClash 통합 (클립 메이커 UI + FFmpeg WASM)
+- [x] ShieldChat → FanClash 통합 (댓글 방어 + PDF 리포트 + 법적 가이드)
 - [x] Hype overlay config wiring (Music/Gacha/Territory/Weather)
 - [x] Zod form validation (schemas + WidgetSettingsModal 검증)
 - [x] Modal focus trap + ESC close (ConfirmModal, WidgetSettingsModal)

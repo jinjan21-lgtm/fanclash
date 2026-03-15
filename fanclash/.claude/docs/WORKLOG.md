@@ -1,5 +1,44 @@
 # 작업 일지
 
+## 2026-03-15 (세션 11)
+
+### 완료한 태스크
+- [x] ClipForge → FanClash 통합 (클립 메이커)
+  - 상세:
+    1. video-processor.ts, audio-analyzer.ts, subtitle-styles.ts를 src/lib/에 복사
+    2. SubtitlePreview.tsx 컴포넌트 복사
+    3. /dashboard/clips (클립 목록) 페이지 생성
+    4. /dashboard/clips/new (새 클립 만들기) 페이지 생성 — 파일 업로드, 오디오 분석, FFmpeg 클립 추출
+    5. next.config.ts에 clips 라우트용 COEP/COOP 헤더 추가
+    6. @ffmpeg/ffmpeg, @ffmpeg/util 의존성 설치
+  - 파일: src/lib/video-processor.ts, audio-analyzer.ts, subtitle-styles.ts, SubtitlePreview.tsx, clips/page.tsx, clips/new/page.tsx, next.config.ts
+
+- [x] ShieldChat → FanClash 통합 (댓글 방어)
+  - 상세:
+    1. toxicity.ts, pdf-generator.ts를 src/lib/에 복사
+    2. ComingSoon.tsx 재사용 컴포넌트 생성
+    3. /dashboard/shield (대시보드 개요) 페이지 생성
+    4. /dashboard/shield/comments (댓글 목록 + 필터) 페이지 생성
+    5. /dashboard/shield/comments/new (단건 + 일괄 입력 + 분석) 페이지 생성
+    6. /dashboard/shield/reports (리포트 목록) 페이지 생성
+    7. /dashboard/shield/reports/new (댓글 선택 → 리포트 생성) 페이지 생성
+    8. /dashboard/shield/reports/[id] (리포트 상세 + PDF 다운로드) 페이지 생성
+    9. /dashboard/shield/legal (법적 대응 가이드 5섹션) 페이지 생성
+    10. html2canvas, jspdf 의존성 설치
+  - 파일: src/lib/toxicity.ts, pdf-generator.ts, ComingSoon.tsx, shield/page.tsx, comments/page.tsx, comments/new/page.tsx, reports/page.tsx, reports/new/page.tsx, reports/[id]/page.tsx, legal/page.tsx
+
+- [x] 사이드바 + 랜딩페이지 + 가격 업데이트
+  - 상세:
+    1. Sidebar.tsx에 "크리에이터 도구" 섹션 추가 (클립 메이커, 새 클립, 댓글 방어, 법적 가이드)
+    2. 랜딩페이지에 "위젯뿐만 아니라" 섹션 추가 (클립 메이커 + 댓글 방어 피처 카드)
+    3. PricingCards Pro 플랜에 "클립 메이커 (무제한 클립)", "댓글 방어 (무제한 분석 + PDF 리포트)" 추가
+  - 파일: Sidebar.tsx, page.tsx, PricingCards.tsx
+
+- [x] docs/INTEGRATION_STATUS.md 작성
+  - 상세: 작동 기능, 준비 중 기능 (API 키 필요), DB 테이블 참고 문서화
+
+---
+
 ## 2026-03-15 (세션 10)
 
 ### 완료한 태스크
