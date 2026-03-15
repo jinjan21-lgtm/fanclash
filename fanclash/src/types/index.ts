@@ -97,10 +97,13 @@ export interface ServerToClientEvents {
   'battle:finished': (data: { winner: string; benefit: string }) => void;
   'team_battle:update': (data: { battle: TeamBattle; teams: Record<number, { total: number; members: TeamBattleMember[] }> }) => void;
   'donation:new': (data: Donation) => void;
+  'widget:chain-action': (data: { type: string; data: Record<string, unknown> }) => void;
 }
 
 export interface ClientToServerEvents {
   'widget:subscribe': (widgetId: string) => void;
+  'widget:event': (data: { type: string; data: Record<string, unknown>; streamerId?: string }) => void;
+  'live:subscribe': (streamerId: string) => void;
   'donation:add': (data: { streamer_id: string; fan_nickname: string; amount: number; message?: string }) => void;
   'battle:create': (data: { streamer_id: string; benefit: string; min_amount: number; time_limit: number }) => void;
   'battle:join': (data: { battle_id: string; nickname: string; amount: number }) => void;

@@ -116,6 +116,28 @@ io.on('connection', (socket) => {
     socket.join(`streamer:${streamerId}`);
   });
 
+  // Widget event chain relay — broadcast widget events to all widgets for the same streamer
+  socket.on('widget:event' as any, (data: { type: string; data: Record<string, unknown>; streamerId?: string }) => {
+    // Determine streamer room from the rooms this socket has joined
+    const rooms = Array.from(socket.rooms);
+    const streamerRoom = data.streamerId
+      ? `streamer:${data.streamerId}`
+      : rooms.find(r => r.startsWith('streamer:'));
+    if (streamerRoom) {
+      io.to(streamerRoom).emit('widget:chain-action', {
+        type: data.type,
+        data: data.data,
+      });
+    }
+  });
+
+  // Live spectator subscription — fans can watch live widget states without auth
+  socket.on('live:subscribe' as any, (streamerId: string) => {
+    if (typeof streamerId === 'string' && streamerId.length > 0) {
+      socket.join(`streamer:${streamerId}`);
+    }
+  });
+
   handleDonation(io, socket, supabase);
   handleBattle(io, socket, supabase);
   handleTeamBattle(io, socket, supabase);
