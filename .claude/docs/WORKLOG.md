@@ -1,5 +1,27 @@
 # 작업 일지
 
+## 2026-03-15 (위젯 UX 버그 수정 — 사운드/설명/데모/TTS)
+
+### 완료한 태스크
+
+#### Fix 1: ThroneAlert 사운드 설정 불일치 (CRITICAL)
+- [x] Settings는 config.sound 저장, Overlay는 config.soundUrl 읽음 → 사운드 절대 안 재생
+- [x] sound.ts에 playBeep() 함수 추가 (Web Audio API, 파일 불필요)
+- [x] ThroneAlert.tsx에서 config.sound 읽어 playBeep(default/fanfare) 호출로 변경
+
+#### Fix 2: 위젯 설명 개선
+- [x] widgets/page.tsx + WidgetCard.tsx 양쪽 WIDGET_LABELS 업데이트
+- [x] physics, meter, affinity, territory, messages 설명을 사용자 친화적으로 변경
+
+#### Fix 3: 데모 페이지 빈 화면 수정
+- [x] EventTimer: preview 모드에서 자동 타이머 시작 추가
+- [x] BattleArena/TeamBattle/MessageBoard: 기존 preview 데모 데이터 동작 확인 (정상)
+
+#### Fix 4: AlertSettings TTS 음성 선택
+- [x] TTS ON 시 음성 선택 드롭다운 추가 (한국어/영어/일본어)
+
+---
+
 ## 2026-03-15 (위젯 고심각도 버그 4파일 수정)
 
 ### 완료한 태스크
