@@ -7,7 +7,7 @@ import { isWidgetLocked, FREE_ALLOWED_WIDGETS } from '@/lib/plan';
 import CollabBattleManager from '@/components/dashboard/CollabBattleManager';
 import type { Widget, WidgetType } from '@/types';
 
-const ALL_WIDGET_TYPES: WidgetType[] = ['alert', 'ranking', 'throne', 'goal', 'affinity', 'battle', 'team_battle', 'timer', 'messages', 'roulette', 'music', 'gacha', 'physics', 'territory', 'weather', 'train', 'slots', 'meter'];
+const ALL_WIDGET_TYPES: WidgetType[] = ['alert', 'ranking', 'throne', 'goal', 'affinity', 'battle', 'team_battle', 'timer', 'messages', 'roulette', 'music', 'gacha', 'physics', 'territory', 'weather', 'train', 'slots', 'meter', 'quiz'];
 
 const WIDGET_LABELS: Record<WidgetType, { name: string; desc: string }> = {
   alert: { name: '후원 알림', desc: '후원 시 풀스크린 알림 + TTS' },
@@ -28,6 +28,7 @@ const WIDGET_LABELS: Record<WidgetType, { name: string; desc: string }> = {
   train: { name: '도네이션 트레인', desc: '연속 후원 콤보 카운터' },
   slots: { name: '슬롯머신', desc: '후원 시 슬롯머신 돌리기' },
   meter: { name: '핫/콜드 미터', desc: '실시간 후원 온도 게이지' },
+  quiz: { name: '팬 퀴즈', desc: '도네이션 메시지로 퀴즈 맞추기' },
 };
 
 export default function WidgetsPage() {
@@ -185,6 +186,7 @@ const PREVIEW_SIZES: Record<WidgetType, { w: number; h: number }> = {
   train: { w: 500, h: 400 },
   slots: { w: 500, h: 400 },
   meter: { w: 400, h: 500 },
+  quiz: { w: 500, h: 400 },
 };
 
 function LockedWidgetPreview({ type, onClose }: { type: WidgetType; onClose: () => void }) {

@@ -21,6 +21,7 @@ const PREVIEW_SIZES: Record<WidgetType, { w: number; h: number }> = {
   train: { w: 500, h: 400 },
   slots: { w: 500, h: 400 },
   meter: { w: 400, h: 500 },
+  quiz: { w: 500, h: 400 },
 };
 
 interface Props {

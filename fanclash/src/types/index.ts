@@ -1,4 +1,4 @@
-export type WidgetType = 'ranking' | 'throne' | 'goal' | 'affinity' | 'battle' | 'team_battle' | 'timer' | 'messages' | 'alert' | 'roulette' | 'music' | 'gacha' | 'physics' | 'territory' | 'weather' | 'train' | 'slots' | 'meter';
+export type WidgetType = 'ranking' | 'throne' | 'goal' | 'affinity' | 'battle' | 'team_battle' | 'timer' | 'messages' | 'alert' | 'roulette' | 'music' | 'gacha' | 'physics' | 'territory' | 'weather' | 'train' | 'slots' | 'meter' | 'quiz';
 export type ThemeName = 'modern' | 'game' | 'girlcam';
 export type BattleStatus = 'recruiting' | 'active' | 'finished' | 'cancelled';
 

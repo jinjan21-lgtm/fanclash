@@ -21,6 +21,7 @@ import DonationWeather from '@/components/overlay/DonationWeather';
 import DonationTrain from '@/components/overlay/DonationTrain';
 import DonationSlots from '@/components/overlay/DonationSlots';
 import DonationMeter from '@/components/overlay/DonationMeter';
+import DonationQuiz from '@/components/overlay/DonationQuiz';
 import { sanitizeCSS } from '@/lib/sanitize-css';
 
 export default function OverlayPage({ params }: { params: Promise<{ widgetId: string }> }) {
@@ -53,6 +54,7 @@ export default function OverlayPage({ params }: { params: Promise<{ widgetId: st
       case 'train': return <DonationTrain widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
       case 'slots': return <DonationSlots widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
       case 'meter': return <DonationMeter widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
+      case 'quiz': return <DonationQuiz widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
       default: return null;
     }
   };

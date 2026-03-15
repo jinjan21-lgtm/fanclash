@@ -19,6 +19,7 @@ import DonationWeather from '@/components/overlay/DonationWeather';
 import DonationTrain from '@/components/overlay/DonationTrain';
 import DonationSlots from '@/components/overlay/DonationSlots';
 import DonationMeter from '@/components/overlay/DonationMeter';
+import DonationQuiz from '@/components/overlay/DonationQuiz';
 import { useEffect, useRef } from 'react';
 import type { Widget, WidgetType } from '@/types';
 
@@ -264,6 +265,34 @@ function DonationMeterDemo() {
   return <DonationMeter config={{}} />;
 }
 
+// Demo component for DonationQuiz — simulates a quiz session
+function DonationQuizDemo() {
+  const DEMO_NAMES = ['별빛팬', '후원왕', '새벽감성', '치킨러버', '고래밥', '불꽃소녀', '달빛기사'];
+  const DEMO_AMOUNTS = [1000, 2000, 3000, 5000, 10000];
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const quiz = (window as unknown as Record<string, { startQuiz: (q: string, a: string, t: number) => void; handleDonation: (n: string, a: number, m?: string) => void }>).__donationQuiz;
+      if (quiz?.startQuiz) {
+        quiz.startQuiz('스트리머가 좋아하는 음식은?', '치킨', 30);
+        // Simulate donations with answers
+        let count = 0;
+        const interval = setInterval(() => {
+          if (count >= 5) { clearInterval(interval); return; }
+          const name = DEMO_NAMES[Math.floor(Math.random() * DEMO_NAMES.length)];
+          const amount = DEMO_AMOUNTS[Math.floor(Math.random() * DEMO_AMOUNTS.length)];
+          const answers = ['피자', '치킨', '햄버거', '치킨', '라면'];
+          quiz.handleDonation(name, amount, answers[count]);
+          count++;
+        }, 3000);
+      }
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  return <DonationQuiz config={{}} />;
+}
+
 const DEMO_WIDGET: Omit<Widget, 'type'> = {
   id: 'demo',
   streamer_id: 'demo',
@@ -299,6 +328,7 @@ export default function DemoOverlayPage({ params }: { params: Promise<{ type: st
       case 'train': return <DonationTrainDemo />;
       case 'slots': return <DonationSlotsDemo />;
       case 'meter': return <DonationMeterDemo />;
+      case 'quiz': return <DonationQuizDemo />;
       default: return null;
     }
   };
