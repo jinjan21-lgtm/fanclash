@@ -1,5 +1,37 @@
 # 작업 일지
 
+## 2026-03-16 (위젯 정밀 검토 + 버그 수정)
+
+### 완료한 태스크
+
+#### 위젯 6차 감사 + 버그 수정
+- [x] 왕좌 사운드 config 미스매치 수정 (sound ↔ soundUrl 키 불일치 → Web Audio beep/fanfare 구현)
+  - 파일: ThroneAlert.tsx, ThroneSettings.tsx, src/lib/sound.ts
+- [x] 위젯 설명 5종 직관적으로 변경 (폭격/미터/호감도/영토/응원월)
+  - 파일: widgets/page.tsx, WidgetCard.tsx
+- [x] 이벤트형 위젯 데모 반복 (Alert/Throne/Affinity 8초마다)
+  - 파일: DonationAlert.tsx, ThroneAlert.tsx, AffinityBadge.tsx
+- [x] AlertSettings TTS 음성 선택 드롭다운 추가 (한국어/영어/일본어)
+  - 파일: AlertSettings.tsx
+- [x] 가챠 N등급 색상 밝게 (#6b7280 → #9ca3af)
+  - 파일: DonationGacha.tsx
+- [x] 9종 위젯 테마 prop 전달 + font/text 테마 적용
+  - 파일: overlay/[widgetId]/page.tsx, 9개 오버레이 컴포넌트
+- [x] widget-container minHeight 100vh 수정 (Canvas 위젯 높이 0 문제)
+  - 파일: overlay/[widgetId]/page.tsx, demo/[type]/page.tsx
+- [x] Physics + Territory h-full → 부모 minHeight 의존으로 정상화
+
+#### 브라우저 실제 검증 (Chrome DevTools MCP)
+- [x] 알림: 빈 화면 → 반복 트리거 수정
+- [x] 랭킹: 정상 작동 확인
+- [x] 왕좌: 정상 작동 확인
+- [x] 슬롯: 정상 작동 확인
+- [x] 트레인: 정상 작동 확인
+- [x] 폭격: 빈 화면 → widget-container 높이 수정
+- [x] 가챠: 렌더링 되지만 어두움 → N등급 밝게
+
+---
+
 ## 2026-03-15 (위젯 UX 버그 수정 — 사운드/설명/데모/TTS)
 
 ### 완료한 태스크
