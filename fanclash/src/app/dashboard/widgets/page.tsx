@@ -43,7 +43,7 @@ export default function WidgetsPage() {
   const [broadcastStyle, setBroadcastStyle] = useState<BroadcastStyle | null>(null);
   const [previewType, setPreviewType] = useState<WidgetType | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showAllWidgets, setShowAllWidgets] = useState(false);
+  const [showAllWidgets, setShowAllWidgets] = useState(true);
   const supabase = createClient();
 
   const fetchWidgets = async () => {
