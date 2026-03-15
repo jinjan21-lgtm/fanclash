@@ -6,6 +6,7 @@ import WidgetSettingsModal from './WidgetSettingsModal';
 import WidgetPreviewModal from './WidgetPreviewModal';
 import OBSGuideModal from './OBSGuideModal';
 import BattleControl from './BattleControl';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 const WIDGET_LABELS: Record<WidgetType, { name: string; desc: string }> = {
   alert: { name: '후원 알림', desc: '후원 시 풀스크린 알림 + TTS' },
@@ -18,6 +19,11 @@ const WIDGET_LABELS: Record<WidgetType, { name: string; desc: string }> = {
   timer: { name: '이벤트 타이머', desc: '카운트다운 + 벌칙/미션' },
   messages: { name: '메시지 보드', desc: '후원 메시지 실시간 표시' },
   roulette: { name: '후원 룰렛', desc: '후원 시 룰렛 돌리기 이벤트' },
+  music: { name: '도네이션 뮤직', desc: '후원 금액별 음이 연주되는 인터랙티브 음악' },
+  gacha: { name: '도네이션 가챠', desc: '후원 시 등급 뽑기 (N/R/SR/SSR/UR)' },
+  physics: { name: '도네이션 폭격', desc: '후원하면 물체가 떨어지고 쌓이는 물리엔진' },
+  territory: { name: '영토 전쟁', desc: '후원으로 격자 칸을 점령하는 r/place 스타일' },
+  weather: { name: '방송 날씨', desc: '후원량에 따라 맑음→비→폭풍→블리자드' },
 };
 
 export default function WidgetCard({ widget, plan, onUpdate }: { widget: Widget; plan?: string; onUpdate: () => void }) {
@@ -29,6 +35,7 @@ export default function WidgetCard({ widget, plan, onUpdate }: { widget: Widget;
   const [showOBSGuide, setShowOBSGuide] = useState(false);
   const [showBattleControl, setShowBattleControl] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const isBattleType = widget.type === 'battle' || widget.type === 'team_battle';
 
   const toggleEnabled = async () => {
@@ -58,6 +65,8 @@ export default function WidgetCard({ widget, plan, onUpdate }: { widget: Widget;
             <p className="text-gray-400 text-sm">{label.desc}</p>
           </div>
           <button onClick={toggleEnabled}
+            aria-label={`${label.name} ${widget.enabled ? '비활성화' : '활성화'}`}
+            aria-pressed={widget.enabled}
             className={`px-3 py-1 rounded-full text-xs font-bold ${widget.enabled ? 'bg-green-600' : 'bg-gray-700'}`}>
             {widget.enabled ? 'ON' : 'OFF'}
           </button>
@@ -98,7 +107,7 @@ export default function WidgetCard({ widget, plan, onUpdate }: { widget: Widget;
           </select>
         </div>
         <div className="mt-2">
-          <button onClick={deleteWidget}
+          <button onClick={() => setShowDeleteConfirm(true)}
             className="w-full py-1.5 text-xs text-gray-500 hover:text-red-400 transition-colors">
             위젯 삭제
           </button>
@@ -123,6 +132,16 @@ export default function WidgetCard({ widget, plan, onUpdate }: { widget: Widget;
         <OBSGuideModal
           overlayUrl={overlayUrl}
           onClose={() => setShowOBSGuide(false)}
+        />
+      )}
+      {showDeleteConfirm && (
+        <ConfirmModal
+          title="위젯 삭제"
+          message="이 위젯을 삭제하시겠습니까? 설정과 데이터가 모두 삭제됩니다."
+          confirmText="삭제"
+          variant="danger"
+          onConfirm={() => { deleteWidget(); setShowDeleteConfirm(false); }}
+          onCancel={() => setShowDeleteConfirm(false)}
         />
       )}
       {showBattleControl && isBattleType && (
@@ -187,6 +206,31 @@ function ConfigSummary({ widget }: { widget: Widget }) {
       if (config.minAmount) items.push(`${(config.minAmount as number).toLocaleString()}원 이상`);
       break;
     }
+    case 'music':
+      if (config.volume !== undefined) items.push(`볼륨 ${config.volume}%`);
+      if (config.scaleType) {
+        const scales: Record<string, string> = { pentatonic: '펜타토닉', major: '메이저', minor: '마이너' };
+        items.push(scales[config.scaleType as string] || '');
+      }
+      break;
+    case 'gacha':
+      if (config.minAmount) items.push(`${(config.minAmount as number).toLocaleString()}원 이상`);
+      if (config.maxHistory) items.push(`히스토리 ${config.maxHistory}개`);
+      break;
+    case 'physics':
+      if (config.maxObjects) items.push(`최대 ${config.maxObjects}개`);
+      if (config.gravity) {
+        const gravities: Record<string, string> = { low: '약', medium: '중', high: '강' };
+        items.push(`중력 ${gravities[config.gravity as string] || ''}`);
+      }
+      break;
+    case 'territory':
+      if (config.gridSize) items.push(config.gridSize as string);
+      if (config.minAmount) items.push(`${(config.minAmount as number).toLocaleString()}원 이상`);
+      break;
+    case 'weather':
+      if (config.weatherWindow) items.push(`${config.weatherWindow}분 기준`);
+      break;
   }
 
   if (items.length === 0) return <p className="text-xs text-gray-600 mb-1">기본 설정 사용 중</p>;

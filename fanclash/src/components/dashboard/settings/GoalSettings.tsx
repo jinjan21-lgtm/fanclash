@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import ConfirmModal from '@/components/ui/ConfirmModal';
+
 export default function GoalSettings({
   milestones, newAmount, newMission, onNewAmountChange, onNewMissionChange, onAdd, onRemove, onReset,
 }: {
@@ -10,6 +13,8 @@ export default function GoalSettings({
   onRemove: (i: number) => void;
   onReset: () => void;
 }) {
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
   return (
     <>
       <div>
@@ -50,10 +55,20 @@ export default function GoalSettings({
           </button>
         </div>
       </div>
-      <button onClick={onReset}
+      <button onClick={() => setShowResetConfirm(true)}
         className="w-full py-2 bg-red-900/50 border border-red-800 rounded-lg text-sm text-red-400 hover:bg-red-900">
         현재 목표 금액 초기화 (0원으로)
       </button>
+      {showResetConfirm && (
+        <ConfirmModal
+          title="목표 초기화"
+          message="목표 진행도가 0원으로 초기화됩니다. 이 작업은 되돌릴 수 없습니다."
+          confirmText="초기화"
+          variant="danger"
+          onConfirm={() => { onReset(); setShowResetConfirm(false); }}
+          onCancel={() => setShowResetConfirm(false)}
+        />
+      )}
     </>
   );
 }

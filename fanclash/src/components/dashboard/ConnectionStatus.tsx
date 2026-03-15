@@ -35,7 +35,7 @@ export default function ConnectionStatus() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (loading) return null;
+  if (loading) return <div className="h-6 w-32 bg-gray-800 rounded animate-pulse" />;
 
   const configured = integrations.length;
   const connected = integrations.filter(i => i.connected).length;
@@ -56,6 +56,9 @@ export default function ConnectionStatus() {
             <span className={`inline-block w-2 h-2 rounded-full ${i.connected ? 'bg-green-400' : 'bg-red-400'}`} />
             <span className={`text-xs ${i.connected ? 'text-green-400' : 'text-gray-500'}`}>
               {PLATFORM_LABELS[i.platform] || i.platform}
+            </span>
+            <span className={`text-[10px] ${i.connected ? 'text-green-400/70' : 'text-red-400/70'}`}>
+              {i.connected ? '연결됨' : '끊김'}
             </span>
           </div>
         ))}
