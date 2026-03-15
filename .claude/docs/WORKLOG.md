@@ -1,5 +1,38 @@
 # 작업 일지
 
+## 2026-03-15 (위젯 고심각도 버그 4파일 수정)
+
+### 완료한 태스크
+
+#### Fix 1: DonationRPG.tsx
+- [x] 대량 도네이션 시 while 루프 프레임 잭 → MAX_LEVELUPS_PER_DONATION=10 캡 적용
+- [x] 모든 setTimeout → safeTimeout 패턴 교체 + timeoutIdsRef 언마운트 정리
+- [x] Socket import에 .catch() 에러 핸들링 추가
+- [x] streamerIdRef 미로드 시 save 스킵 가드 추가
+- [x] 최근 도너 캐릭터에 "의 캐릭터" 라벨 추가 (UX 명확화)
+
+#### Fix 2: DonationRoulette.tsx
+- [x] idle→spin 전환 시 idleAngle을 baseRotRef에 반영 (회전 계산 오류 수정)
+- [x] 3중 중첩 setTimeout → safeTimeout + timeoutIdsRef 언마운트 정리
+
+#### Fix 3: DonationTerritory.tsx
+- [x] gridSize 변경 시 그리드 재초기화 (useEffect 의존성에 gridSizeStr 추가)
+- [x] gridDimsRef로 동적 cols/rows 참조 (렌더 루프 안전성)
+- [x] Canvas context null 체크 추가
+- [x] Socket import에 .catch() 에러 핸들링 추가
+
+#### Fix 4: DonationMission.tsx
+- [x] mission:update 소켓에서 서버 완료 미션 감지 → celebration 트리거
+- [x] donorsRef 무한 성장 방지 → 미션 완료/제거 시 관련 키 정리
+- [x] Date 파싱 캐시 (parsedTimesRef) — 1초 인터벌 성능 개선
+- [x] 모든 setTimeout → safeTimeout + timeoutIdsRef 언마운트 정리
+- [x] Socket import에 .catch() 에러 핸들링 추가
+
+#### 빌드 확인
+- [x] 빌드 성공 (0 에러, 0 경고)
+
+---
+
 ## 2026-03-15 (위젯 크리티컬 버그 6건 수정)
 
 ### 완료한 태스크
