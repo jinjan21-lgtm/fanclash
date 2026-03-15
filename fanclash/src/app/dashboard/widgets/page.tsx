@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import WidgetCard from '@/components/dashboard/WidgetCard';
 import WidgetPreviewModal from '@/components/dashboard/WidgetPreviewModal';
-import { isWidgetLocked } from '@/lib/plan';
+import { isWidgetLocked, FREE_ALLOWED_WIDGETS } from '@/lib/plan';
+import CollabBattleManager from '@/components/dashboard/CollabBattleManager';
 import type { Widget, WidgetType } from '@/types';
 
-const ALL_WIDGET_TYPES: WidgetType[] = ['alert', 'ranking', 'throne', 'goal', 'affinity', 'battle', 'team_battle', 'timer', 'messages', 'roulette'];
+const ALL_WIDGET_TYPES: WidgetType[] = ['alert', 'ranking', 'throne', 'goal', 'affinity', 'battle', 'team_battle', 'timer', 'messages', 'roulette', 'music', 'gacha', 'physics', 'territory', 'weather', 'train', 'slots', 'meter'];
 
 const WIDGET_LABELS: Record<WidgetType, { name: string; desc: string }> = {
   alert: { name: '후원 알림', desc: '후원 시 풀스크린 알림 + TTS' },
@@ -19,12 +20,21 @@ const WIDGET_LABELS: Record<WidgetType, { name: string; desc: string }> = {
   timer: { name: '이벤트 타이머', desc: '카운트다운 + 벌칙/미션' },
   messages: { name: '메시지 보드', desc: '후원 메시지 실시간 표시' },
   roulette: { name: '후원 룰렛', desc: '후원 시 룰렛 돌리기 이벤트' },
+  music: { name: '도네이션 뮤직', desc: '후원 금액별 음이 연주되는 인터랙티브 음악' },
+  gacha: { name: '도네이션 가챠', desc: '후원 시 등급 뽑기 (N/R/SR/SSR/UR)' },
+  physics: { name: '도네이션 폭격', desc: '후원하면 물체가 떨어지고 쌓이는 물리엔진' },
+  territory: { name: '영토 전쟁', desc: '후원으로 격자 칸을 점령하는 r/place 스타일' },
+  weather: { name: '방송 날씨', desc: '후원량에 따라 맑음→비→폭풍→블리자드' },
+  train: { name: '도네이션 트레인', desc: '연속 후원 콤보 카운터' },
+  slots: { name: '슬롯머신', desc: '후원 시 슬롯머신 돌리기' },
+  meter: { name: '핫/콜드 미터', desc: '실시간 후원 온도 게이지' },
 };
 
 export default function WidgetsPage() {
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [plan, setPlan] = useState<string>('free');
   const [previewType, setPreviewType] = useState<WidgetType | null>(null);
+  const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
   const fetchWidgets = async () => {
@@ -35,33 +45,51 @@ export default function WidgetsPage() {
     const { data: streamer } = await supabase.from('streamers').select('plan').eq('id', user.id).single();
     setPlan(streamer?.plan || 'free');
 
-    // Free 유저: alert 위젯 자동 생성
-    if ((!streamer?.plan || streamer.plan === 'free') && data && !data.some(w => w.type === 'alert')) {
-      await supabase.from('widgets').insert({ streamer_id: user.id, type: 'alert' });
-      const { data: refreshed } = await supabase.from('widgets').select('*').eq('streamer_id', user.id);
-      setWidgets(refreshed || []);
+    // Free 유저: 허용된 위젯 자동 생성 (alert, ranking, goal)
+    if ((!streamer?.plan || streamer.plan === 'free') && data) {
+      const existingTypes = data.map(w => w.type);
+      const missingFree = FREE_ALLOWED_WIDGETS.filter(t => !existingTypes.includes(t));
+      if (missingFree.length > 0) {
+        await Promise.all(missingFree.map(type =>
+          supabase.from('widgets').insert({ streamer_id: user.id, type })
+        ));
+        const { data: refreshed } = await supabase.from('widgets').select('*').eq('streamer_id', user.id);
+        setWidgets(refreshed || []);
+      }
     }
+    setLoading(false);
   };
 
   useEffect(() => { fetchWidgets(); }, []);
 
-  const alertWidget = widgets.find(w => w.type === 'alert');
   const isPro = plan === 'pro';
-  const lockedTypes = ALL_WIDGET_TYPES.filter(t => t !== 'alert' && !widgets.some(w => w.type === t));
-  const proWidgets = isPro ? widgets.filter(w => w.type !== 'alert') : [];
+  const freeWidgets = widgets.filter(w => FREE_ALLOWED_WIDGETS.includes(w.type));
+  const proWidgets = isPro ? widgets.filter(w => !FREE_ALLOWED_WIDGETS.includes(w.type)) : [];
+  const lockedTypes = ALL_WIDGET_TYPES.filter(t => !FREE_ALLOWED_WIDGETS.includes(t) && !widgets.some(w => w.type === t));
 
   // 잠금된 위젯의 미리보기용 더미 위젯
   const previewWidget = previewType ? widgets.find(w => w.type === previewType) : null;
+
+  if (loading) return (
+    <div className="animate-pulse">
+      <div className="h-8 w-48 bg-gray-800 rounded-lg mb-6" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-gray-900 rounded-xl p-5 border border-gray-800 h-56" />
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">위젯 관리</h2>
 
-      {/* 활성 위젯: alert (Free) 또는 전체 (Pro) */}
+      {/* 활성 위젯: Free 3종 (알림, 랭킹, 목표) + Pro 전체 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {alertWidget && (
-          <WidgetCard key={alertWidget.id} widget={alertWidget} plan={plan} onUpdate={fetchWidgets} />
-        )}
+        {freeWidgets.map(w => (
+          <WidgetCard key={w.id} widget={w} plan={plan} onUpdate={fetchWidgets} />
+        ))}
         {isPro && proWidgets.map(w => (
           <WidgetCard key={w.id} widget={w} plan={plan} onUpdate={fetchWidgets} />
         ))}
@@ -128,6 +156,8 @@ export default function WidgetsPage() {
         </div>
       )}
 
+      {isPro && <CollabBattleManager />}
+
       {/* 잠금 위젯 미리보기: 데모 오버레이 */}
       {previewType && (
         <LockedWidgetPreview type={previewType} onClose={() => setPreviewType(null)} />
@@ -147,6 +177,14 @@ const PREVIEW_SIZES: Record<WidgetType, { w: number; h: number }> = {
   timer: { w: 400, h: 300 },
   messages: { w: 400, h: 400 },
   roulette: { w: 500, h: 500 },
+  music: { w: 600, h: 400 },
+  gacha: { w: 500, h: 500 },
+  physics: { w: 600, h: 500 },
+  territory: { w: 600, h: 450 },
+  weather: { w: 600, h: 400 },
+  train: { w: 500, h: 400 },
+  slots: { w: 500, h: 400 },
+  meter: { w: 400, h: 500 },
 };
 
 function LockedWidgetPreview({ type, onClose }: { type: WidgetType; onClose: () => void }) {

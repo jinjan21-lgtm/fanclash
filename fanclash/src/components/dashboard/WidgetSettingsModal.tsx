@@ -20,6 +20,9 @@ import GachaSettings from './settings/GachaSettings';
 import PhysicsSettings from './settings/PhysicsSettings';
 import TerritorySettings from './settings/TerritorySettings';
 import WeatherSettings from './settings/WeatherSettings';
+import TrainSettings from './settings/TrainSettings';
+import SlotsSettings from './settings/SlotsSettings';
+import MeterSettings from './settings/MeterSettings';
 import StylePresets from './settings/StylePresets';
 
 interface Props {
@@ -46,6 +49,9 @@ function getDefaultTitle(type: WidgetType): string {
     physics: '도네이션 폭격',
     territory: '영토 전쟁',
     weather: '방송 날씨',
+    train: '도네이션 트레인',
+    slots: '슬롯머신',
+    meter: '핫/콜드 미터',
   };
   return defaults[type];
 }
@@ -198,6 +204,9 @@ export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }:
             {widget.type === 'physics' && <PhysicsSettings config={config} onChange={setConfig} />}
             {widget.type === 'territory' && <TerritorySettings config={config} onChange={setConfig} />}
             {widget.type === 'weather' && <WeatherSettings config={config} onChange={setConfig} />}
+            {widget.type === 'train' && <TrainSettings config={config} onChange={setConfig} />}
+            {widget.type === 'slots' && <SlotsSettings config={config} onChange={setConfig} />}
+            {widget.type === 'meter' && <MeterSettings config={config} onChange={setConfig} />}
           </div>
 
           {/* Widget Style (Pro only) */}

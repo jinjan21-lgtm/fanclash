@@ -24,6 +24,9 @@ const WIDGET_LABELS: Record<WidgetType, { name: string; desc: string }> = {
   physics: { name: '도네이션 폭격', desc: '후원하면 물체가 떨어지고 쌓이는 물리엔진' },
   territory: { name: '영토 전쟁', desc: '후원으로 격자 칸을 점령하는 r/place 스타일' },
   weather: { name: '방송 날씨', desc: '후원량에 따라 맑음→비→폭풍→블리자드' },
+  train: { name: '도네이션 트레인', desc: '연속 후원 콤보 카운터' },
+  slots: { name: '슬롯머신', desc: '후원 시 슬롯머신 돌리기' },
+  meter: { name: '핫/콜드 미터', desc: '실시간 후원 온도 게이지' },
 };
 
 export default function WidgetCard({ widget, plan, onUpdate }: { widget: Widget; plan?: string; onUpdate: () => void }) {
@@ -230,6 +233,23 @@ function ConfigSummary({ widget }: { widget: Widget }) {
       break;
     case 'weather':
       if (config.weatherWindow) items.push(`${config.weatherWindow}분 기준`);
+      break;
+    case 'train':
+      if (config.comboWindow) items.push(`${config.comboWindow}초 콤보`);
+      if (config.minAmount) items.push(`${(config.minAmount as number).toLocaleString()}원 이상`);
+      if (config.effectIntensity) {
+        const intensities: Record<string, string> = { low: '약', medium: '중', high: '강' };
+        items.push(`강도 ${intensities[config.effectIntensity as string] || ''}`);
+      }
+      break;
+    case 'slots':
+      if (config.minAmount) items.push(`${(config.minAmount as number).toLocaleString()}원 이상`);
+      if (config.missions) items.push(`미션 ${(config.missions as string[]).length}개`);
+      if (config.spinDuration) items.push(`${config.spinDuration}초 스핀`);
+      break;
+    case 'meter':
+      if (config.windowMinutes) items.push(`${config.windowMinutes}분 기준`);
+      if (config.maxAmount) items.push(`MAX ${(config.maxAmount as number).toLocaleString()}원`);
       break;
   }
 

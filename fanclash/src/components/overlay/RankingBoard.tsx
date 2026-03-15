@@ -140,7 +140,7 @@ function GlowBurst() {
         boxShadow: '0 0 0 0 rgba(251, 191, 36, 0), inset 0 0 0 rgba(251, 191, 36, 0)',
         opacity: 0,
       }}
-      transition={{ duration: 1.2, ease: 'easeOut' }}
+      transition={{ duration: 3, ease: 'easeOut' }}
     />
   );
 }
@@ -206,6 +206,7 @@ export default function RankingBoard({ widget, preview }: { widget: Widget; prev
   const [rankings, setRankings] = useState<RankEntry[]>([]);
   const [flashNick, setFlashNick] = useState<string | null>(null);
   const [newNick, setNewNick] = useState<string | null>(null);
+  const [crownChanged, setCrownChanged] = useState(false);
   const prevRef = useRef<RankEntry[]>([]);
   const { socketRef, on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
@@ -238,12 +239,20 @@ export default function RankingBoard({ widget, preview }: { widget: Widget; prev
         nickname: r.nickname,
         total: r.total_donated || r.total,
       }));
+      // Detect #1 change
+      const prevFirst = prevRef.current[0]?.nickname;
+      const newFirst = newRankings[0]?.nickname;
+      if (prevFirst && newFirst && prevFirst !== newFirst) {
+        setCrownChanged(true);
+        setTimeout(() => setCrownChanged(false), 3000);
+      }
+
       for (const entry of newRankings) {
         const prev = prevRef.current.find(p => p.nickname === entry.nickname);
         if (!prev) {
-          // Brand new entry
+          // Brand new entry — golden glow for 3 seconds
           setNewNick(entry.nickname);
-          setTimeout(() => setNewNick(null), 1500);
+          setTimeout(() => setNewNick(null), 3000);
           setFlashNick(entry.nickname);
           setTimeout(() => setFlashNick(null), 1200);
           break;
@@ -348,8 +357,14 @@ export default function RankingBoard({ widget, preview }: { widget: Widget; prev
                 {i === 0 ? (
                   <motion.span
                     className="relative inline-block"
-                    animate={{ scale: [1, 1.1, 1], rotate: [0, -5, 5, 0] }}
-                    transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+                    animate={crownChanged
+                      ? { scale: [1, 1.4, 0.9, 1.2, 1], rotate: [0, -15, 15, -5, 0], y: [0, -12, 0, -6, 0] }
+                      : { scale: [1, 1.1, 1], rotate: [0, -5, 5, 0] }
+                    }
+                    transition={crownChanged
+                      ? { duration: 1.2, ease: 'easeOut' }
+                      : { repeat: Infinity, duration: 3, ease: 'easeInOut' }
+                    }
                   >
                     {RANK_MEDALS[0]}
                     <CrownSparkles />
@@ -373,8 +388,8 @@ export default function RankingBoard({ widget, preview }: { widget: Widget; prev
                   <motion.span
                     className="ml-2 text-xs px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300"
                     initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: [0, 1, 1, 0], scale: [0, 1.2, 1, 0.8] }}
-                    transition={{ duration: 1.5 }}
+                    animate={{ opacity: [0, 1, 1, 1, 0], scale: [0, 1.2, 1, 1, 0.8] }}
+                    transition={{ duration: 3 }}
                   >
                     NEW
                   </motion.span>

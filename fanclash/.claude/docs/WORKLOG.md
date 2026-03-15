@@ -1,5 +1,31 @@
 # 작업 일지
 
+## 2026-03-15 (세션 7)
+
+### 완료한 태스크
+- [x] 도네이션 트레인 (train) 위젯 추가
+  - 상세: 연속 후원 콤보 카운터, 4단계 이펙트(심플/불/강렬/레인보우), 콤보 윈도우/최소금액/강도 설정
+  - 파일: src/components/overlay/DonationTrain.tsx (신규), src/components/dashboard/settings/TrainSettings.tsx (신규)
+- [x] 슬롯머신 (slots) 위젯 추가
+  - 상세: 3릴 슬롯, 후원 금액 비례 매칭 확률, 3매치 잭팟+미션 표시, 스핀 시간 설정
+  - 파일: src/components/overlay/DonationSlots.tsx (신규), src/components/dashboard/settings/SlotsSettings.tsx (신규)
+- [x] 핫/콜드 미터 (meter) 위젯 추가
+  - 상세: 롤링 윈도우 기반 후원 속도 게이지, ICE→COLD→NORMAL→HOT→MAX 5단계, 파티클 효과
+  - 파일: src/components/overlay/DonationMeter.tsx (신규), src/components/dashboard/settings/MeterSettings.tsx (신규)
+- [x] 랭킹 보드 애니메이션 강화
+  - 상세: #1 변경 시 바운싱 크라운, 신규 진입 3초 골든 글로우, GlowBurst 3초로 확장
+  - 파일: src/components/overlay/RankingBoard.tsx (수정)
+- [x] 타입/라우팅/설정 연동
+  - src/types/index.ts — WidgetType에 train/slots/meter 추가
+  - src/app/overlay/[widgetId]/page.tsx — 오버레이 라우팅 추가
+  - src/app/overlay/demo/[type]/page.tsx — 데모 컴포넌트 추가
+  - src/components/dashboard/WidgetCard.tsx — 라벨+ConfigSummary 추가
+  - src/components/dashboard/WidgetSettingsModal.tsx — 설정 연동
+  - src/components/dashboard/WidgetPreviewModal.tsx — 프리뷰 사이즈 추가
+  - src/app/dashboard/widgets/page.tsx — 위젯 목록 추가
+
+---
+
 ## 2026-03-12 (세션 6)
 
 ### 완료한 태스크

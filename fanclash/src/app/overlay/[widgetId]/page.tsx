@@ -18,6 +18,9 @@ import DonationGacha from '@/components/overlay/DonationGacha';
 import DonationPhysics from '@/components/overlay/DonationPhysics';
 import DonationTerritory from '@/components/overlay/DonationTerritory';
 import DonationWeather from '@/components/overlay/DonationWeather';
+import DonationTrain from '@/components/overlay/DonationTrain';
+import DonationSlots from '@/components/overlay/DonationSlots';
+import DonationMeter from '@/components/overlay/DonationMeter';
 import { sanitizeCSS } from '@/lib/sanitize-css';
 
 export default function OverlayPage({ params }: { params: Promise<{ widgetId: string }> }) {
@@ -47,6 +50,9 @@ export default function OverlayPage({ params }: { params: Promise<{ widgetId: st
       case 'physics': return <DonationPhysics widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
       case 'territory': return <DonationTerritory widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
       case 'weather': return <DonationWeather widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
+      case 'train': return <DonationTrain widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
+      case 'slots': return <DonationSlots widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
+      case 'meter': return <DonationMeter widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
       default: return null;
     }
   };
