@@ -32,7 +32,10 @@ interface Props {
 }
 
 export default function WidgetPreviewModal({ widget, onClose }: Props) {
-  const overlayUrl = typeof window !== 'undefined' ? `${window.location.origin}/overlay/${widget.id}?preview=true` : '';
+  const [useDemo, setUseDemo] = useState(true);
+  const demoUrl = typeof window !== 'undefined' ? `${window.location.origin}/overlay/demo/${widget.type}` : '';
+  const liveUrl = typeof window !== 'undefined' ? `${window.location.origin}/overlay/${widget.id}?preview=true` : '';
+  const overlayUrl = useDemo ? demoUrl : liveUrl;
   const size = PREVIEW_SIZES[widget.type];
   const [scale, setScale] = useState(1);
 
@@ -41,7 +44,16 @@ export default function WidgetPreviewModal({ widget, onClose }: Props) {
       <div className="flex flex-col items-center gap-4" onClick={e => e.stopPropagation()}>
         {/* Controls */}
         <div className="flex items-center gap-4 bg-gray-900 rounded-xl px-5 py-3 border border-gray-700">
-          <span className="text-sm text-gray-400">미리보기</span>
+          <div className="flex items-center gap-1 bg-gray-800 rounded-lg p-0.5">
+            <button onClick={() => setUseDemo(true)}
+              className={`px-2.5 py-1 rounded text-xs font-medium ${useDemo ? 'bg-purple-600 text-white' : 'text-gray-400'}`}>
+              데모
+            </button>
+            <button onClick={() => setUseDemo(false)}
+              className={`px-2.5 py-1 rounded text-xs font-medium ${!useDemo ? 'bg-purple-600 text-white' : 'text-gray-400'}`}>
+              실시간
+            </button>
+          </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setScale(s => Math.max(0.5, s - 0.25))}
               className="w-7 h-7 rounded bg-gray-700 hover:bg-gray-600 text-sm font-bold">-</button>
@@ -74,7 +86,7 @@ export default function WidgetPreviewModal({ widget, onClose }: Props) {
         </div>
 
         <p className="text-xs text-gray-500">
-          실시간 소켓 연결됨 — 후원 입력 시 여기서 바로 반영됩니다
+          {useDemo ? '데모 데이터로 자동 시뮬레이션됩니다' : '실시간 소켓 연결 — 후원 시 반영됩니다'}
         </p>
       </div>
     </div>
