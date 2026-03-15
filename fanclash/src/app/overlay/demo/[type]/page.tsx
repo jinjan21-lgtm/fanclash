@@ -20,6 +20,7 @@ import DonationTrain from '@/components/overlay/DonationTrain';
 import DonationSlots from '@/components/overlay/DonationSlots';
 import DonationMeter from '@/components/overlay/DonationMeter';
 import DonationQuiz from '@/components/overlay/DonationQuiz';
+import DonationRPG from '@/components/overlay/DonationRPG';
 import { useEffect, useRef } from 'react';
 import type { Widget, WidgetType } from '@/types';
 
@@ -293,6 +294,36 @@ function DonationQuizDemo() {
   return <DonationQuiz config={{}} />;
 }
 
+// Demo component for DonationRPG — simulates donations for XP gain
+function DonationRPGDemo() {
+  const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
+  const DEMO_NAMES = ['별빛팬', '후원왕', '새벽감성', '치킨러버', '고래밥', '불꽃소녀', '달빛기사'];
+  const DEMO_AMOUNTS = [1000, 2000, 5000, 10000, 20000, 50000];
+
+  useEffect(() => {
+    const trigger = () => {
+      const rpg = (window as unknown as Record<string, { processXPGain: (a: number, n: string) => void }>).__donationRPG;
+      if (rpg?.processXPGain) {
+        const name = DEMO_NAMES[Math.floor(Math.random() * DEMO_NAMES.length)];
+        const amount = DEMO_AMOUNTS[Math.floor(Math.random() * DEMO_AMOUNTS.length)];
+        rpg.processXPGain(amount, name);
+      }
+    };
+
+    const timeout = setTimeout(() => {
+      trigger();
+      intervalRef.current = setInterval(trigger, 3000 + Math.random() * 2000);
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(intervalRef.current);
+    };
+  }, []);
+
+  return <DonationRPG config={{ xpRate: 5 }} />;
+}
+
 const DEMO_WIDGET: Omit<Widget, 'type'> = {
   id: 'demo',
   streamer_id: 'demo',
@@ -329,6 +360,7 @@ export default function DemoOverlayPage({ params }: { params: Promise<{ type: st
       case 'slots': return <DonationSlotsDemo />;
       case 'meter': return <DonationMeterDemo />;
       case 'quiz': return <DonationQuizDemo />;
+      case 'rpg': return <DonationRPGDemo />;
       default: return null;
     }
   };

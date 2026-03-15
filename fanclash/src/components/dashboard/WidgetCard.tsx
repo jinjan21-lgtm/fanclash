@@ -29,6 +29,7 @@ const WIDGET_LABELS: Record<WidgetType, { name: string; desc: string }> = {
   slots: { name: '슬롯머신', desc: '후원 시 슬롯머신 돌리기' },
   meter: { name: '핫/콜드 미터', desc: '실시간 후원 온도 게이지' },
   quiz: { name: '팬 퀴즈', desc: '도네이션 메시지로 퀴즈 맞추기' },
+  rpg: { name: '팬 RPG', desc: '후원으로 캐릭터 레벨업 + 장비 성장' },
 };
 
 export default function WidgetCard({ widget, plan, onUpdate }: { widget: Widget; plan?: string; onUpdate: () => void }) {
@@ -275,6 +276,10 @@ function ConfigSummary({ widget }: { widget: Widget }) {
     case 'quiz':
       if (config.defaultTimeLimit) items.push(`${config.defaultTimeLimit}초`);
       if (config.minAmount) items.push(`${(config.minAmount as number).toLocaleString()}원 이상`);
+      break;
+    case 'rpg':
+      if (config.xpRate) items.push(`XP ${config.xpRate}x`);
+      if (config.showEquipment === false) items.push('장비 숨김');
       break;
   }
 

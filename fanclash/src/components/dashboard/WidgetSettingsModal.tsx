@@ -24,6 +24,7 @@ import TrainSettings from './settings/TrainSettings';
 import SlotsSettings from './settings/SlotsSettings';
 import MeterSettings from './settings/MeterSettings';
 import QuizSettings from './settings/QuizSettings';
+import RPGSettings from './settings/RPGSettings';
 import StylePresets from './settings/StylePresets';
 
 interface Props {
@@ -54,6 +55,7 @@ function getDefaultTitle(type: WidgetType): string {
     slots: '슬롯머신',
     meter: '핫/콜드 미터',
     quiz: '팬 퀴즈',
+    rpg: '팬 RPG',
   };
   return defaults[type];
 }
@@ -210,6 +212,7 @@ export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }:
             {widget.type === 'slots' && <SlotsSettings config={config} onChange={setConfig} />}
             {widget.type === 'meter' && <MeterSettings config={config} onChange={setConfig} />}
             {widget.type === 'quiz' && <QuizSettings config={config} onChange={setConfig} />}
+            {widget.type === 'rpg' && <RPGSettings config={config} onChange={setConfig} />}
           </div>
 
           {/* Widget Style (Pro only) */}
