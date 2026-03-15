@@ -27,7 +27,7 @@ export default async function PricingPage() {
 
   let profile: Profile | null = null;
   if (user) {
-    const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+    const { data } = await supabase.from('cf_profiles').select('*').eq('id', user.id).single();
     profile = data as Profile | null;
   }
 

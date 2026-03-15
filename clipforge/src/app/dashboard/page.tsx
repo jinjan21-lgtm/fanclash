@@ -14,11 +14,11 @@ export default async function DashboardPage() {
   let jobs: Job[] = [];
 
   if (user) {
-    const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+    const { data: p } = await supabase.from('cf_profiles').select('*').eq('id', user.id).single();
     profile = p as Profile | null;
 
     const { data: j } = await supabase
-      .from('jobs')
+      .from('cf_jobs')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })

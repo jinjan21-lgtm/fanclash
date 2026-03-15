@@ -8,7 +8,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
 
   const { data, error } = await supabase
-    .from('clips')
+    .from('cf_clips')
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
   // Check usage limits
   const { data: profile } = await supabase
-    .from('profiles')
+    .from('cf_profiles')
     .select('plan, clips_used_this_month')
     .eq('id', user.id)
     .single();
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 
   // Verify job belongs to user
   const { data: job } = await supabase
-    .from('jobs')
+    .from('cf_jobs')
     .select('id')
     .eq('id', job_id)
     .eq('user_id', user.id)
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
   const duration = end_time - start_time;
 
   const { data: clip, error } = await supabase
-    .from('clips')
+    .from('cf_clips')
     .insert({
       job_id,
       user_id: user.id,
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
   // Increment usage
   if (profile) {
     await supabase
-      .from('profiles')
+      .from('cf_profiles')
       .update({ clips_used_this_month: (profile.clips_used_this_month || 0) + 1 })
       .eq('id', user.id);
   }

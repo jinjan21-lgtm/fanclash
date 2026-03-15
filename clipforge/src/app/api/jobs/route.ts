@@ -8,7 +8,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
 
   const { data, error } = await supabase
-    .from('jobs')
+    .from('cf_jobs')
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
   // Check usage limits
   const { data: profile } = await supabase
-    .from('profiles')
+    .from('cf_profiles')
     .select('plan, clips_used_this_month')
     .eq('id', user.id)
     .single();
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
 
   // Create job
   const { data: job, error } = await supabase
-    .from('jobs')
+    .from('cf_jobs')
     .insert({
       user_id: user.id,
       vod_url,
@@ -82,13 +82,13 @@ async function simulateJobProcessing(supabase: any, jobId: string) {
     const progress = steps[i];
     if (progress < 100) {
       await supabase
-        .from('jobs')
+        .from('cf_jobs')
         .update({ progress })
         .eq('id', jobId);
     } else {
       const highlights = generateMockHighlights();
       await supabase
-        .from('jobs')
+        .from('cf_jobs')
         .update({
           progress: 100,
           status: 'completed',
