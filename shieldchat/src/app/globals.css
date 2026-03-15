@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+:root {
+  --background: #030712;
+  --foreground: #f9fafb;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Print styles for report */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Severity badge colors */
+.severity-low { background-color: #374151; color: #9ca3af; }
+.severity-medium { background-color: #854d0e; color: #fde047; }
+.severity-high { background-color: #9a3412; color: #fb923c; }
+.severity-critical { background-color: #991b1b; color: #fca5a5; }
