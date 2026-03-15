@@ -90,6 +90,22 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {/* Onboarding wizard banner for new users */}
+      {completedSteps === 0 && (
+        <div className="bg-gradient-to-r from-purple-900/40 to-indigo-900/40 rounded-xl p-6 border border-purple-800/50 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-lg mb-1">FanClash 시작 가이드</h3>
+              <p className="text-gray-400 text-sm">3단계로 간편하게 설정하세요: 플랫폼 연동 → 위젯 선택 → OBS 설정</p>
+            </div>
+            <Link href="/dashboard/onboarding"
+              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium text-sm whitespace-nowrap transition-colors">
+              시작하기
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Onboarding guide (collapsible client component) */}
       <OnboardingGuide steps={steps} completedSteps={completedSteps} allDone={allDone} />
 
