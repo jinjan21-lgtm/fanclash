@@ -1,7 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 export default function SettingsPage() {
   const supabase = createClient();
@@ -15,6 +17,9 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     (async () => {
@@ -50,15 +55,46 @@ export default function SettingsPage() {
     toast('프로필이 저장되었습니다');
   };
 
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      const res = await fetch('/api/account/delete', { method: 'DELETE' });
+      if (res.ok) {
+        toast('계정이 삭제되었습니다');
+        router.push('/');
+      } else {
+        const data = await res.json();
+        toast(data.error || '계정 삭제에 실패했습니다', 'error');
+      }
+    } catch {
+      toast('계정 삭제 중 오류가 발생했습니다', 'error');
+    }
+    setDeleting(false);
+    setShowDeleteConfirm(false);
+  };
+
   const handlePasswordReset = async () => {
     if (!email) return;
     await supabase.auth.resetPasswordForEmail(email);
     toast('비밀번호 재설정 이메일을 보냈습니다');
   };
 
-  if (loading) {
-    return <div className="text-gray-500">로딩 중...</div>;
-  }
+  if (loading) return (
+    <div className="animate-pulse">
+      <div className="h-8 w-48 bg-gray-800 rounded-lg mb-6" />
+      <div className="space-y-6">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+            <div className="h-5 w-32 bg-gray-800 rounded mb-4" />
+            <div className="space-y-3">
+              <div className="h-10 bg-gray-800 rounded" />
+              <div className="h-10 bg-gray-800 rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div>
@@ -172,16 +208,31 @@ export default function SettingsPage() {
 
         {/* Danger zone */}
         <div className="bg-gray-900 rounded-xl p-6 border border-red-900/50">
-          <h3 className="font-bold text-lg mb-2 text-red-400">위험 구역</h3>
-          <p className="text-gray-500 text-sm mb-3">계정을 삭제하면 모든 데이터가 영구적으로 제거됩니다.</p>
+          <h3 className="font-bold text-lg mb-2 text-red-400">계정 삭제</h3>
+          <p className="text-gray-500 text-sm mb-3">
+            계정을 삭제하면 모든 위젯, 후원 데이터, 연동 정보가 영구적으로 제거됩니다.
+            이 작업은 되돌릴 수 없습니다.
+          </p>
           <button
             className="w-full py-2.5 bg-red-900/30 border border-red-800 rounded-lg text-sm text-red-400 hover:bg-red-900/50"
-            onClick={() => toast('계정 삭제는 support@fanclash.com으로 요청해주세요')}
+            disabled={deleting}
+            onClick={() => setShowDeleteConfirm(true)}
           >
-            계정 삭제 요청
+            {deleting ? '삭제 중...' : '계정 삭제'}
           </button>
         </div>
       </div>
+
+      {showDeleteConfirm && (
+        <ConfirmModal
+          title="계정 삭제"
+          message="정말로 계정을 삭제하시겠습니까? 모든 위젯, 후원 데이터, 연동 정보가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다."
+          confirmText="삭제"
+          variant="danger"
+          onConfirm={handleDeleteAccount}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
     </div>
   );
 }
