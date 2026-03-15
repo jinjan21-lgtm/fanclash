@@ -1,5 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { themes } from '@/lib/themes';
+import type { ThemeName } from '@/types';
 
 type QuizState = 'IDLE' | 'ACTIVE' | 'RESULT';
 
@@ -16,9 +18,11 @@ interface DonationQuizProps {
     minAmount?: number;
     showAnswersDuringQuiz?: boolean;
   };
+  theme?: string;
 }
 
-export default function DonationQuiz({ widgetId, config }: DonationQuizProps) {
+export default function DonationQuiz({ widgetId, config, theme }: DonationQuizProps) {
+  const themeData = themes[(theme as ThemeName) || 'modern'];
   const [state, setState] = useState<QuizState>('IDLE');
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
@@ -129,7 +133,7 @@ export default function DonationQuiz({ widgetId, config }: DonationQuizProps) {
 
   if (state === 'IDLE') {
     return (
-      <div className="relative w-full h-full flex items-center justify-center" style={{ background: 'transparent' }}>
+      <div className={`relative w-full h-full flex items-center justify-center ${themeData.fontClass} ${themeData.text}`} style={{ background: 'transparent' }}>
         <div className="text-center p-8 rounded-2xl bg-gray-900/80 border border-gray-700">
           <div className="text-5xl mb-3" style={{ animation: 'quizBounce 2s ease-in-out infinite' }}>&#x2753;</div>
           <p className="text-xl font-bold text-white">팬 퀴즈</p>
@@ -144,7 +148,7 @@ export default function DonationQuiz({ widgetId, config }: DonationQuizProps) {
 
   if (state === 'RESULT') {
     return (
-      <div className="relative w-full h-full flex items-center justify-center" style={{ background: 'transparent' }}>
+      <div className={`relative w-full h-full flex items-center justify-center ${themeData.fontClass} ${themeData.text}`} style={{ background: 'transparent' }}>
         <div className="text-center p-8 rounded-2xl bg-gray-900/90 border-2 border-yellow-500 shadow-2xl shadow-yellow-500/20 max-w-md w-full mx-4"
           style={{ animation: 'quizResultIn 0.5s ease-out' }}>
           <div className="text-5xl mb-3">&#x1F3C6;</div>
@@ -184,7 +188,7 @@ export default function DonationQuiz({ widgetId, config }: DonationQuizProps) {
   const isUrgent = timeLeft <= 10;
 
   return (
-    <div className="relative w-full h-full overflow-hidden" style={{ background: 'transparent' }}>
+    <div className={`relative w-full h-full overflow-hidden ${themeData.fontClass} ${themeData.text}`} style={{ background: 'transparent' }}>
       {/* Timer bar at top */}
       <div className="absolute top-0 left-0 right-0 h-2 bg-gray-800">
         <div

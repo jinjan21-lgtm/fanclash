@@ -1,15 +1,19 @@
 'use client';
 import { useEffect, useRef, useCallback } from 'react';
 import Matter from 'matter-js';
+import { themes } from '@/lib/themes';
+import type { ThemeName } from '@/types';
 
 const EMOJIS = ['⭐', '💜', '🔥', '💎', '🎉', '❤️', '✨', '🌟', '💫', '🎵'];
 
 interface DonationPhysicsProps {
   widgetId?: string;
   config?: { maxObjects?: number; gravity?: string; emojiSize?: string };
+  theme?: string;
 }
 
-export default function DonationPhysics({ widgetId, config }: DonationPhysicsProps) {
+export default function DonationPhysics({ widgetId, config, theme }: DonationPhysicsProps) {
+  const themeData = themes[(theme as ThemeName) || 'modern'];
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Matter.Engine | null>(null);
   const renderLoopRef = useRef<number>(0);
@@ -186,7 +190,7 @@ export default function DonationPhysics({ widgetId, config }: DonationPhysicsPro
   }, [widgetId, triggerDrop]);
 
   return (
-    <div className="relative w-full h-full" style={{ background: 'transparent' }}>
+    <div className={`relative w-full h-full ${themeData.fontClass} ${themeData.text}`} style={{ background: 'transparent' }}>
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
     </div>
   );

@@ -1,12 +1,16 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { themes } from '@/lib/themes';
+import type { ThemeName } from '@/types';
 
 interface DonationTrainProps {
   widgetId?: string;
   config?: Record<string, unknown>;
+  theme?: string;
 }
 
-export default function DonationTrain({ widgetId, config }: DonationTrainProps) {
+export default function DonationTrain({ widgetId, config, theme }: DonationTrainProps) {
+  const themeData = themes[(theme as ThemeName) || 'modern'];
   const comboWindow = (typeof config?.comboWindow === 'number' ? config.comboWindow : 30) * 1000;
   const minAmount = typeof config?.minAmount === 'number' ? config.minAmount : 1000;
   const effectIntensity = typeof config?.effectIntensity === 'string' ? config.effectIntensity : 'medium';
@@ -104,7 +108,7 @@ export default function DonationTrain({ widgetId, config }: DonationTrainProps) 
 
   return (
     <div
-      className={`relative w-full h-full overflow-hidden flex items-center justify-center ${
+      className={`relative w-full h-full overflow-hidden flex items-center justify-center ${themeData.fontClass} ${themeData.text} ${
         stage === 'fire' || stage === 'intense' || stage === 'rainbow' ? 'train-shake' : ''
       }`}
       style={{ background: 'transparent' }}

@@ -1,5 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { themes } from '@/lib/themes';
+import type { ThemeName } from '@/types';
 
 const DEFAULT_GRID_COLS = 20;
 const DEFAULT_GRID_ROWS = 12;
@@ -38,9 +40,11 @@ function nicknameToColor(nickname: string): string {
 interface DonationTerritoryProps {
   widgetId?: string;
   config?: Record<string, unknown>;
+  theme?: string;
 }
 
-export default function DonationTerritory({ widgetId, config }: DonationTerritoryProps) {
+export default function DonationTerritory({ widgetId, config, theme }: DonationTerritoryProps) {
+  const themeData = themes[(theme as ThemeName) || 'modern'];
   const gridSizeStr = (config?.gridSize as string) ?? '20x12';
   const showLeaderboard = (config?.showLeaderboard as boolean) ?? true;
   const minAmount = (config?.minAmount as number) ?? 1000;
@@ -220,7 +224,7 @@ export default function DonationTerritory({ widgetId, config }: DonationTerritor
   }, [widgetId, triggerClaim]);
 
   return (
-    <div className="relative w-full h-full" style={{ background: 'transparent' }}>
+    <div className={`relative w-full h-full ${themeData.fontClass} ${themeData.text}`} style={{ background: 'transparent' }}>
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
 
       {/* Territory leaderboard */}

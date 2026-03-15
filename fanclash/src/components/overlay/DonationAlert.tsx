@@ -143,11 +143,15 @@ export default function DonationAlert({ widget, preview }: { widget: Widget; pre
     };
   }, []);
 
-  // Preview mode
+  // Preview mode — repeat every 8s so the demo isn't blank after the first alert
   useEffect(() => {
     if (!preview) return;
     enqueue(DEMO_ALERT);
-  }, [preview]);
+    const interval = setInterval(() => {
+      enqueue(DEMO_ALERT);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [preview, enqueue]);
 
   // Theme-aware accent colours
   const accentRing =

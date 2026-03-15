@@ -1,5 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { themes } from '@/lib/themes';
+import type { ThemeName } from '@/types';
 
 interface Mission {
   id: string;
@@ -21,9 +23,11 @@ interface DonationMissionProps {
     showReward?: boolean;
     maxVisible?: number;
   };
+  theme?: string;
 }
 
-export default function DonationMission({ widgetId, config }: DonationMissionProps) {
+export default function DonationMission({ widgetId, config, theme }: DonationMissionProps) {
+  const themeData = themes[(theme as ThemeName) || 'modern'];
   const [missions, setMissions] = useState<Mission[]>([]);
   const [completedMission, setCompletedMission] = useState<Mission | null>(null);
   const donorsRef = useRef<Set<string>>(new Set());
@@ -207,7 +211,7 @@ export default function DonationMission({ widgetId, config }: DonationMissionPro
   // Completion celebration
   if (completedMission) {
     return (
-      <div className="relative w-full h-full flex items-center justify-center" style={{ background: 'transparent' }}>
+      <div className={`relative w-full h-full flex items-center justify-center ${themeData.fontClass} ${themeData.text}`} style={{ background: 'transparent' }}>
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {Array.from({ length: 40 }).map((_, i) => (
             <div key={i} className="absolute text-2xl"
@@ -246,7 +250,7 @@ export default function DonationMission({ widgetId, config }: DonationMissionPro
 
   if (activeMissions.length === 0) {
     return (
-      <div className="relative w-full h-full flex items-center justify-center" style={{ background: 'transparent' }}>
+      <div className={`relative w-full h-full flex items-center justify-center ${themeData.fontClass} ${themeData.text}`} style={{ background: 'transparent' }}>
         <div className="text-center p-6 rounded-2xl bg-gray-900/80 border border-gray-700">
           <div className="text-4xl mb-2" style={{ animation: 'missionPulse 2s ease-in-out infinite' }}>🎯</div>
           <p className="text-lg font-bold text-white">팬 미션</p>
@@ -260,7 +264,7 @@ export default function DonationMission({ widgetId, config }: DonationMissionPro
   }
 
   return (
-    <div className="relative w-full h-full flex flex-col justify-end p-4 gap-3" style={{ background: 'transparent' }}>
+    <div className={`relative w-full h-full flex flex-col justify-end p-4 gap-3 ${themeData.fontClass} ${themeData.text}`} style={{ background: 'transparent' }}>
       {activeMissions.map((mission, i) => {
         const progress = Math.min(100, (mission.current_value / mission.goal_value) * 100);
         const timeRemaining = formatTimeRemaining(mission);

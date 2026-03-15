@@ -41,13 +41,23 @@ export default function ThroneAlert({ widget, preview }: { widget: Widget; previ
     };
   }, []);
 
-  // Show demo alert in preview mode
+  // Show demo alert in preview mode — repeat every 8s
   useEffect(() => {
-    if (preview) {
+    if (!preview) return;
+    const trigger = () => {
       setAlert({ previous: '밤하늘구름', current: '별빛소나기' });
-      setThroneCount(3);
-    }
-  }, [preview]);
+      setThroneCount(prev => prev + 1);
+      // Auto-dismiss after duration
+      const id = setTimeout(() => {
+        timeoutIdsRef.current.delete(id);
+        setAlert(null);
+      }, duration * 1000);
+      timeoutIdsRef.current.add(id);
+    };
+    trigger();
+    const interval = setInterval(trigger, 8000);
+    return () => clearInterval(interval);
+  }, [preview, duration]);
 
   return (
     <div className={`${theme.bg} ${theme.fontClass}`}>

@@ -1,9 +1,11 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { themes } from '@/lib/themes';
+import type { ThemeName } from '@/types';
 
 // 등급별 확률 및 이펙트
 const GRADES = [
-  { grade: 'N', label: 'Normal', color: '#6b7280', bgGlow: '', chance: 0.40, emoji: '⬜', screenEffect: false },
+  { grade: 'N', label: 'Normal', color: '#9ca3af', bgGlow: '', chance: 0.40, emoji: '⬜', screenEffect: false },
   { grade: 'R', label: 'Rare', color: '#3b82f6', bgGlow: 'shadow-blue-500/30', chance: 0.30, emoji: '🟦', screenEffect: false },
   { grade: 'SR', label: 'Super Rare', color: '#a855f7', bgGlow: 'shadow-purple-500/40', chance: 0.20, emoji: '🟪', screenEffect: true },
   { grade: 'SSR', label: 'Super Super Rare', color: '#f59e0b', bgGlow: 'shadow-yellow-500/50', chance: 0.08, emoji: '🟨', screenEffect: true },
@@ -50,9 +52,11 @@ interface DonationGachaProps {
   widgetId?: string;
   streamerId?: string;
   config?: Record<string, unknown>;
+  theme?: string;
 }
 
-export default function DonationGacha({ widgetId, streamerId, config }: DonationGachaProps) {
+export default function DonationGacha({ widgetId, streamerId, config, theme }: DonationGachaProps) {
+  const themeData = themes[(theme as ThemeName) || 'modern'];
   const [results, setResults] = useState<GachaResult[]>([]);
   const [currentPull, setCurrentPull] = useState<GachaResult | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -164,7 +168,7 @@ export default function DonationGacha({ widgetId, streamerId, config }: Donation
   }, [widgetId, triggerGacha, minAmount]);
 
   return (
-    <div className="relative w-full h-full overflow-hidden" style={{ background: 'transparent' }}>
+    <div className={`relative w-full h-full overflow-hidden ${themeData.fontClass} ${themeData.text}`} style={{ background: 'transparent' }}>
       {/* Screen flash for SR+ */}
       {screenFlash && (
         <div

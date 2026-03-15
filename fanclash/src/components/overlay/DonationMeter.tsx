@@ -1,5 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { themes } from '@/lib/themes';
+import type { ThemeName } from '@/types';
 
 /* ── Gauge skin stages ── */
 const GAUGE_STAGES = [
@@ -33,9 +35,11 @@ interface Particle {
 interface DonationMeterProps {
   widgetId?: string;
   config?: Record<string, unknown>;
+  theme?: string;
 }
 
-export default function DonationMeter({ widgetId, config }: DonationMeterProps) {
+export default function DonationMeter({ widgetId, config, theme }: DonationMeterProps) {
+  const themeData = themes[(theme as ThemeName) || 'modern'];
   const skin = (config?.skin as string) || 'gauge';
   const windowMinutes = (config?.windowMinutes as number) || 5;
   const maxAmount = (config?.maxAmount as number) || 50000;
@@ -179,7 +183,7 @@ export default function DonationMeter({ widgetId, config }: DonationMeterProps) 
   if (skin === 'weather') {
     return (
       <div
-        className={`relative w-full h-full overflow-hidden ${shake ? 'animate-meter-shake' : ''}`}
+        className={`relative w-full h-full overflow-hidden ${themeData.fontClass} ${themeData.text} ${shake ? 'animate-meter-shake' : ''}`}
         style={{ background: 'transparent' }}
       >
         {lightning && (
@@ -249,7 +253,7 @@ export default function DonationMeter({ widgetId, config }: DonationMeterProps) 
 
   return (
     <div
-      className={`relative w-full h-full flex items-center justify-center ${shake ? 'meter-shake' : ''}`}
+      className={`relative w-full h-full flex items-center justify-center ${themeData.fontClass} ${themeData.text} ${shake ? 'meter-shake' : ''}`}
       style={{ background: 'transparent' }}
     >
       {particleCount > 0 && Array.from({ length: particleCount }).map((_, i) => (

@@ -1,5 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { themes } from '@/lib/themes';
+import type { ThemeName } from '@/types';
 
 interface RPGCharacter {
   fan_nickname: string;
@@ -13,6 +15,7 @@ interface RPGCharacter {
 interface DonationRPGProps {
   widgetId?: string;
   config?: Record<string, unknown>;
+  theme?: string;
 }
 
 const RPG_TITLES: { level: number; title: string }[] = [
@@ -86,7 +89,8 @@ function getTierColor(level: number): string {
   return 'from-amber-700 via-amber-800 to-amber-900';
 }
 
-export default function DonationRPG({ widgetId, config }: DonationRPGProps) {
+export default function DonationRPG({ widgetId, config, theme }: DonationRPGProps) {
+  const themeData = themes[(theme as ThemeName) || 'modern'];
   const xpRate = (config?.xpRate as number) || 1;
   const showEquipment = config?.showEquipment !== false;
 
@@ -240,7 +244,7 @@ export default function DonationRPG({ widgetId, config }: DonationRPGProps) {
   const tierColor = character ? getTierColor(character.level) : 'from-amber-700 via-amber-800 to-amber-900';
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center" style={{ background: 'transparent' }}>
+    <div className={`relative w-full h-full flex items-center justify-center ${themeData.fontClass} ${themeData.text}`} style={{ background: 'transparent' }}>
       {/* Level up flash */}
       {levelUpAnim && (
         <div className="absolute inset-0 pointer-events-none rpg-flash z-20">

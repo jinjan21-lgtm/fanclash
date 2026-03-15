@@ -46,15 +46,15 @@ export default function OverlayPage({ params }: { params: Promise<{ widgetId: st
       case 'messages': return <MessageBoard {...props} />;
       case 'alert': return <DonationAlert {...props} />;
       case 'roulette': return <DonationRoulette {...props} />;
-      case 'gacha': return <DonationGacha widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
-      case 'physics': return <DonationPhysics widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
-      case 'territory': return <DonationTerritory widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
-      case 'train': return <DonationTrain widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
-      case 'slots': return <DonationSlots widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
-      case 'meter': return <DonationMeter widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
-      case 'quiz': return <DonationQuiz widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
-      case 'rpg': return <DonationRPG widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
-      case 'mission': return <DonationMission widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
+      case 'gacha': return <DonationGacha widgetId={widgetId} config={widget.config as Record<string, unknown>} theme={widget.theme} />;
+      case 'physics': return <DonationPhysics widgetId={widgetId} config={widget.config as Record<string, unknown>} theme={widget.theme} />;
+      case 'territory': return <DonationTerritory widgetId={widgetId} config={widget.config as Record<string, unknown>} theme={widget.theme} />;
+      case 'train': return <DonationTrain widgetId={widgetId} config={widget.config as Record<string, unknown>} theme={widget.theme} />;
+      case 'slots': return <DonationSlots widgetId={widgetId} config={widget.config as Record<string, unknown>} theme={widget.theme} />;
+      case 'meter': return <DonationMeter widgetId={widgetId} config={widget.config as Record<string, unknown>} theme={widget.theme} />;
+      case 'quiz': return <DonationQuiz widgetId={widgetId} config={widget.config as Record<string, unknown>} theme={widget.theme} />;
+      case 'rpg': return <DonationRPG widgetId={widgetId} config={widget.config as Record<string, unknown>} theme={widget.theme} />;
+      case 'mission': return <DonationMission widgetId={widgetId} config={widget.config as Record<string, unknown>} theme={widget.theme} />;
       default: return null;
     }
   };

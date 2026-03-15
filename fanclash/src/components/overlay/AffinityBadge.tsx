@@ -43,11 +43,21 @@ export default function AffinityBadge({ widget, preview }: { widget: Widget; pre
     };
   }, []);
 
-  // Show demo data in preview mode
+  // Show demo data in preview mode — repeat every 8s
   useEffect(() => {
-    if (preview) {
+    if (!preview) return;
+    const trigger = () => {
       setLevelUp({ nickname: '별빛소나기', level: 3, title: '첫사랑' });
-    }
+      // Auto-dismiss after 5s
+      const id = setTimeout(() => {
+        timeoutIdsRef.current.delete(id);
+        setLevelUp(null);
+      }, 5000);
+      timeoutIdsRef.current.add(id);
+    };
+    trigger();
+    const interval = setInterval(trigger, 8000);
+    return () => clearInterval(interval);
   }, [preview]);
 
   const safeLevel = levelUp ? Math.min(Math.max(levelUp.level, 0), LEVEL_COLORS.length - 1) : 0;

@@ -1,14 +1,18 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { themes } from '@/lib/themes';
+import type { ThemeName } from '@/types';
 
 const SYMBOLS = ['\uD83C\uDF52', '\uD83D\uDC8E', '\u2B50', '\u2764\uFE0F', '\uD83D\uDC51', '7\uFE0F\u20E3', '\uD83C\uDFB0'];
 
 interface DonationSlotsProps {
   widgetId?: string;
   config?: Record<string, unknown>;
+  theme?: string;
 }
 
-export default function DonationSlots({ widgetId, config }: DonationSlotsProps) {
+export default function DonationSlots({ widgetId, config, theme }: DonationSlotsProps) {
+  const themeData = themes[(theme as ThemeName) || 'modern'];
   const minAmount = (config?.minAmount as number) || 1000;
   const missions = (config?.missions as string[])?.length > 0
     ? (config!.missions as string[])
@@ -175,7 +179,7 @@ export default function DonationSlots({ widgetId, config }: DonationSlotsProps) 
   }, [result]);
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center" style={{ background: 'transparent' }}>
+    <div className={`relative w-full h-full flex items-center justify-center ${themeData.fontClass} ${themeData.text}`} style={{ background: 'transparent' }}>
       {/* Big win flash */}
       {result === 'big' && <div className="absolute inset-0 big-win-flash pointer-events-none z-0" />}
 
