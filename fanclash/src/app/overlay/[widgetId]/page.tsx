@@ -74,7 +74,7 @@ export default function OverlayPage({ params }: { params: Promise<{ widgetId: st
 
   return (
     <ErrorBoundary fallback={<div className="bg-transparent" />}>
-      <div className="widget-container" style={{ minHeight: '100vh' }}>
+      <div className="widget-container" style={{ height: '100vh' }}>
         <WidgetComponent />
       </div>
     </ErrorBoundary>

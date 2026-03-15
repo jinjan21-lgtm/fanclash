@@ -356,7 +356,7 @@ export default function DemoOverlayPage({ params }: { params: Promise<{ type: st
 
   return (
     <ErrorBoundary fallback={<div className="bg-transparent" />}>
-      <div className="widget-container" style={{ minHeight: '100vh' }}>
+      <div className="widget-container" style={{ height: '100vh' }}>
         <WidgetComponent />
       </div>
     </ErrorBoundary>
