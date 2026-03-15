@@ -63,7 +63,7 @@ function getDefaultTitle(type: WidgetType): string {
 export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }: Props) {
   const supabase = createClient();
   const { toast } = useToast();
-  const [config, setConfig] = useState<Record<string, unknown>>(widget.config || {});
+  const [config, setConfig] = useState<Record<string, unknown>>(() => JSON.parse(JSON.stringify(widget.config || {})));
   const [saving, setSaving] = useState(false);
 
   // ESC key to close modal

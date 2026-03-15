@@ -13,7 +13,8 @@ interface WallCard {
   id: number;
 }
 
-let cardId = 0;
+// Per-instance counter to avoid ID collisions across multiple widget instances
+// Using a function to generate unique IDs instead of a module-level counter
 
 function getAmountTier(amount: number): { bg: string; border: string; nicknameColor: string } {
   if (amount >= 30000) return { bg: 'bg-yellow-900/40', border: 'border-yellow-500/60', nicknameColor: 'text-yellow-400' };
@@ -25,6 +26,7 @@ function getAmountTier(amount: number): { bg: string; border: string; nicknameCo
 export default function MessageBoard({ widget, preview }: { widget: Widget; preview?: boolean }) {
   const [cards, setCards] = useState<WallCard[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const cardIdRef = useRef(0);
   const { on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
   const config = widget.config as Record<string, unknown>;
@@ -49,7 +51,7 @@ export default function MessageBoard({ widget, preview }: { widget: Widget; prev
             nickname: d.fan_nickname,
             amount: d.amount,
             message: d.message || '',
-            id: cardId++,
+            id: cardIdRef.current++,
           }));
           setCards(loaded);
           setTotalCount(loaded.length);
@@ -66,7 +68,7 @@ export default function MessageBoard({ widget, preview }: { widget: Widget; prev
         nickname: data.fan_nickname,
         amount: data.amount,
         message: data.message,
-        id: cardId++,
+        id: cardIdRef.current++,
       };
       setTotalCount(prev => prev + 1);
       setCards(prev => [...prev, newCard].slice(-maxVisible));
@@ -78,14 +80,14 @@ export default function MessageBoard({ widget, preview }: { widget: Widget; prev
   useEffect(() => {
     if (preview && cards.length === 0) {
       const demoCards: WallCard[] = [
-        { nickname: '별빛팬', amount: 5000, message: '화이팅!', id: cardId++ },
-        { nickname: '후원왕', amount: 10000, message: '대박!!', id: cardId++ },
-        { nickname: '치킨러버', amount: 3000, message: '최고!', id: cardId++ },
-        { nickname: '고래밥', amount: 1000, message: '응원!', id: cardId++ },
-        { nickname: '불꽃소녀', amount: 50000, message: '사랑해', id: cardId++ },
-        { nickname: '달빛기사', amount: 2000, message: '멋져요~', id: cardId++ },
-        { nickname: '새벽감성', amount: 30000, message: '오늘도 파이팅', id: cardId++ },
-        { nickname: '꿈나무', amount: 1000, message: '첫 후원!', id: cardId++ },
+        { nickname: '별빛팬', amount: 5000, message: '화이팅!', id: cardIdRef.current++ },
+        { nickname: '후원왕', amount: 10000, message: '대박!!', id: cardIdRef.current++ },
+        { nickname: '치킨러버', amount: 3000, message: '최고!', id: cardIdRef.current++ },
+        { nickname: '고래밥', amount: 1000, message: '응원!', id: cardIdRef.current++ },
+        { nickname: '불꽃소녀', amount: 50000, message: '사랑해', id: cardIdRef.current++ },
+        { nickname: '달빛기사', amount: 2000, message: '멋져요~', id: cardIdRef.current++ },
+        { nickname: '새벽감성', amount: 30000, message: '오늘도 파이팅', id: cardIdRef.current++ },
+        { nickname: '꿈나무', amount: 1000, message: '첫 후원!', id: cardIdRef.current++ },
       ];
       setCards(demoCards);
       setTotalCount(demoCards.length);

@@ -34,6 +34,13 @@ export function useSocket(widgetId: string) {
   const on = useCallback((event: string, handler: (...args: any[]) => void) => {
     const socket = socketRef.current;
     if (socket) {
+      // Remove any existing handler for the same event to prevent duplicates on reconnect
+      const existing = listenersRef.current.filter(l => l.event === event);
+      for (const l of existing) {
+        socket.off(event as any, l.handler);
+      }
+      listenersRef.current = listenersRef.current.filter(l => l.event !== event);
+
       socket.on(event as any, handler);
       listenersRef.current.push({ event, handler });
     }
