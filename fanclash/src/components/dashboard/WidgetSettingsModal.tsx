@@ -5,11 +5,44 @@ import { useToast } from '@/components/ui/Toast';
 import { isProFeature } from '@/lib/plan';
 import type { Widget, WidgetType } from '@/types';
 
+import AlertSettings from './settings/AlertSettings';
+import RankingSettings from './settings/RankingSettings';
+import ThroneSettings from './settings/ThroneSettings';
+import GoalSettings from './settings/GoalSettings';
+import AffinitySettings from './settings/AffinitySettings';
+import BattleSettings from './settings/BattleSettings';
+import TimerSettings from './settings/TimerSettings';
+import TeamBattleSettings from './settings/TeamBattleSettings';
+import RouletteSettings from './settings/RouletteSettings';
+import MessagesSettings from './settings/MessagesSettings';
+import StylePresets from './settings/StylePresets';
+
 interface Props {
   widget: Widget;
   plan: string;
   onClose: () => void;
   onUpdate: () => void;
+}
+
+function getDefaultTitle(type: WidgetType): string {
+  const defaults: Record<WidgetType, string> = {
+    alert: '후원 알림',
+    ranking: '후원 랭킹',
+    throne: '왕좌 쟁탈전',
+    goal: '도네 목표',
+    affinity: '호감도',
+    battle: '후원 배틀',
+    team_battle: '팬 투표',
+    timer: '이벤트 타이머',
+    messages: '메시지 보드',
+    roulette: '후원 룰렛',
+    music: '도네이션 뮤직',
+    gacha: '도네이션 가챠',
+    physics: '도네이션 폭격',
+    territory: '영토 전쟁',
+    weather: '방송 날씨',
+  };
+  return defaults[type];
 }
 
 export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }: Props) {
@@ -104,7 +137,6 @@ export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }:
               />
             </div>
 
-            {/* Type-specific settings */}
             {/* Sound setting for alert-type widgets (Pro only) */}
             {(['alert', 'throne', 'affinity', 'battle'] as const).includes(widget.type as any) && (
               <div>
@@ -134,15 +166,10 @@ export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }:
               </div>
             )}
 
-            {widget.type === 'alert' && (
-              <AlertSettings config={config} onChange={setConfig} />
-            )}
-            {widget.type === 'ranking' && (
-              <RankingSettings config={config} onChange={setConfig} />
-            )}
-            {widget.type === 'throne' && (
-              <ThroneSettings config={config} onChange={setConfig} />
-            )}
+            {/* Type-specific settings */}
+            {widget.type === 'alert' && <AlertSettings config={config} onChange={setConfig} />}
+            {widget.type === 'ranking' && <RankingSettings config={config} onChange={setConfig} />}
+            {widget.type === 'throne' && <ThroneSettings config={config} onChange={setConfig} />}
             {widget.type === 'goal' && (
               <GoalSettings
                 milestones={milestones}
@@ -155,30 +182,12 @@ export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }:
                 onReset={resetGoalAmount}
               />
             )}
-            {widget.type === 'affinity' && (
-              <AffinitySettings config={config} onChange={setConfig} />
-            )}
+            {widget.type === 'affinity' && <AffinitySettings config={config} onChange={setConfig} />}
             {/* battle settings are now in BattleControl */}
             {/* team_battle settings are now in BattleControl */}
-            {widget.type === 'timer' && (
-              <TimerSettings config={config} onChange={setConfig} />
-            )}
-            {widget.type === 'messages' && (
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">표시 메시지 수</label>
-                <select
-                  value={(config.maxMessages as number) || 5}
-                  onChange={e => setConfig({ ...config, maxMessages: parseInt(e.target.value) })}
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm">
-                  <option value={3}>3개</option>
-                  <option value={5}>5개</option>
-                  <option value={10}>10개</option>
-                </select>
-              </div>
-            )}
-            {widget.type === 'roulette' && (
-              <RouletteSettings config={config} onChange={setConfig} />
-            )}
+            {widget.type === 'timer' && <TimerSettings config={config} onChange={setConfig} />}
+            {widget.type === 'messages' && <MessagesSettings config={config} onChange={setConfig} />}
+            {widget.type === 'roulette' && <RouletteSettings config={config} onChange={setConfig} />}
           </div>
 
           {/* Widget Style (Pro only) */}
@@ -212,601 +221,5 @@ export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }:
         </div>
       </div>
     </div>
-  );
-}
-
-function getDefaultTitle(type: WidgetType): string {
-  const defaults: Record<WidgetType, string> = {
-    alert: '후원 알림',
-    ranking: '후원 랭킹',
-    throne: '왕좌 쟁탈전',
-    goal: '도네 목표',
-    affinity: '호감도',
-    battle: '후원 배틀',
-    team_battle: '팬 투표',
-    timer: '이벤트 타이머',
-    messages: '메시지 보드',
-    roulette: '후원 룰렛',
-  };
-  return defaults[type];
-}
-
-function AlertSettings({ config, onChange }: { config: Record<string, unknown>; onChange: (c: Record<string, unknown>) => void }) {
-  return (
-    <>
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">알림 표시 시간 (초)</label>
-        <input
-          type="number"
-          value={(config.alertDuration as number) || 5}
-          onChange={e => onChange({ ...config, alertDuration: parseInt(e.target.value) })}
-          min={2} max={15}
-          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
-        />
-      </div>
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">최소 표시 금액</label>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            value={(config.minAmount as number) || 0}
-            onChange={e => onChange({ ...config, minAmount: parseInt(e.target.value) })}
-            step={1000} min={0}
-            className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
-          />
-          <span className="text-gray-400 text-sm">원</span>
-        </div>
-        <p className="text-xs text-gray-600 mt-1">이 금액 미만의 후원은 알림을 표시하지 않습니다</p>
-      </div>
-      <div className="flex items-center justify-between">
-        <div>
-          <label className="text-sm text-gray-400">메시지 표시</label>
-          <p className="text-xs text-gray-600">후원 메시지를 알림에 표시</p>
-        </div>
-        <button
-          onClick={() => onChange({ ...config, showMessage: !(config.showMessage ?? true) })}
-          className={`px-3 py-1 rounded-full text-xs font-bold ${(config.showMessage ?? true) ? 'bg-green-600' : 'bg-gray-700'}`}>
-          {(config.showMessage ?? true) ? 'ON' : 'OFF'}
-        </button>
-      </div>
-      <div className="flex items-center justify-between">
-        <div>
-          <label className="text-sm text-gray-400">TTS (음성 읽기)</label>
-          <p className="text-xs text-gray-600">후원 내용을 음성으로 읽어줍니다</p>
-        </div>
-        <button
-          onClick={() => onChange({ ...config, ttsEnabled: !config.ttsEnabled })}
-          className={`px-3 py-1 rounded-full text-xs font-bold ${config.ttsEnabled ? 'bg-green-600' : 'bg-gray-700'}`}>
-          {config.ttsEnabled ? 'ON' : 'OFF'}
-        </button>
-      </div>
-    </>
-  );
-}
-
-function RankingSettings({ config, onChange }: { config: Record<string, unknown>; onChange: (c: Record<string, unknown>) => void }) {
-  return (
-    <>
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">표시 인원 수</label>
-        <select
-          value={(config.maxDisplay as number) || 5}
-          onChange={e => onChange({ ...config, maxDisplay: parseInt(e.target.value) })}
-          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm">
-          <option value={3}>TOP 3</option>
-          <option value={5}>TOP 5</option>
-          <option value={10}>TOP 10</option>
-        </select>
-      </div>
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">집계 기간</label>
-        <select
-          value={(config.period as string) || 'daily'}
-          onChange={e => onChange({ ...config, period: e.target.value })}
-          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm">
-          <option value="daily">오늘</option>
-          <option value="weekly">이번 주</option>
-          <option value="monthly">이번 달</option>
-          <option value="all">전체</option>
-        </select>
-      </div>
-    </>
-  );
-}
-
-function ThroneSettings({ config, onChange }: { config: Record<string, unknown>; onChange: (c: Record<string, unknown>) => void }) {
-  return (
-    <>
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">알림 표시 시간 (초)</label>
-        <input
-          type="number"
-          value={(config.alertDuration as number) || 5}
-          onChange={e => onChange({ ...config, alertDuration: parseInt(e.target.value) })}
-          min={2}
-          max={15}
-          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
-        />
-      </div>
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">알림 효과음</label>
-        <select
-          value={(config.sound as string) || 'default'}
-          onChange={e => onChange({ ...config, sound: e.target.value })}
-          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm">
-          <option value="default">기본</option>
-          <option value="fanfare">팡파레</option>
-          <option value="none">없음</option>
-        </select>
-      </div>
-    </>
-  );
-}
-
-function GoalSettings({
-  milestones, newAmount, newMission, onNewAmountChange, onNewMissionChange, onAdd, onRemove, onReset,
-}: {
-  milestones: { amount: number; mission: string }[];
-  newAmount: string;
-  newMission: string;
-  onNewAmountChange: (v: string) => void;
-  onNewMissionChange: (v: string) => void;
-  onAdd: () => void;
-  onRemove: (i: number) => void;
-  onReset: () => void;
-}) {
-  return (
-    <>
-      <div>
-        <label className="block text-sm text-gray-400 mb-2">마일스톤 목록</label>
-        {milestones.length === 0 && (
-          <p className="text-gray-500 text-sm mb-2">아직 마일스톤이 없습니다. 아래에서 추가하세요.</p>
-        )}
-        <div className="space-y-2 mb-3">
-          {milestones.map((m, i) => (
-            <div key={i} className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2">
-              <span className="text-purple-400 font-bold text-sm min-w-[80px]">
-                {m.amount.toLocaleString()}원
-              </span>
-              <span className="flex-1 text-sm">{m.mission}</span>
-              <button onClick={() => onRemove(i)} className="text-red-400 hover:text-red-300 text-lg">&times;</button>
-            </div>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="number"
-            value={newAmount}
-            onChange={e => onNewAmountChange(e.target.value)}
-            placeholder="금액"
-            className="w-28 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
-          />
-          <input
-            type="text"
-            value={newMission}
-            onChange={e => onNewMissionChange(e.target.value)}
-            placeholder="미션 (예: 노래 한 곡)"
-            className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
-            onKeyDown={e => e.key === 'Enter' && onAdd()}
-          />
-          <button onClick={onAdd}
-            className="px-4 py-2 bg-purple-600 rounded-lg text-sm hover:bg-purple-700 whitespace-nowrap">
-            추가
-          </button>
-        </div>
-      </div>
-      <button onClick={onReset}
-        className="w-full py-2 bg-red-900/50 border border-red-800 rounded-lg text-sm text-red-400 hover:bg-red-900">
-        현재 목표 금액 초기화 (0원으로)
-      </button>
-    </>
-  );
-}
-
-function AffinitySettings({ config, onChange }: { config: Record<string, unknown>; onChange: (c: Record<string, unknown>) => void }) {
-  const levels = (config.levels as { title: string; minAmount: number }[]) || [
-    { title: '지나가는 팬', minAmount: 0 },
-    { title: '단골', minAmount: 10000 },
-    { title: '열혈팬', minAmount: 50000 },
-    { title: '첫사랑', minAmount: 200000 },
-    { title: '소울메이트', minAmount: 500000 },
-  ];
-
-  const updateLevel = (index: number, field: 'title' | 'minAmount', value: string | number) => {
-    const updated = levels.map((l, i) => i === index ? { ...l, [field]: value } : l);
-    onChange({ ...config, levels: updated });
-  };
-
-  return (
-    <div>
-      <label className="block text-sm text-gray-400 mb-2">호감도 레벨 설정</label>
-      <div className="space-y-2">
-        {levels.map((level, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <span className="text-gray-500 text-sm w-6">Lv{i}</span>
-            <input
-              type="text"
-              value={level.title}
-              onChange={e => updateLevel(i, 'title', e.target.value)}
-              className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:border-purple-500 focus:outline-none"
-            />
-            <input
-              type="number"
-              value={level.minAmount}
-              onChange={e => updateLevel(i, 'minAmount', parseInt(e.target.value) || 0)}
-              className="w-28 bg-gray-800 border border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:border-purple-500 focus:outline-none"
-              disabled={i === 0}
-            />
-            <span className="text-gray-500 text-xs">원</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function BattleSettings({ config, onChange }: { config: Record<string, unknown>; onChange: (c: Record<string, unknown>) => void }) {
-  return (
-    <>
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">기본 최소 참가 금액</label>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            value={(config.defaultMinAmount as number) || 5000}
-            onChange={e => onChange({ ...config, defaultMinAmount: parseInt(e.target.value) })}
-            step={1000}
-            min={1000}
-            className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
-          />
-          <span className="text-gray-400 text-sm">원</span>
-        </div>
-      </div>
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">기본 제한 시간</label>
-        <select
-          value={(config.defaultTimeLimit as number) || 180}
-          onChange={e => onChange({ ...config, defaultTimeLimit: parseInt(e.target.value) })}
-          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm">
-          <option value={60}>1분</option>
-          <option value={120}>2분</option>
-          <option value={180}>3분</option>
-          <option value={300}>5분</option>
-          <option value={600}>10분</option>
-        </select>
-      </div>
-    </>
-  );
-}
-
-function TimerSettings({ config, onChange }: { config: Record<string, unknown>; onChange: (c: Record<string, unknown>) => void }) {
-  const donationMode = (config.donationMode as string) || 'none';
-
-  return (
-    <>
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">이벤트 제목</label>
-        <input
-          type="text"
-          value={(config.eventTitle as string) || ''}
-          onChange={e => onChange({ ...config, eventTitle: e.target.value })}
-          placeholder="예: 10분 안에 목표 달성!"
-          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
-        />
-      </div>
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">제한 시간</label>
-        <select
-          value={(config.duration as number) || 600}
-          onChange={e => onChange({ ...config, duration: parseInt(e.target.value) })}
-          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm">
-          <option value={60}>1분</option>
-          <option value={180}>3분</option>
-          <option value={300}>5분</option>
-          <option value={600}>10분</option>
-          <option value={900}>15분</option>
-          <option value={1800}>30분</option>
-        </select>
-      </div>
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">벌칙/미션 (선택)</label>
-        <input
-          type="text"
-          value={(config.penalty as string) || ''}
-          onChange={e => onChange({ ...config, penalty: e.target.value })}
-          placeholder="예: 노래 3곡 연속!"
-          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
-        />
-      </div>
-
-      {/* 도네이션 연동 */}
-      <div className="pt-3 border-t border-gray-700">
-        <label className="block text-sm text-gray-400 mb-1">후원 연동 모드</label>
-        <select
-          value={donationMode}
-          onChange={e => onChange({ ...config, donationMode: e.target.value })}
-          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm">
-          <option value="none">없음 (수동 타이머)</option>
-          <option value="add">시간 추가 — 후원하면 시간이 늘어남</option>
-          <option value="subtract">시간 차감 — 후원하면 시간이 줄어듦</option>
-          <option value="auto_start">자동 시작 — 목표 금액 도달 시 타이머 시작</option>
-        </select>
-      </div>
-
-      {(donationMode === 'add' || donationMode === 'subtract') && (
-        <>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">
-              기준 금액 (이 금액당 시간 변동)
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                value={(config.donationAmountPer as number) || 1000}
-                onChange={e => onChange({ ...config, donationAmountPer: parseInt(e.target.value) })}
-                step={500}
-                min={500}
-                className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
-              />
-              <span className="text-gray-400 text-sm">원당</span>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">
-              {donationMode === 'add' ? '추가' : '차감'} 시간 (초)
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                value={(config.donationTimeChange as number) || 30}
-                onChange={e => onChange({ ...config, donationTimeChange: parseInt(e.target.value) })}
-                step={5}
-                min={1}
-                max={300}
-                className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
-              />
-              <span className="text-gray-400 text-sm">초</span>
-            </div>
-            <p className="text-xs text-gray-600 mt-1">
-              예: {((config.donationAmountPer as number) || 1000).toLocaleString()}원 후원 시 {(config.donationTimeChange as number) || 30}초 {donationMode === 'add' ? '추가' : '차감'}
-            </p>
-          </div>
-        </>
-      )}
-
-      {donationMode === 'auto_start' && (
-        <div>
-          <label className="block text-sm text-gray-400 mb-1">자동 시작 목표 금액</label>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              value={(config.autoStartGoal as number) || 50000}
-              onChange={e => onChange({ ...config, autoStartGoal: parseInt(e.target.value) })}
-              step={10000}
-              min={1000}
-              className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
-            />
-            <span className="text-gray-400 text-sm">원</span>
-          </div>
-          <p className="text-xs text-gray-600 mt-1">
-            누적 후원이 이 금액에 도달하면 타이머가 자동으로 시작됩니다
-          </p>
-        </div>
-      )}
-    </>
-  );
-}
-
-function TeamBattleSettings({ config, onChange }: { config: Record<string, unknown>; onChange: (c: Record<string, unknown>) => void }) {
-  const teamNames = (config.defaultTeamNames as string[]) || ['A팀', 'B팀'];
-
-  const updateTeamName = (index: number, value: string) => {
-    const updated = [...teamNames];
-    updated[index] = value;
-    onChange({ ...config, defaultTeamNames: updated });
-  };
-
-  return (
-    <>
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">기본 팀 수</label>
-        <select
-          value={(config.defaultTeamCount as number) || 2}
-          onChange={e => {
-            const count = parseInt(e.target.value);
-            const names = [...teamNames];
-            while (names.length < count) names.push(`${String.fromCharCode(65 + names.length)}팀`);
-            onChange({ ...config, defaultTeamCount: count, defaultTeamNames: names.slice(0, count) });
-          }}
-          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm">
-          <option value={2}>2팀</option>
-          <option value={3}>3팀</option>
-          <option value={4}>4팀</option>
-        </select>
-      </div>
-      <div>
-        <label className="block text-sm text-gray-400 mb-2">팀 이름</label>
-        <div className="space-y-2">
-          {teamNames.slice(0, (config.defaultTeamCount as number) || 2).map((name, i) => (
-            <input
-              key={i}
-              type="text"
-              value={name}
-              onChange={e => updateTeamName(i, e.target.value)}
-              placeholder={`${i + 1}번째 팀`}
-              className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
-            />
-          ))}
-        </div>
-      </div>
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">기본 제한 시간</label>
-        <select
-          value={(config.defaultTimeLimit as number) || 300}
-          onChange={e => onChange({ ...config, defaultTimeLimit: parseInt(e.target.value) })}
-          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm">
-          <option value={120}>2분</option>
-          <option value={180}>3분</option>
-          <option value={300}>5분</option>
-          <option value={600}>10분</option>
-        </select>
-      </div>
-    </>
-  );
-}
-
-const STYLE_PRESETS: { id: string; name: string; desc: string; css: string; preview: Record<string, string> }[] = [
-  {
-    id: 'none',
-    name: '기본',
-    desc: '테마 기본 스타일',
-    css: '',
-    preview: { background: 'transparent', border: '2px dashed #374151' },
-  },
-  {
-    id: 'glass',
-    name: '글래스',
-    desc: '반투명 유리 효과',
-    css: `.widget-container { background: rgba(255,255,255,0.08); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 16px; }`,
-    preview: { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '16px', backdropFilter: 'blur(4px)' },
-  },
-  {
-    id: 'neon',
-    name: '네온',
-    desc: '빛나는 네온 테두리',
-    css: `.widget-container { background: rgba(0,0,0,0.7); border: 2px solid #a855f7; border-radius: 12px; padding: 16px; box-shadow: 0 0 15px rgba(168,85,247,0.4), inset 0 0 15px rgba(168,85,247,0.1); }`,
-    preview: { background: 'rgba(0,0,0,0.7)', border: '2px solid #a855f7', borderRadius: '12px', boxShadow: '0 0 10px rgba(168,85,247,0.4)' },
-  },
-  {
-    id: 'gradient',
-    name: '그라데이션',
-    desc: '컬러 그라데이션 배경',
-    css: `.widget-container { background: linear-gradient(135deg, rgba(168,85,247,0.3), rgba(59,130,246,0.3)); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 16px; }`,
-    preview: { background: 'linear-gradient(135deg, rgba(168,85,247,0.3), rgba(59,130,246,0.3))', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px' },
-  },
-  {
-    id: 'dark',
-    name: '다크',
-    desc: '어두운 배경 + 둥근 모서리',
-    css: `.widget-container { background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; }`,
-    preview: { background: 'rgba(0,0,0,0.85)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px' },
-  },
-  {
-    id: 'retro',
-    name: '레트로',
-    desc: '픽셀 게임 스타일',
-    css: `.widget-container { background: #1a1a2e; border: 3px solid #e94560; border-radius: 0; padding: 16px; box-shadow: 4px 4px 0 #e94560; font-family: 'Press Start 2P', monospace; }`,
-    preview: { background: '#1a1a2e', border: '3px solid #e94560', borderRadius: '0', boxShadow: '4px 4px 0 #e94560' },
-  },
-  {
-    id: 'minimal',
-    name: '미니멀',
-    desc: '깔끔한 흰색 라인',
-    css: `.widget-container { background: transparent; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 16px; }`,
-    preview: { background: 'transparent', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '8px' },
-  },
-  {
-    id: 'fire',
-    name: '불꽃',
-    desc: '빨간 그라데이션 + 글로우',
-    css: `.widget-container { background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(234,179,8,0.2)); border: 1px solid rgba(239,68,68,0.4); border-radius: 12px; padding: 16px; box-shadow: 0 0 20px rgba(239,68,68,0.2); }`,
-    preview: { background: 'linear-gradient(135deg, rgba(239,68,68,0.2), rgba(234,179,8,0.2))', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '12px', boxShadow: '0 0 10px rgba(239,68,68,0.2)' },
-  },
-];
-
-function StylePresets({ config, onChange }: { config: Record<string, unknown>; onChange: (c: Record<string, unknown>) => void }) {
-  const currentId = (config.stylePreset as string) || 'none';
-
-  const selectPreset = (preset: typeof STYLE_PRESETS[number]) => {
-    onChange({ ...config, stylePreset: preset.id, customCss: preset.css });
-  };
-
-  return (
-    <div className="grid grid-cols-4 gap-2">
-      {STYLE_PRESETS.map(preset => (
-        <button
-          key={preset.id}
-          onClick={() => selectPreset(preset)}
-          className={`group relative p-1 rounded-lg border-2 transition-all ${
-            currentId === preset.id
-              ? 'border-purple-500 ring-1 ring-purple-500/30'
-              : 'border-gray-700 hover:border-gray-500'
-          }`}
-        >
-          <div
-            className="w-full h-12 rounded-md mb-1.5"
-            style={preset.preview}
-          />
-          <p className="text-xs font-medium truncate">{preset.name}</p>
-          <p className="text-[10px] text-gray-500 truncate">{preset.desc}</p>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function RouletteSettings({ config, onChange }: { config: Record<string, unknown>; onChange: (c: Record<string, unknown>) => void }) {
-  const segments = (config.segments as string[]) || ['노래 한 곡', '스쿼트 10개', '광고 읽기', '팬 선택곡', '꽁치킨 약속', '2배속 게임'];
-  const [newSegment, setNewSegment] = useState('');
-
-  const addSegment = () => {
-    if (!newSegment.trim() || segments.length >= 12) return;
-    onChange({ ...config, segments: [...segments, newSegment.trim()] });
-    setNewSegment('');
-  };
-
-  const removeSegment = (index: number) => {
-    if (segments.length <= 2) return;
-    onChange({ ...config, segments: segments.filter((_, i) => i !== index) });
-  };
-
-  return (
-    <>
-      <div>
-        <label className="block text-sm text-gray-400 mb-2">룰렛 항목 ({segments.length}/12)</label>
-        <div className="space-y-2 mb-3">
-          {segments.map((seg, i) => (
-            <div key={i} className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2">
-              <span className="w-2 h-2 rounded-full" style={{
-                background: ['#ef4444','#3b82f6','#22c55e','#eab308','#a855f7','#ec4899','#06b6d4','#f97316'][i % 8]
-              }} />
-              <span className="flex-1 text-sm">{seg}</span>
-              <button onClick={() => removeSegment(i)} className="text-red-400 hover:text-red-300 text-lg"
-                disabled={segments.length <= 2}>&times;</button>
-            </div>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newSegment}
-            onChange={e => setNewSegment(e.target.value)}
-            placeholder="새 항목 (예: 노래 부르기)"
-            maxLength={30}
-            className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
-            onKeyDown={e => e.key === 'Enter' && addSegment()}
-          />
-          <button onClick={addSegment} disabled={segments.length >= 12}
-            className="px-4 py-2 bg-purple-600 rounded-lg text-sm hover:bg-purple-700 disabled:opacity-50">
-            추가
-          </button>
-        </div>
-      </div>
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">최소 후원 금액 (룰렛 작동)</label>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            value={(config.minAmount as number) || 5000}
-            onChange={e => onChange({ ...config, minAmount: parseInt(e.target.value) })}
-            step={1000}
-            min={1000}
-            className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
-          />
-          <span className="text-gray-400 text-sm">원</span>
-        </div>
-        <p className="text-xs text-gray-600 mt-1">이 금액 이상 후원 시 룰렛이 자동으로 돌아갑니다</p>
-      </div>
-    </>
   );
 }
