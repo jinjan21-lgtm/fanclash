@@ -44,16 +44,22 @@ export default function DonationTerritory({ widgetId, config }: DonationTerritor
   const gridSizeStr = (config?.gridSize as string) ?? '20x12';
   const showLeaderboard = (config?.showLeaderboard as boolean) ?? true;
   const minAmount = (config?.minAmount as number) ?? 1000;
-  const { cols: GRID_COLS, rows: GRID_ROWS } = parseGridSize(gridSizeStr);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gridRef = useRef<Cell[][]>(
-    Array.from({ length: GRID_ROWS }, () =>
-      Array.from({ length: GRID_COLS }, () => ({ owner: null, color: '#1a1a2e', claimedAt: 0 }))
-    )
-  );
+  const gridRef = useRef<Cell[][]>([]);
+  const gridDimsRef = useRef<{ cols: number; rows: number }>({ cols: 0, rows: 0 });
   const [leaders, setLeaders] = useState<TerritoryLeader[]>([]);
   const animFrameRef = useRef<number>(0);
+
+  // Re-initialize grid when gridSize config changes
+  useEffect(() => {
+    const { cols, rows } = parseGridSize(gridSizeStr);
+    gridDimsRef.current = { cols, rows };
+    gridRef.current = Array.from({ length: rows }, () =>
+      Array.from({ length: cols }, () => ({ owner: null, color: '#1a1a2e', claimedAt: 0 }))
+    );
+    setLeaders([]);
+  }, [gridSizeStr]);
 
   // Render loop
   useEffect(() => {
@@ -69,9 +75,16 @@ export default function DonationTerritory({ widgetId, config }: DonationTerritor
     resize();
     window.addEventListener('resize', resize);
 
-    const ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     const render = () => {
+      const { cols: GRID_COLS, rows: GRID_ROWS } = gridDimsRef.current;
+      if (GRID_COLS === 0 || GRID_ROWS === 0) {
+        animFrameRef.current = requestAnimationFrame(render);
+        return;
+      }
+
       const w = canvas.width;
       const h = canvas.height;
       const cellW = w / GRID_COLS;
@@ -84,7 +97,8 @@ export default function DonationTerritory({ widgetId, config }: DonationTerritor
 
       for (let r = 0; r < GRID_ROWS; r++) {
         for (let c = 0; c < GRID_COLS; c++) {
-          const cell = grid[r][c];
+          const cell = grid[r]?.[c];
+          if (!cell) continue;
           const x = c * cellW;
           const y = r * cellH;
 
@@ -126,15 +140,16 @@ export default function DonationTerritory({ widgetId, config }: DonationTerritor
       cancelAnimationFrame(animFrameRef.current);
       window.removeEventListener('resize', resize);
     };
-  }, []);
+  }, [gridSizeStr]);
 
   const updateLeaders = useCallback(() => {
+    const { cols: GRID_COLS, rows: GRID_ROWS } = gridDimsRef.current;
     const counts: Record<string, { color: string; count: number }> = {};
     const grid = gridRef.current;
     for (let r = 0; r < GRID_ROWS; r++) {
       for (let c = 0; c < GRID_COLS; c++) {
-        const cell = grid[r][c];
-        if (cell.owner) {
+        const cell = grid[r]?.[c];
+        if (cell?.owner) {
           if (!counts[cell.owner]) counts[cell.owner] = { color: cell.color, count: 0 };
           counts[cell.owner].count++;
         }
@@ -149,6 +164,7 @@ export default function DonationTerritory({ widgetId, config }: DonationTerritor
 
   const triggerClaim = useCallback((amount: number, nickname: string) => {
     if (amount < minAmount) return;
+    const { cols: GRID_COLS, rows: GRID_ROWS } = gridDimsRef.current;
     const grid = gridRef.current;
     const color = nicknameToColor(nickname);
     const cellCount = Math.max(1, Math.floor(amount / 2000) + 1);
@@ -159,7 +175,7 @@ export default function DonationTerritory({ widgetId, config }: DonationTerritor
     // First: unclaimed cells
     for (let r = 0; r < GRID_ROWS; r++) {
       for (let c = 0; c < GRID_COLS; c++) {
-        if (grid[r][c].owner !== nickname) available.push([r, c]);
+        if (grid[r]?.[c]?.owner !== nickname) available.push([r, c]);
       }
     }
 
@@ -171,11 +187,13 @@ export default function DonationTerritory({ widgetId, config }: DonationTerritor
 
     const toClaim = available.slice(0, cellCount);
     toClaim.forEach(([r, c]) => {
-      grid[r][c] = { owner: nickname, color, claimedAt: now };
+      if (grid[r]?.[c]) {
+        grid[r][c] = { owner: nickname, color, claimedAt: now };
+      }
     });
 
     updateLeaders();
-  }, [updateLeaders, minAmount, GRID_COLS, GRID_ROWS]);
+  }, [updateLeaders, minAmount]);
 
   // Expose for demo
   useEffect(() => {
@@ -195,7 +213,7 @@ export default function DonationTerritory({ widgetId, config }: DonationTerritor
       socket.on('donation:new', (data: { fan_nickname: string; amount: number }) => {
         triggerClaim(data.amount, data.fan_nickname);
       });
-    });
+    }).catch(err => console.error('Socket.IO initialization failed:', err));
     return () => { socket?.disconnect(); };
   }, [widgetId, triggerClaim]);
 

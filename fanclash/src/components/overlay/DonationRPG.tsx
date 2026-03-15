@@ -24,6 +24,9 @@ const RPG_TITLES: { level: number; title: string }[] = [
   { level: 25, title: '신화' },
 ];
 
+// Maximum level-ups processed per single donation to prevent frame jank
+const MAX_LEVELUPS_PER_DONATION = 10;
+
 function getTitle(level: number): string {
   let title = '초보 모험가';
   for (const t of RPG_TITLES) {
@@ -96,14 +99,27 @@ export default function DonationRPG({ widgetId, config }: DonationRPGProps) {
   const streamerIdRef = useRef<string | null>(null);
   const levelUpEventRef = useRef<{ nickname: string; level: number } | null>(null);
   const socketRef = useRef<ReturnType<typeof import('socket.io-client').io> | null>(null);
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
+  const safeTimeout = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      timeoutIdsRef.current.delete(id);
+      fn();
+    }, ms);
+    timeoutIdsRef.current.add(id);
+    return id;
+  }, []);
+
+  // Design: Each fan has their own RPG character. The overlay shows the
+  // character of the most recent donor, with their nickname displayed.
+  // This creates a "spotlight" effect where each donor gets their moment.
   const processXPGain = useCallback((amount: number, nickname: string) => {
     const xpGained = Math.floor((amount / 100) * xpRate);
     if (xpGained <= 0) return;
 
     setGainedXP(xpGained);
     setXpGainAnim(true);
-    setTimeout(() => setXpGainAnim(false), 2000);
+    safeTimeout(() => setXpGainAnim(false), 2000);
 
     setCharacter(prev => {
       const base = prev && prev.fan_nickname === nickname
@@ -114,17 +130,20 @@ export default function DonationRPG({ widgetId, config }: DonationRPGProps) {
       let newLevel = base.level;
       let newXpToNext = base.xp_to_next;
       let didLevelUp = false;
+      let levelUps = 0;
 
-      while (newXP >= newXpToNext) {
+      while (newXP >= newXpToNext && levelUps < MAX_LEVELUPS_PER_DONATION) {
         newXP -= newXpToNext;
         newLevel += 1;
+        levelUps++;
         newXpToNext = newLevel * 100;
         didLevelUp = true;
       }
+      // If still has remaining XP after cap, just add it (stays as current XP)
 
       if (didLevelUp) {
         setLevelUpAnim(true);
-        setTimeout(() => setLevelUpAnim(false), 3000);
+        safeTimeout(() => setLevelUpAnim(false), 3000);
         // Emit widget event for event chaining (deferred to allow socket ref to be set)
         levelUpEventRef.current = { nickname, level: newLevel };
       }
@@ -144,20 +163,22 @@ export default function DonationRPG({ widgetId, config }: DonationRPGProps) {
     clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       const sid = streamerIdRef.current;
-      if (sid) {
-        fetch('/api/rpg', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            streamer_id: sid,
-            fan_nickname: nickname,
-            xp_gained: pendingXPRef.current,
-          }),
-        }).catch(() => {});
-        pendingXPRef.current = 0;
+      if (!sid) {
+        console.warn('Streamer ID not yet loaded, skipping save');
+        return;
       }
+      fetch('/api/rpg', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          streamer_id: sid,
+          fan_nickname: nickname,
+          xp_gained: pendingXPRef.current,
+        }),
+      }).catch(() => {});
+      pendingXPRef.current = 0;
     }, 2000);
-  }, [xpRate]);
+  }, [xpRate, safeTimeout]);
 
   // Expose for demo
   useEffect(() => {
@@ -178,7 +199,7 @@ export default function DonationRPG({ widgetId, config }: DonationRPGProps) {
       socket.on('donation:new', (data: { fan_nickname: string; amount: number }) => {
         processXPGain(data.amount, data.fan_nickname);
         // Emit level-up event if one was triggered
-        setTimeout(() => {
+        safeTimeout(() => {
           if (levelUpEventRef.current) {
             const { nickname, level } = levelUpEventRef.current;
             socket.emit('widget:event' as any, {
@@ -194,9 +215,14 @@ export default function DonationRPG({ widgetId, config }: DonationRPGProps) {
       socket.on('widget:chain-action' as any, (event: { action: string; data: Record<string, unknown> }) => {
         // No inbound chain actions for RPG currently
       });
-    });
-    return () => { socket?.disconnect(); socketRef.current = null; };
-  }, [widgetId, processXPGain]);
+    }).catch(err => console.error('Socket.IO initialization failed:', err));
+    return () => {
+      socket?.disconnect();
+      socketRef.current = null;
+      timeoutIdsRef.current.forEach(id => clearTimeout(id));
+      timeoutIdsRef.current.clear();
+    };
+  }, [widgetId, processXPGain, safeTimeout]);
 
   // Load streamer_id from widget
   useEffect(() => {
@@ -235,6 +261,13 @@ export default function DonationRPG({ widgetId, config }: DonationRPGProps) {
       {/* Character card */}
       {character ? (
         <div className="relative z-10 w-80">
+          {/* Nickname label — shows whose character is displayed */}
+          <div className="text-center mb-2">
+            <span className="text-sm font-bold text-purple-300 bg-purple-900/50 px-3 py-1 rounded-full">
+              {character.fan_nickname}의 캐릭터
+            </span>
+          </div>
+
           {/* Character avatar area */}
           <div className={`bg-gradient-to-br ${tierColor} rounded-t-2xl p-6 text-center relative overflow-hidden`}>
             {/* Background pattern */}

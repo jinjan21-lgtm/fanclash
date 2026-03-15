@@ -106,6 +106,16 @@ export default function DonationRoulette({ widget, preview }: { widget: Widget; 
   const queueRef = useRef<SpinRequest[]>([]);
   const busyRef = useRef(false);
   const baseRotRef = useRef(0);
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  const safeTimeout = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      timeoutIdsRef.current.delete(id);
+      fn();
+    }, ms);
+    timeoutIdsRef.current.add(id);
+    return id;
+  }, []);
 
   // Conic-gradient for the wheel
   const conicGradient = useMemo(() => {
@@ -143,6 +153,12 @@ export default function DonationRoulette({ widget, preview }: { widget: Widget; 
     const idx = Math.floor(Math.random() * segCount);
     setWinnerIndex(idx);
 
+    // If currently in idle mode, capture the current idle angle as base
+    // so the spin calculation starts from the actual wheel position
+    if (phase === 'idle') {
+      baseRotRef.current = idleAngle % 360;
+    }
+
     // Calculate target rotation so winner lands at top (pointer)
     // Pointer is at top → 0deg. Wheel rotates clockwise.
     // Segment center at: idx * sliceAngle + sliceAngle/2
@@ -159,21 +175,21 @@ export default function DonationRoulette({ widget, preview }: { widget: Widget; 
     playSound(cfg.soundUrl);
 
     // After spin completes → show result
-    setTimeout(() => {
+    safeTimeout(() => {
       baseRotRef.current = finalDeg % 360;
       setPhase('result');
       setShowConfetti(true);
       playSound(cfg.soundUrl);
 
       // Auto-hide result
-      setTimeout(() => {
+      safeTimeout(() => {
         setPhase('idle');
         setShowConfetti(false);
         setDonor(null);
         setWinnerIndex(-1);
 
         // Process next in queue
-        setTimeout(() => {
+        safeTimeout(() => {
           if (queueRef.current.length > 0) {
             const next = queueRef.current.shift()!;
             doSpin(next);
@@ -183,7 +199,7 @@ export default function DonationRoulette({ widget, preview }: { widget: Widget; 
         }, 500);
       }, RESULT_DISPLAY);
     }, SPIN_DURATION + 200);
-  }, [segCount, cfg.soundUrl]);
+  }, [segCount, cfg.soundUrl, phase, idleAngle, safeTimeout]);
 
   const enqueue = useCallback((data: SpinRequest) => {
     if (data.amount < minAmount) return;
@@ -212,6 +228,14 @@ export default function DonationRoulette({ widget, preview }: { widget: Widget; 
       }
     });
   }, [ready, enqueue, minAmount]);
+
+  // ── Timeout cleanup on unmount ───────────────────────────────────────────
+  useEffect(() => {
+    return () => {
+      timeoutIdsRef.current.forEach(id => clearTimeout(id));
+      timeoutIdsRef.current.clear();
+    };
+  }, []);
 
   // ── Preview mode ─────────────────────────────────────────────────────────
   useEffect(() => {

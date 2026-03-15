@@ -29,6 +29,29 @@ export default function DonationMission({ widgetId, config }: DonationMissionPro
   const donorsRef = useRef<Set<string>>(new Set());
   const showReward = config?.showReward ?? true;
   const maxVisible = config?.maxVisible ?? 3;
+  const timeoutIdsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  // Cache parsed started_at timestamps to avoid repeated Date parsing in the 1s interval
+  const parsedTimesRef = useRef<Map<string, number>>(new Map());
+
+  const safeTimeout = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      timeoutIdsRef.current.delete(id);
+      fn();
+    }, ms);
+    timeoutIdsRef.current.add(id);
+    return id;
+  }, []);
+
+  // Clean up donors tracking for a completed/removed mission
+  const cleanupMissionDonors = useCallback((missionId: string) => {
+    const missionPrefix = `${missionId}:`;
+    donorsRef.current.forEach(key => {
+      if (key.startsWith(missionPrefix)) {
+        donorsRef.current.delete(key);
+      }
+    });
+    parsedTimesRef.current.delete(missionId);
+  }, []);
 
   const updateMissionProgress = useCallback((mission: Mission, amount: number, nickname: string) => {
     let newValue = mission.current_value;
@@ -49,6 +72,14 @@ export default function DonationMission({ widgetId, config }: DonationMissionPro
     return newValue;
   }, []);
 
+  const triggerCelebration = useCallback((completed: Mission) => {
+    safeTimeout(() => {
+      setCompletedMission(completed);
+      safeTimeout(() => setCompletedMission(null), 5000);
+    }, 300);
+    cleanupMissionDonors(completed.id);
+  }, [safeTimeout, cleanupMissionDonors]);
+
   const handleDonation = useCallback((amount: number, nickname: string) => {
     setMissions(prev => {
       const updated = prev.map(m => {
@@ -56,17 +87,14 @@ export default function DonationMission({ widgetId, config }: DonationMissionPro
         const newValue = updateMissionProgress(m, amount, nickname);
         if (newValue >= m.goal_value && m.current_value < m.goal_value) {
           const completed = { ...m, current_value: m.goal_value, status: 'completed' };
-          setTimeout(() => {
-            setCompletedMission(completed);
-            setTimeout(() => setCompletedMission(null), 5000);
-          }, 300);
+          triggerCelebration(completed);
           return completed;
         }
         return { ...m, current_value: Math.min(newValue, m.goal_value) };
       });
       return updated;
     });
-  }, [updateMissionProgress]);
+  }, [updateMissionProgress, triggerCelebration]);
 
   const addMission = useCallback((mission: Mission) => {
     setMissions(prev => {
@@ -76,8 +104,9 @@ export default function DonationMission({ widgetId, config }: DonationMissionPro
   }, []);
 
   const removeMission = useCallback((missionId: string) => {
+    cleanupMissionDonors(missionId);
     setMissions(prev => prev.filter(m => m.id !== missionId));
-  }, []);
+  }, [cleanupMissionDonors]);
 
   // Expose for demo/socket
   useEffect(() => {
@@ -101,7 +130,16 @@ export default function DonationMission({ widgetId, config }: DonationMissionPro
         handleDonation(data.amount, data.fan_nickname);
       });
       socket.on('mission:update' as any, (data: { mission: Mission }) => {
-        setMissions(prev => prev.map(m => m.id === data.mission.id ? data.mission : m));
+        setMissions(prev => {
+          return prev.map(m => {
+            if (m.id !== data.mission.id) return m;
+            // If mission just became completed (wasn't before), trigger celebration
+            if (data.mission.status === 'completed' && m.status === 'active') {
+              triggerCelebration(data.mission);
+            }
+            return data.mission;
+          });
+        });
       });
       socket.on('mission:create' as any, (data: { mission: Mission }) => {
         addMission(data.mission);
@@ -109,24 +147,34 @@ export default function DonationMission({ widgetId, config }: DonationMissionPro
       socket.on('mission:cancel' as any, (data: { missionId: string }) => {
         removeMission(data.missionId);
       });
-    });
-    return () => { socket?.disconnect(); };
-  }, [widgetId, handleDonation, addMission, removeMission]);
+    }).catch(err => console.error('Socket.IO initialization failed:', err));
+    return () => {
+      socket?.disconnect();
+      timeoutIdsRef.current.forEach(id => clearTimeout(id));
+      timeoutIdsRef.current.clear();
+    };
+  }, [widgetId, handleDonation, addMission, removeMission, triggerCelebration]);
 
   // Timer countdown for time-limited missions
   useEffect(() => {
     const interval = setInterval(() => {
       setMissions(prev => prev.map(m => {
         if (m.status !== 'active' || !m.time_limit_minutes) return m;
-        const elapsed = (Date.now() - new Date(m.started_at).getTime()) / 1000 / 60;
+        // Use cached parsed timestamp
+        if (!parsedTimesRef.current.has(m.id)) {
+          parsedTimesRef.current.set(m.id, new Date(m.started_at).getTime());
+        }
+        const startedAt = parsedTimesRef.current.get(m.id)!;
+        const elapsed = (Date.now() - startedAt) / 1000 / 60;
         if (elapsed >= m.time_limit_minutes) {
+          cleanupMissionDonors(m.id);
           return { ...m, status: 'expired' };
         }
         return m;
       }));
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [cleanupMissionDonors]);
 
   const activeMissions = missions.filter(m => m.status === 'active').slice(0, maxVisible);
 
@@ -141,7 +189,12 @@ export default function DonationMission({ widgetId, config }: DonationMissionPro
 
   const formatTimeRemaining = (mission: Mission) => {
     if (!mission.time_limit_minutes) return null;
-    const endTime = new Date(mission.started_at).getTime() + mission.time_limit_minutes * 60 * 1000;
+    // Use cached parsed timestamp
+    if (!parsedTimesRef.current.has(mission.id)) {
+      parsedTimesRef.current.set(mission.id, new Date(mission.started_at).getTime());
+    }
+    const startedAt = parsedTimesRef.current.get(mission.id)!;
+    const endTime = startedAt + mission.time_limit_minutes * 60 * 1000;
     const remaining = Math.max(0, endTime - Date.now());
     const minutes = Math.floor(remaining / 60000);
     const seconds = Math.floor((remaining % 60000) / 1000);
