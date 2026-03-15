@@ -1,7 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
+import { isLiveRequired, getKoreanError } from '@/lib/integration-errors';
 import type { Integration, PlatformType } from '@/types';
 
 interface PlatformGuide {
@@ -134,6 +135,8 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
   const [connecting, setConnecting] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [prevConnected, setPrevConnected] = useState(integration?.connected ?? false);
+  const [timeoutError, setTimeoutError] = useState<string | null>(null);
+  const connectTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // 연결 상태 변경 감지 → 토스트 알림
   useEffect(() => {
@@ -177,16 +180,50 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
 
   const handleToggle = async () => {
     if (!integration) return;
-    setConnecting(true);
-    onToggleConnection(integration, !integration.connected);
-    setTimeout(() => setConnecting(false), 3000);
+    setTimeoutError(null);
+    if (!integration.connected) {
+      // Connecting: start 15s timeout
+      setConnecting(true);
+      onToggleConnection(integration, true);
+      connectTimeoutRef.current = setTimeout(() => {
+        setConnecting(false);
+        setTimeoutError('플랫폼 서버가 응답하지 않습니다. 잠시 후 다시 시도해주세요.');
+      }, 15000);
+    } else {
+      // Disconnecting
+      setConnecting(true);
+      onToggleConnection(integration, false);
+      setTimeout(() => setConnecting(false), 3000);
+    }
   };
+
+  // Clear timeout on successful connection
+  useEffect(() => {
+    if (integration?.connected) {
+      setConnecting(false);
+      setTimeoutError(null);
+      if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current);
+    }
+  }, [integration?.connected]);
+
+  // Clear timeout on error from parent
+  useEffect(() => {
+    if (error) {
+      setConnecting(false);
+      if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current);
+    }
+  }, [error]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => { if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current); };
+  }, []);
 
   const isConfigured = info.fields.every(f => config[f.key]?.trim());
 
   // 상태별 배지 렌더링
   const renderStatus = () => {
-    if (error) {
+    if (error || timeoutError) {
       return (
         <div className="flex items-center gap-1.5">
           <span className="relative flex h-2.5 w-2.5">
@@ -237,7 +274,7 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
 
   return (
     <div className={`bg-gray-800 rounded-xl p-5 border transition-colors ${
-      error ? 'border-red-700/50' :
+      (error || timeoutError) ? 'border-red-700/50' :
       integration?.connected ? 'border-green-700/50' :
       'border-gray-700'
     }`}>
@@ -245,7 +282,14 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
         <div className="flex items-center gap-3">
           <span className="text-2xl">{info.icon}</span>
           <div>
-            <h3 className="font-bold text-lg">{info.label}</h3>
+            <h3 className="font-bold text-lg">
+              {info.label}
+              {isLiveRequired(platform) && (
+                <span className="ml-2 px-1.5 py-0.5 bg-red-600/20 text-red-400 text-[10px] font-bold rounded">
+                  LIVE 필수
+                </span>
+              )}
+            </h3>
             {renderStatus()}
           </div>
         </div>
@@ -267,10 +311,12 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
       </div>
 
       {/* 에러 메시지 표시 */}
-      {error && (
+      {(error || timeoutError) && (
         <div className="mb-4 p-3 bg-red-900/30 border border-red-700/50 rounded-lg">
           <p className="text-sm text-red-300 font-medium mb-1">연결 오류</p>
-          <p className="text-xs text-red-400">{error}</p>
+          <p className="text-xs text-red-400">
+            {timeoutError || getKoreanError(platform, error!)}
+          </p>
           {info.liveRequired && (
             <p className="text-xs text-red-400/70 mt-1">
               라이브 방송 중인지 확인 후 다시 연결해주세요.
@@ -280,7 +326,7 @@ export default function IntegrationCard({ platform, integration, streamerId, onU
       )}
 
       {/* 라이브 필요 플랫폼 안내 */}
-      {integration && !integration.connected && !error && !editing && info.liveRequired && (
+      {integration && !integration.connected && !error && !timeoutError && !editing && info.liveRequired && (
         <div className="mb-4 p-3 bg-yellow-900/20 border border-yellow-700/30 rounded-lg">
           <p className="text-xs text-yellow-300/80">
             라이브 방송을 시작한 후 "연결" 버튼을 눌러주세요. 방송 종료 시 자동으로 연결이 해제됩니다.

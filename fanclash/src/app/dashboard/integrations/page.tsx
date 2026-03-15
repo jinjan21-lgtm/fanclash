@@ -1,12 +1,11 @@
 'use client';
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { io, Socket } from 'socket.io-client';
 import IntegrationCard from '@/components/dashboard/IntegrationCard';
 import type { Integration, PlatformType } from '@/types';
 
 const PLATFORMS: PlatformType[] = ['toonation', 'tiktok', 'streamlabs', 'chzzk', 'soop'];
-const POLL_INTERVAL = 5000; // 5초마다 상태 갱신
 
 export default function IntegrationsPage() {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
@@ -14,7 +13,6 @@ export default function IntegrationsPage() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [integrationErrors, setIntegrationErrors] = useState<Record<string, string>>({});
   const supabase = createClient();
-  const pollRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   useEffect(() => {
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
@@ -59,16 +57,6 @@ export default function IntegrationsPage() {
 
   useEffect(() => { fetchIntegrations(); }, [fetchIntegrations]);
 
-  // 주기적으로 연결 상태 폴링
-  useEffect(() => {
-    if (!streamerId) return;
-    pollRef.current = setInterval(async () => {
-      const { data } = await supabase.from('integrations').select('*').eq('streamer_id', streamerId);
-      if (data) setIntegrations(data);
-    }, POLL_INTERVAL);
-    return () => clearInterval(pollRef.current);
-  }, [streamerId, supabase]);
-
   const handleToggleConnection = (integration: Integration, connect: boolean) => {
     if (!socket) return;
     if (connect) {
@@ -90,7 +78,16 @@ export default function IntegrationsPage() {
     }
   };
 
-  if (!streamerId) return <div className="text-gray-400">로딩 중...</div>;
+  if (!streamerId) return (
+    <div className="animate-pulse">
+      <div className="h-8 w-48 bg-gray-800 rounded-lg mb-6" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="bg-gray-900 rounded-xl p-5 border border-gray-800 h-48" />
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div>
