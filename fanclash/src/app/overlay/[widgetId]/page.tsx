@@ -13,6 +13,12 @@ import EventTimer from '@/components/overlay/EventTimer';
 import MessageBoard from '@/components/overlay/MessageBoard';
 import DonationAlert from '@/components/overlay/DonationAlert';
 import DonationRoulette from '@/components/overlay/DonationRoulette';
+import DonationMusic from '@/components/overlay/DonationMusic';
+import DonationGacha from '@/components/overlay/DonationGacha';
+import DonationPhysics from '@/components/overlay/DonationPhysics';
+import DonationTerritory from '@/components/overlay/DonationTerritory';
+import DonationWeather from '@/components/overlay/DonationWeather';
+import { sanitizeCSS } from '@/lib/sanitize-css';
 
 export default function OverlayPage({ params }: { params: Promise<{ widgetId: string }> }) {
   const { widgetId } = use(params);
@@ -36,11 +42,18 @@ export default function OverlayPage({ params }: { params: Promise<{ widgetId: st
       case 'messages': return <MessageBoard {...props} />;
       case 'alert': return <DonationAlert {...props} />;
       case 'roulette': return <DonationRoulette {...props} />;
+      case 'music': return <DonationMusic widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
+      case 'gacha': return <DonationGacha widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
+      case 'physics': return <DonationPhysics widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
+      case 'territory': return <DonationTerritory widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
+      case 'weather': return <DonationWeather widgetId={widgetId} config={widget.config as Record<string, unknown>} />;
       default: return null;
     }
   };
 
-  const customCss = (widget.config as Record<string, unknown>)?.customCss as string | undefined;
+  const customCss = sanitizeCSS(
+    (widget.config as Record<string, unknown>)?.customCss as string ?? ''
+  );
 
   return (
     <ErrorBoundary fallback={<div className="bg-transparent" />}>
