@@ -87,6 +87,14 @@ export default async function FanProfilePage({ params }: Props) {
     .eq('streamer_id', streamerId)
     .eq('fan_nickname', decodedNickname);
 
+  // Fan achievements
+  const { data: achievements } = await supabase
+    .from('fan_achievements')
+    .select('achievement_id, unlocked_at')
+    .eq('streamer_id', streamerId)
+    .eq('fan_nickname', decodedNickname)
+    .order('unlocked_at', { ascending: false });
+
   // Battle wins/losses
   const { data: battleParticipations } = await supabase
     .from('battle_participants')
@@ -127,6 +135,7 @@ export default async function FanProfilePage({ params }: Props) {
       gachaCollection={gachaCollection || []}
       battleWins={battleWins}
       battleLosses={battleLosses}
+      achievements={achievements || []}
     />
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { AFFINITY_LEVELS } from '@/types';
+import { getAchievementById, RARITY_COLORS, RARITY_LABELS, CATEGORY_LABELS } from '@/lib/achievements';
 
 interface Props {
   streamer: { id: string; display_name: string };
@@ -23,6 +24,7 @@ interface Props {
   gachaCollection: { grade: string; count: number }[];
   battleWins: number;
   battleLosses: number;
+  achievements: { achievement_id: string; unlocked_at: string }[];
 }
 
 const GACHA_GRADES = ['N', 'R', 'SR', 'SSR', 'UR'];
@@ -69,7 +71,7 @@ function getPetLabel(pet: string): string {
 
 export default function FanProfileClient({
   streamer, nickname, fanProfile, donationCount, rank, totalFans,
-  rpgCharacter, gachaCollection, battleWins, battleLosses,
+  rpgCharacter, gachaCollection, battleWins, battleLosses, achievements,
 }: Props) {
   const [copied, setCopied] = useState(false);
 
@@ -225,6 +227,29 @@ export default function FanProfileClient({
                 승률 {Math.round((battleWins / (battleWins + battleLosses)) * 100)}%
               </div>
             )}
+          </div>
+        )}
+
+        {/* Achievements */}
+        {achievements.length > 0 && (
+          <div className="bg-gray-900 rounded-xl p-5 mb-6 border border-gray-800">
+            <h3 className="font-bold text-lg mb-4">🏅 업적 ({achievements.length}개)</h3>
+            <div className="grid grid-cols-4 gap-2">
+              {achievements.map(a => {
+                const def = getAchievementById(a.achievement_id);
+                if (!def) return null;
+                const style = RARITY_COLORS[def.rarity];
+                return (
+                  <div key={a.achievement_id}
+                    className={`text-center p-2 rounded-xl border ${style.border} ${style.bg} ${style.glow || ''}`}
+                    title={`${def.name} - ${def.description}`}>
+                    <div className="text-2xl mb-0.5">{def.icon}</div>
+                    <div className="text-[10px] font-medium text-white truncate">{def.name}</div>
+                    <div className={`text-[9px] ${style.text}`}>{RARITY_LABELS[def.rarity]}</div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
