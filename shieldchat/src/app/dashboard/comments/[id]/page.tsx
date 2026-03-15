@@ -20,7 +20,7 @@ export default function CommentDetailPage({ params }: { params: Promise<{ id: st
 
   const load = useCallback(async () => {
     const { data } = await supabase
-      .from('comments')
+      .from('sc_comments')
       .select('*')
       .eq('id', id)
       .single();

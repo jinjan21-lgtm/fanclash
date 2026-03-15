@@ -18,7 +18,7 @@ export default function SettingsPage() {
       if (!user) return;
 
       const { data } = await supabase
-        .from('profiles')
+        .from('sc_profiles')
         .select('*')
         .eq('id', user.id)
         .single();
@@ -38,7 +38,7 @@ export default function SettingsPage() {
     setMessage('');
 
     const { error } = await supabase
-      .from('profiles')
+      .from('sc_profiles')
       .update({ display_name: displayName.trim() })
       .eq('id', profile.id);
 

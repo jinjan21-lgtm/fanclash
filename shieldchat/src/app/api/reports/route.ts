@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { data, error } = await supabase
-    .from('reports')
+    .from('sc_reports')
     .insert({
       user_id: user.id,
       title,
@@ -42,7 +42,7 @@ export async function GET() {
   }
 
   const { data, error } = await supabase
-    .from('reports')
+    .from('sc_reports')
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });

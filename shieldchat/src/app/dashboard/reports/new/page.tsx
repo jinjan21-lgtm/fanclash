@@ -30,7 +30,7 @@ function NewReportContent() {
   useEffect(() => {
     const loadComments = async () => {
       const { data } = await supabase
-        .from('comments')
+        .from('sc_comments')
         .select('*')
         .in('severity', ['medium', 'high', 'critical'])
         .order('created_at', { ascending: false });

@@ -13,7 +13,7 @@ export async function GET(
   }
 
   const { data, error } = await supabase
-    .from('comments')
+    .from('sc_comments')
     .select('*')
     .eq('id', id)
     .eq('user_id', user.id)
@@ -44,7 +44,7 @@ export async function PUT(
   if (body.notes !== undefined) updateFields.notes = body.notes;
 
   const { data, error } = await supabase
-    .from('comments')
+    .from('sc_comments')
     .update(updateFields)
     .eq('id', id)
     .eq('user_id', user.id)
@@ -70,7 +70,7 @@ export async function DELETE(
   }
 
   const { error } = await supabase
-    .from('comments')
+    .from('sc_comments')
     .delete()
     .eq('id', id)
     .eq('user_id', user.id);

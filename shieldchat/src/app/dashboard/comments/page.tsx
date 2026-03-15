@@ -27,7 +27,7 @@ export default function CommentsListPage() {
 
   const loadComments = useCallback(async () => {
     setLoading(true);
-    let query = supabase.from('comments').select('*');
+    let query = supabase.from('sc_comments').select('*');
 
     if (filterSeverity) query = query.eq('severity', filterSeverity);
     if (filterCategory) query = query.eq('category', filterCategory);

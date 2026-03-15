@@ -14,7 +14,7 @@ export async function POST(
 
   // Update report status to generated
   const { error } = await supabase
-    .from('reports')
+    .from('sc_reports')
     .update({ status: 'generated' })
     .eq('id', id)
     .eq('user_id', user.id);

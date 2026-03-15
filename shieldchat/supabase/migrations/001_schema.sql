@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS profiles (
+CREATE TABLE IF NOT EXISTS sc_profiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email text,
   display_name text,
@@ -7,9 +7,9 @@ CREATE TABLE IF NOT EXISTS profiles (
   created_at timestamptz DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS comments (
+CREATE TABLE IF NOT EXISTS sc_comments (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id uuid REFERENCES sc_profiles(id) ON DELETE CASCADE,
   platform text,
   author_name text,
   author_url text,
@@ -25,9 +25,9 @@ CREATE TABLE IF NOT EXISTS comments (
   created_at timestamptz DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS reports (
+CREATE TABLE IF NOT EXISTS sc_reports (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id uuid REFERENCES sc_profiles(id) ON DELETE CASCADE,
   title text NOT NULL,
   comment_ids uuid[] DEFAULT '{}',
   comment_count int DEFAULT 0,
@@ -36,34 +36,34 @@ CREATE TABLE IF NOT EXISTS reports (
   created_at timestamptz DEFAULT now()
 );
 
-CREATE INDEX idx_comments_user ON comments(user_id);
-CREATE INDEX idx_comments_severity ON comments(user_id, severity);
-CREATE INDEX idx_reports_user ON reports(user_id);
+CREATE INDEX idx_sc_comments_user ON sc_comments(user_id);
+CREATE INDEX idx_sc_comments_severity ON sc_comments(user_id, severity);
+CREATE INDEX idx_sc_reports_user ON sc_reports(user_id);
 
 -- RLS
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sc_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sc_comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sc_reports ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can view own profile" ON sc_profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can update own profile" ON sc_profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Users can insert own profile" ON sc_profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
-CREATE POLICY "Users can view own comments" ON comments FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own comments" ON comments FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own comments" ON comments FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete own comments" ON comments FOR DELETE USING (auth.uid() = user_id);
+CREATE POLICY "Users can view own comments" ON sc_comments FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own comments" ON sc_comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own comments" ON sc_comments FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own comments" ON sc_comments FOR DELETE USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can view own reports" ON reports FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own reports" ON reports FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own reports" ON reports FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete own reports" ON reports FOR DELETE USING (auth.uid() = user_id);
+CREATE POLICY "Users can view own reports" ON sc_reports FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own reports" ON sc_reports FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own reports" ON sc_reports FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own reports" ON sc_reports FOR DELETE USING (auth.uid() = user_id);
 
 -- Auto-create profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, display_name)
+  INSERT INTO public.sc_profiles (id, email, display_name)
   VALUES (NEW.id, NEW.email, COALESCE(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1)));
   RETURN NEW;
 END;

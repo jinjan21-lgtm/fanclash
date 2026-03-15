@@ -20,14 +20,14 @@ export default function ReportPrintPage({ params }: { params: Promise<{ id: stri
       if (!user) return;
 
       const { data: profileData } = await supabase
-        .from('profiles')
+        .from('sc_profiles')
         .select('display_name, email')
         .eq('id', user.id)
         .single();
       setProfile(profileData);
 
       const { data: reportData } = await supabase
-        .from('reports')
+        .from('sc_reports')
         .select('*')
         .eq('id', id)
         .single();
@@ -40,7 +40,7 @@ export default function ReportPrintPage({ params }: { params: Promise<{ id: stri
 
       if (reportData.comment_ids?.length) {
         const { data: commentsData } = await supabase
-          .from('comments')
+          .from('sc_comments')
           .select('*')
           .in('id', reportData.comment_ids)
           .order('severity', { ascending: true });

@@ -26,14 +26,14 @@ export async function POST(request: NextRequest) {
 
   // Check free plan limit
   const { data: profile } = await supabase
-    .from('profiles')
+    .from('sc_profiles')
     .select('plan, reports_used_this_month')
     .eq('id', user.id)
     .single();
 
   if (profile?.plan === 'free') {
     const { count } = await supabase
-      .from('comments')
+      .from('sc_comments')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id);
 
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
   });
 
   const { data, error } = await supabase
-    .from('comments')
+    .from('sc_comments')
     .insert(insertData)
     .select();
 
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
   const platform = searchParams.get('platform');
 
   let query = supabase
-    .from('comments')
+    .from('sc_comments')
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });

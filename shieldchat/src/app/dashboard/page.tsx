@@ -12,24 +12,24 @@ export default async function DashboardPage() {
 
   // Fetch stats
   const { count: totalComments } = await supabase
-    .from('comments')
+    .from('sc_comments')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user.id);
 
   const { count: dangerCount } = await supabase
-    .from('comments')
+    .from('sc_comments')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user.id)
     .in('severity', ['high', 'critical']);
 
   const { count: reportCount } = await supabase
-    .from('reports')
+    .from('sc_reports')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user.id);
 
   // Severity distribution
   const { data: allComments } = await supabase
-    .from('comments')
+    .from('sc_comments')
     .select('severity')
     .eq('user_id', user.id);
 
@@ -43,7 +43,7 @@ export default async function DashboardPage() {
 
   // Recent toxic comments
   const { data: recentComments } = await supabase
-    .from('comments')
+    .from('sc_comments')
     .select('*')
     .eq('user_id', user.id)
     .in('severity', ['medium', 'high', 'critical'])
