@@ -19,16 +19,14 @@ const WIDGET_LABELS: Record<WidgetType, { name: string; desc: string }> = {
   battle: { name: '후원 배틀', desc: '1:1 후원 대결 화면' },
   team_battle: { name: '팬 투표', desc: '팀별 투표 대결' },
   timer: { name: '이벤트 타이머', desc: '카운트다운 + 벌칙/미션' },
-  messages: { name: '메시지 보드', desc: '후원 메시지 실시간 표시' },
+  messages: { name: '팬 응원 월', desc: '후원 메시지가 벽처럼 쌓이는 응원 월' },
   roulette: { name: '후원 룰렛', desc: '후원 시 룰렛 돌리기 이벤트' },
-  music: { name: '도네이션 뮤직', desc: '후원 금액별 음이 연주되는 인터랙티브 음악' },
   gacha: { name: '도네이션 가챠', desc: '후원 시 등급 뽑기 (N/R/SR/SSR/UR)' },
   physics: { name: '도네이션 폭격', desc: '후원하면 물체가 떨어지고 쌓이는 물리엔진' },
   territory: { name: '영토 전쟁', desc: '후원으로 격자 칸을 점령하는 r/place 스타일' },
-  weather: { name: '방송 날씨', desc: '후원량에 따라 맑음→비→폭풍→블리자드' },
   train: { name: '도네이션 트레인', desc: '연속 후원 콤보 카운터' },
   slots: { name: '슬롯머신', desc: '후원 시 슬롯머신 돌리기' },
-  meter: { name: '핫/콜드 미터', desc: '실시간 후원 온도 게이지' },
+  meter: { name: '분위기 미터', desc: '후원량에 따라 분위기가 변하는 실시간 게이지' },
   quiz: { name: '팬 퀴즈', desc: '도네이션 메시지로 퀴즈 맞추기' },
   rpg: { name: '팬 RPG', desc: '후원으로 캐릭터 레벨업 + 장비 성장' },
   mission: { name: '팬 미션', desc: '팬들이 함께 달성하는 공동 미션' },
@@ -252,13 +250,6 @@ function ConfigSummary({ widget }: { widget: Widget }) {
       if (config.minAmount) items.push(`${(config.minAmount as number).toLocaleString()}원 이상`);
       break;
     }
-    case 'music':
-      if (config.volume !== undefined) items.push(`볼륨 ${config.volume}%`);
-      if (config.scaleType) {
-        const scales: Record<string, string> = { pentatonic: '펜타토닉', major: '메이저', minor: '마이너' };
-        items.push(scales[config.scaleType as string] || '');
-      }
-      break;
     case 'gacha':
       if (config.minAmount) items.push(`${(config.minAmount as number).toLocaleString()}원 이상`);
       if (config.maxHistory) items.push(`히스토리 ${config.maxHistory}개`);
@@ -273,9 +264,6 @@ function ConfigSummary({ widget }: { widget: Widget }) {
     case 'territory':
       if (config.gridSize) items.push(config.gridSize as string);
       if (config.minAmount) items.push(`${(config.minAmount as number).toLocaleString()}원 이상`);
-      break;
-    case 'weather':
-      if (config.weatherWindow) items.push(`${config.weatherWindow}분 기준`);
       break;
     case 'train':
       if (config.comboWindow) items.push(`${config.comboWindow}초 콤보`);
@@ -293,6 +281,8 @@ function ConfigSummary({ widget }: { widget: Widget }) {
     case 'meter':
       if (config.windowMinutes) items.push(`${config.windowMinutes}분 기준`);
       if (config.maxAmount) items.push(`MAX ${(config.maxAmount as number).toLocaleString()}원`);
+      if (config.skin === 'weather') items.push('날씨 효과');
+      else items.push('온도 게이지');
       break;
     case 'quiz':
       if (config.defaultTimeLimit) items.push(`${config.defaultTimeLimit}초`);

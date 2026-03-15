@@ -11,11 +11,9 @@ import EventTimer from '@/components/overlay/EventTimer';
 import MessageBoard from '@/components/overlay/MessageBoard';
 import DonationAlert from '@/components/overlay/DonationAlert';
 import DonationRoulette from '@/components/overlay/DonationRoulette';
-import DonationMusic from '@/components/overlay/DonationMusic';
 import DonationGacha from '@/components/overlay/DonationGacha';
 import DonationPhysics from '@/components/overlay/DonationPhysics';
 import DonationTerritory from '@/components/overlay/DonationTerritory';
-import DonationWeather from '@/components/overlay/DonationWeather';
 import DonationTrain from '@/components/overlay/DonationTrain';
 import DonationSlots from '@/components/overlay/DonationSlots';
 import DonationMeter from '@/components/overlay/DonationMeter';
@@ -24,38 +22,6 @@ import DonationRPG from '@/components/overlay/DonationRPG';
 import DonationMission from '@/components/overlay/DonationMission';
 import { useEffect, useRef } from 'react';
 import type { Widget, WidgetType } from '@/types';
-
-// Demo component for DonationMusic — simulates random donations
-function DonationMusicDemo() {
-  const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
-  const DEMO_NAMES = ['별빛팬', '후원왕', '새벽감성', '치킨러버', '고래밥', '불꽃소녀', '달빛기사'];
-  const DEMO_AMOUNTS = [1000, 2000, 3000, 5000, 10000, 20000, 50000];
-
-  useEffect(() => {
-    // Auto-play demo donations every 2-4 seconds
-    const play = () => {
-      const music = (window as unknown as Record<string, { playDonation: (a: number, n: string) => void }>).__donationMusic;
-      if (music?.playDonation) {
-        const name = DEMO_NAMES[Math.floor(Math.random() * DEMO_NAMES.length)];
-        const amount = DEMO_AMOUNTS[Math.floor(Math.random() * DEMO_AMOUNTS.length)];
-        music.playDonation(amount, name);
-      }
-    };
-
-    // First play after 1s
-    const timeout = setTimeout(() => {
-      play();
-      intervalRef.current = setInterval(play, 2000 + Math.random() * 2000);
-    }, 1000);
-
-    return () => {
-      clearTimeout(timeout);
-      clearInterval(intervalRef.current);
-    };
-  }, []);
-
-  return <DonationMusic config={{ volume: 70, showVisual: true }} />;
-}
 
 // Demo component for DonationGacha — simulates random gacha pulls
 function DonationGachaDemo() {
@@ -145,36 +111,6 @@ function DonationTerritoryDemo() {
   }, []);
 
   return <DonationTerritory config={{}} />;
-}
-
-// Demo component for DonationWeather — simulates random donations
-function DonationWeatherDemo() {
-  const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
-  const DEMO_NAMES = ['별빛팬', '후원왕', '새벽감성', '치킨러버', '고래밥', '불꽃소녀', '달빛기사'];
-  const DEMO_AMOUNTS = [1000, 2000, 3000, 5000, 10000, 20000, 50000];
-
-  useEffect(() => {
-    const donate = () => {
-      const weather = (window as unknown as Record<string, { addDonation: (a: number, n: string) => void }>).__donationWeather;
-      if (weather?.addDonation) {
-        const name = DEMO_NAMES[Math.floor(Math.random() * DEMO_NAMES.length)];
-        const amount = DEMO_AMOUNTS[Math.floor(Math.random() * DEMO_AMOUNTS.length)];
-        weather.addDonation(amount, name);
-      }
-    };
-
-    const timeout = setTimeout(() => {
-      donate();
-      intervalRef.current = setInterval(donate, 2000 + Math.random() * 2000);
-    }, 1000);
-
-    return () => {
-      clearTimeout(timeout);
-      clearInterval(intervalRef.current);
-    };
-  }, []);
-
-  return <DonationWeather config={{}} />;
 }
 
 // Demo component for DonationTrain — simulates rapid consecutive donations
@@ -405,11 +341,9 @@ export default function DemoOverlayPage({ params }: { params: Promise<{ type: st
       case 'messages': return <MessageBoard {...props} />;
       case 'alert': return <DonationAlert {...props} />;
       case 'roulette': return <DonationRoulette {...props} />;
-      case 'music': return <DonationMusicDemo />;
       case 'gacha': return <DonationGachaDemo />;
       case 'physics': return <DonationPhysicsDemo />;
       case 'territory': return <DonationTerritoryDemo />;
-      case 'weather': return <DonationWeatherDemo />;
       case 'train': return <DonationTrainDemo />;
       case 'slots': return <DonationSlotsDemo />;
       case 'meter': return <DonationMeterDemo />;

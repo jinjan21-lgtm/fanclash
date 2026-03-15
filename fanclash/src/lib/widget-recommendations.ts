@@ -44,7 +44,7 @@ export function getRecommendations(style: BroadcastStyle): WidgetRecommendation[
       { type: 'train', name: '콤보 트레인', emoji: '🚂', description: '연속 후원 콤보', reason: '분위기 과열', priority: 'recommended' },
     ],
     music: [
-      { type: 'music', name: '도네이션 뮤직', emoji: '🎵', description: '후원이 음악이 되는', reason: '음악 방송 특화', priority: 'recommended' },
+      { type: 'meter', name: '분위기 미터', emoji: '🌡️', description: '후원량에 따른 분위기 변화', reason: '음악 방송 특화', priority: 'recommended' },
       { type: 'goal', name: '목표 게이지', emoji: '📊', description: '신곡 공개 목표', reason: '목표 설정', priority: 'recommended' },
       { type: 'mission', name: '팬 미션', emoji: '🎯', description: '리퀘스트 미션', reason: '팬 참여', priority: 'recommended' },
     ],
@@ -108,7 +108,6 @@ export const WIDGET_SIZES: Partial<Record<WidgetType, { w: number; h: number }>>
   mission: { w: 500, h: 400 },
   goal: { w: 450, h: 350 },
   meter: { w: 400, h: 500 },
-  music: { w: 600, h: 400 },
   timer: { w: 400, h: 300 },
   gacha: { w: 500, h: 600 },
 };

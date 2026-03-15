@@ -16,11 +16,9 @@ import TimerSettings from './settings/TimerSettings';
 import TeamBattleSettings from './settings/TeamBattleSettings';
 import RouletteSettings from './settings/RouletteSettings';
 import MessagesSettings from './settings/MessagesSettings';
-import MusicSettings from './settings/MusicSettings';
 import GachaSettings from './settings/GachaSettings';
 import PhysicsSettings from './settings/PhysicsSettings';
 import TerritorySettings from './settings/TerritorySettings';
-import WeatherSettings from './settings/WeatherSettings';
 import TrainSettings from './settings/TrainSettings';
 import SlotsSettings from './settings/SlotsSettings';
 import MeterSettings from './settings/MeterSettings';
@@ -47,16 +45,14 @@ function getDefaultTitle(type: WidgetType): string {
     battle: '후원 배틀',
     team_battle: '팬 투표',
     timer: '이벤트 타이머',
-    messages: '메시지 보드',
+    messages: '팬 응원 월',
     roulette: '후원 룰렛',
-    music: '도네이션 뮤직',
     gacha: '도네이션 가챠',
     physics: '도네이션 폭격',
     territory: '영토 전쟁',
-    weather: '방송 날씨',
     train: '도네이션 트레인',
     slots: '슬롯머신',
-    meter: '핫/콜드 미터',
+    meter: '분위기 미터',
     quiz: '팬 퀴즈',
     rpg: '팬 RPG',
     mission: '팬 미션',
@@ -226,11 +222,9 @@ export default function WidgetSettingsModal({ widget, plan, onClose, onUpdate }:
             {widget.type === 'timer' && <TimerSettings config={config} onChange={setConfig} />}
             {widget.type === 'messages' && <MessagesSettings config={config} onChange={setConfig} />}
             {widget.type === 'roulette' && <RouletteSettings config={config} onChange={setConfig} />}
-            {widget.type === 'music' && <MusicSettings config={config} onChange={setConfig} />}
             {widget.type === 'gacha' && <GachaSettings config={config} onChange={setConfig} />}
             {widget.type === 'physics' && <PhysicsSettings config={config} onChange={setConfig} />}
             {widget.type === 'territory' && <TerritorySettings config={config} onChange={setConfig} />}
-            {widget.type === 'weather' && <WeatherSettings config={config} onChange={setConfig} />}
             {widget.type === 'train' && <TrainSettings config={config} onChange={setConfig} />}
             {widget.type === 'slots' && <SlotsSettings config={config} onChange={setConfig} />}
             {widget.type === 'meter' && <MeterSettings config={config} onChange={setConfig} />}

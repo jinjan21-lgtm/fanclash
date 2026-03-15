@@ -41,12 +41,6 @@ const WIDGETS = [
     triggerMethod: 'donationTrain',
   },
   {
-    id: 'music',
-    label: '뮤직',
-    description: '후원 금액에 따라 다른 음계가 연주됩니다. 시청자들이 함께 만드는 즉흥 음악! 비주얼 이펙트도 함께 표시됩니다.',
-    triggerMethod: 'donationMusic',
-  },
-  {
     id: 'rpg',
     label: 'RPG',
     description: '후원이 경험치로 변환됩니다! 레벨업하면 화려한 이펙트가 터지고, 스트리머 캐릭터가 성장합니다.',
@@ -61,7 +55,6 @@ const TRIGGER_MAP: Record<string, { objName: string; methodName: string }> = {
   donationSlots: { objName: '__donationSlots', methodName: 'triggerSpin' },
   donationGacha: { objName: '__donationGacha', methodName: 'triggerGacha' },
   donationTrain: { objName: '__donationTrain', methodName: 'triggerDonation' },
-  donationMusic: { objName: '__donationMusic', methodName: 'playDonation' },
   donationRPG: { objName: '__donationRPG', methodName: 'processXPGain' },
 };
 

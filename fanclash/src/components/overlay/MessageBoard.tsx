@@ -6,47 +6,30 @@ import { createClient } from '@/lib/supabase/client';
 import { themes } from '@/lib/themes';
 import type { Widget } from '@/types';
 
-interface Message {
+interface WallCard {
   nickname: string;
   amount: number;
   message: string;
   id: number;
 }
 
-let msgId = 0;
+let cardId = 0;
 
-/* ── theme-aware glow colors for box-shadow effects ── */
-const glowColors: Record<string, { border: string; flash: string; breathe: string; shimmer: string }> = {
-  modern: {
-    border: 'rgba(168,85,247,0.6)',
-    flash: 'rgba(168,85,247,0.45)',
-    breathe: 'rgba(168,85,247,0.35)',
-    shimmer: 'linear-gradient(90deg, transparent 0%, rgba(168,85,247,0.5) 50%, transparent 100%)',
-  },
-  game: {
-    border: 'rgba(34,211,238,0.6)',
-    flash: 'rgba(234,179,8,0.45)',
-    breathe: 'rgba(34,211,238,0.35)',
-    shimmer: 'linear-gradient(90deg, transparent 0%, rgba(234,179,8,0.5) 50%, transparent 100%)',
-  },
-  girlcam: {
-    border: 'rgba(244,114,182,0.6)',
-    flash: 'rgba(244,114,182,0.45)',
-    breathe: 'rgba(244,114,182,0.35)',
-    shimmer: 'linear-gradient(90deg, transparent 0%, rgba(244,114,182,0.5) 50%, transparent 100%)',
-  },
-};
+function getAmountTier(amount: number): { bg: string; border: string; nicknameColor: string } {
+  if (amount >= 30000) return { bg: 'bg-yellow-900/40', border: 'border-yellow-500/60', nicknameColor: 'text-yellow-400' };
+  if (amount >= 10000) return { bg: 'bg-purple-900/40', border: 'border-purple-500/60', nicknameColor: 'text-purple-400' };
+  if (amount >= 3000) return { bg: 'bg-blue-900/40', border: 'border-blue-500/60', nicknameColor: 'text-blue-400' };
+  return { bg: 'bg-gray-800/40', border: 'border-gray-600/60', nicknameColor: 'text-gray-400' };
+}
 
 export default function MessageBoard({ widget, preview }: { widget: Widget; preview?: boolean }) {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const { socketRef, on, ready } = useSocket(widget.id);
+  const [cards, setCards] = useState<WallCard[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const { on, ready } = useSocket(widget.id);
   const theme = themes[widget.theme];
-  const maxMessages = ((widget.config as any)?.maxMessages as number) || 5;
-  const glow = glowColors[widget.theme] || glowColors.modern;
-
-  /* track the newest message id so we can flash it */
-  const newestIdRef = useRef<number | null>(null);
-  const [flashId, setFlashId] = useState<number | null>(null);
+  const config = widget.config as Record<string, unknown>;
+  const maxVisible = (config?.maxVisible as number) || 30;
+  const showAmount = (config?.showAmount ?? true) as boolean;
 
   // Load recent messages from DB
   useEffect(() => {
@@ -58,145 +41,102 @@ export default function MessageBoard({ widget, preview }: { widget: Widget; prev
       .eq('streamer_id', widget.streamer_id)
       .not('message', 'eq', '')
       .order('created_at', { ascending: false })
-      .limit(maxMessages)
+      .limit(maxVisible)
       .then(({ data }) => {
         if (data && data.length > 0) {
-          setMessages(data.map(d => ({
+          const loaded = data.reverse().map(d => ({
             nickname: d.fan_nickname,
             amount: d.amount,
             message: d.message || '',
-            id: msgId++,
-          })));
+            id: cardId++,
+          }));
+          setCards(loaded);
+          setTotalCount(loaded.length);
         }
       });
-  }, [widget.streamer_id, maxMessages, preview]);
+  }, [widget.streamer_id, maxVisible, preview]);
 
+  // Socket: listen for new donations
   useEffect(() => {
     if (!ready) return;
-    const handler = (data: any) => {
-      if (!data.message) return; // Skip donations without messages
-      const newId = msgId++;
-      newestIdRef.current = newId;
-      setFlashId(newId);
-      setMessages(prev => [
-        { nickname: data.fan_nickname, amount: data.amount, message: data.message, id: newId },
-        ...prev,
-      ].slice(0, maxMessages));
-      // Clear flash after animation
-      setTimeout(() => setFlashId(null), 600);
+    const handler = (data: { fan_nickname: string; amount: number; message?: string }) => {
+      if (!data.message) return;
+      const newCard: WallCard = {
+        nickname: data.fan_nickname,
+        amount: data.amount,
+        message: data.message,
+        id: cardId++,
+      };
+      setTotalCount(prev => prev + 1);
+      setCards(prev => [...prev, newCard].slice(-maxVisible));
     };
     on('donation:new', handler);
-  }, [ready, maxMessages]);
+  }, [ready, maxVisible, on]);
 
-  // Show demo messages in preview mode
+  // Demo messages in preview mode
   useEffect(() => {
-    if (preview && messages.length === 0) {
-      setMessages([
-        { nickname: '별빛소나기', amount: 10000, message: '오늘 방송 너무 재밌어요! 화이팅!', id: msgId++ },
-        { nickname: '치즈덕후', amount: 5000, message: '노래 한 곡 불러주세요~', id: msgId++ },
-        { nickname: '밤하늘구름', amount: 3000, message: '첫 후원입니다 ㅎㅎ', id: msgId++ },
-      ]);
+    if (preview && cards.length === 0) {
+      const demoCards: WallCard[] = [
+        { nickname: '별빛팬', amount: 5000, message: '화이팅!', id: cardId++ },
+        { nickname: '후원왕', amount: 10000, message: '대박!!', id: cardId++ },
+        { nickname: '치킨러버', amount: 3000, message: '최고!', id: cardId++ },
+        { nickname: '고래밥', amount: 1000, message: '응원!', id: cardId++ },
+        { nickname: '불꽃소녀', amount: 50000, message: '사랑해', id: cardId++ },
+        { nickname: '달빛기사', amount: 2000, message: '멋져요~', id: cardId++ },
+        { nickname: '새벽감성', amount: 30000, message: '오늘도 파이팅', id: cardId++ },
+        { nickname: '꿈나무', amount: 1000, message: '첫 후원!', id: cardId++ },
+      ];
+      setCards(demoCards);
+      setTotalCount(demoCards.length);
     }
-  }, [preview]);
+  }, [preview, cards.length]);
 
   return (
-    <div className={`p-4 ${theme.bg} ${theme.fontClass}`}>
-      {/* Shimmer keyframes + breathing glow injected once */}
-      <style>{`
-        @keyframes mb-shimmer {
-          0%   { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        @keyframes mb-breathe {
-          0%, 100% { box-shadow: 0 0 6px ${glow.breathe}; }
-          50%      { box-shadow: 0 0 18px ${glow.breathe}, 0 0 30px ${glow.breathe}; }
-        }
-        @keyframes mb-border-glow {
-          0%   { opacity: 0; box-shadow: inset 3px 0 6px -2px ${glow.border}; }
-          100% { opacity: 1; box-shadow: inset 3px 0 8px -2px ${glow.border}; }
-        }
-      `}</style>
+    <div className={`p-4 h-full ${theme.bg} ${theme.fontClass}`}>
+      {/* Header counter */}
+      <div className="mb-3 flex items-center gap-2">
+        <span className="text-lg">💬</span>
+        <span className={`text-sm font-bold ${theme.accent}`}>
+          오늘의 응원 ({totalCount}건)
+        </span>
+      </div>
 
-      <AnimatePresence mode="popLayout">
-        {messages.map((msg, index) => {
-          const isLatest = index === 0;
-          const isFlashing = flashId === msg.id;
+      {/* Fan wall grid */}
+      <div className="flex flex-wrap gap-2 content-start overflow-hidden" style={{ maxHeight: 'calc(100% - 40px)' }}>
+        <AnimatePresence mode="popLayout">
+          {cards.map(card => {
+            const tier = getAmountTier(card.amount);
+            return (
+              <motion.div
+                key={card.id}
+                layout
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                className={`${tier.bg} ${tier.border} border rounded-lg px-3 py-2 backdrop-blur-sm`}
+                style={{ minWidth: '80px', maxWidth: '140px' }}
+              >
+                <p className={`text-[11px] font-bold truncate ${tier.nicknameColor}`}>
+                  {card.nickname}
+                </p>
+                <p className={`text-sm leading-tight mt-0.5 ${theme.text}`}>
+                  {card.message}
+                </p>
+                {showAmount && (
+                  <p className="text-[10px] text-gray-500 mt-0.5">
+                    {card.amount.toLocaleString()}원
+                  </p>
+                )}
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
 
-          return (
-            <motion.div
-              key={msg.id}
-              layout
-              /* ── Entry: slide from left + rotation + scale bounce ── */
-              initial={{ opacity: 0, x: -60, scale: 0.85, rotate: -2, filter: 'blur(4px)' }}
-              animate={{
-                opacity: 1,
-                x: 0,
-                scale: [0.85, 1.05, 1],
-                rotate: 0,
-                filter: 'blur(0px)',
-              }}
-              /* ── Exit: fade up and shrink ── */
-              exit={{ opacity: 0, y: -20, scale: 0.8, filter: 'blur(3px)' }}
-              transition={{
-                type: 'spring',
-                stiffness: 340,
-                damping: 22,
-                delay: index * 0.08, // staggered children
-                scale: { type: 'spring', stiffness: 400, damping: 15, delay: index * 0.08 },
-              }}
-              className={`mb-2 p-3 rounded-xl ${theme.card} border ${theme.border} backdrop-blur-sm relative overflow-hidden`}
-              style={{
-                /* glowing left border that fades in */
-                borderLeft: `3px solid transparent`,
-                animation: isLatest
-                  ? `mb-border-glow 0.6s ease forwards, mb-breathe 2.4s ease-in-out infinite 0.6s`
-                  : `mb-border-glow 0.6s ease forwards`,
-                /* new-message flash */
-                boxShadow: isFlashing
-                  ? `0 0 24px ${glow.flash}, 0 0 48px ${glow.flash}`
-                  : undefined,
-                transition: 'box-shadow 0.4s ease',
-              }}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                {/* Nickname with continuous shimmer */}
-                <span
-                  className={`font-bold text-sm ${theme.accent}`}
-                  style={{
-                    backgroundImage: glow.shimmer,
-                    backgroundSize: '200% 100%',
-                    WebkitBackgroundClip: 'text',
-                    backgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    animation: 'mb-shimmer 3s linear infinite',
-                  }}
-                >
-                  {msg.nickname}
-                </span>
-
-                {/* Amount badge with delayed pop-in */}
-                <motion.span
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 500,
-                    damping: 18,
-                    delay: index * 0.08 + 0.25,
-                  }}
-                  className="text-xs text-gray-500 inline-block"
-                >
-                  {msg.amount.toLocaleString()}원
-                </motion.span>
-              </div>
-              <p className={`text-sm ${theme.text}`}>{msg.message}</p>
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
-      {messages.length === 0 && (
-        <div className={`text-center py-4 text-sm text-gray-600 ${theme.fontClass}`}>
-          메시지를 기다리는 중...
+      {cards.length === 0 && (
+        <div className={`text-center py-8 text-sm text-gray-600 ${theme.fontClass}`}>
+          응원 메시지를 기다리는 중...
         </div>
       )}
     </div>

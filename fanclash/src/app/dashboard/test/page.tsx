@@ -16,9 +16,8 @@ const WIDGET_TABS: { type: WidgetType; label: string }[] = [
   { type: 'gacha', label: '가챠' },
   { type: 'rpg', label: 'RPG' },
   { type: 'train', label: '트레인' },
-  { type: 'meter', label: '미터' },
+  { type: 'meter', label: '분위기 미터' },
   { type: 'physics', label: '폭격' },
-  { type: 'weather', label: '날씨' },
 ];
 
 function getRandomAmount(): number {

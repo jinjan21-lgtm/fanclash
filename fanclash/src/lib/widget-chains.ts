@@ -40,7 +40,7 @@ export const DEFAULT_CHAINS: EventChain[] = [
   {
     id: 'meter-to-weather',
     name: '미터 MAX → 블리자드',
-    description: '핫/콜드 미터가 MAX에 도달하면 날씨가 블리자드로 변경',
+    description: '분위기 미터가 MAX에 도달하면 날씨 스킨이 블리자드로 변경',
     trigger: 'meter:max',
     action: 'weather:blizzard',
     enabled: false,
