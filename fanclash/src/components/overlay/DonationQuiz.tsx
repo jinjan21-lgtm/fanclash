@@ -108,10 +108,12 @@ export default function DonationQuiz({ widgetId, config }: DonationQuizProps) {
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
     if (!socketUrl) return;
 
-    let socket: ReturnType<typeof import('socket.io-client').io>;
+    let socket: ReturnType<typeof import('socket.io-client').io> | null = null;
+    let unmounted = false;
     import('socket.io-client').then(({ io }) => {
+      if (unmounted) return;
       socket = io(socketUrl);
-      socket.on('connect', () => socket.emit('widget:subscribe', widgetId));
+      socket.on('connect', () => socket!.emit('widget:subscribe', widgetId));
       socket.on('quiz:start' as any, (data: { question: string; answer: string; timeLimit: number }) => {
         startQuiz(data.question, data.answer, data.timeLimit);
       });
@@ -122,7 +124,7 @@ export default function DonationQuiz({ widgetId, config }: DonationQuizProps) {
         handleDonation(data.fan_nickname, data.amount, data.message);
       });
     }).catch(err => console.error('Socket init failed:', err));
-    return () => { socket?.disconnect(); };
+    return () => { unmounted = true; socket?.disconnect(); };
   }, [widgetId, startQuiz, endQuiz, handleDonation]);
 
   if (state === 'IDLE') {

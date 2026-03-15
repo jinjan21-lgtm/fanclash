@@ -143,11 +143,13 @@ export default function DonationSlots({ widgetId, config }: DonationSlotsProps) 
     if (!widgetId) return;
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
     if (!socketUrl) return;
-    let socket: ReturnType<typeof import('socket.io-client').io>;
+    let socket: ReturnType<typeof import('socket.io-client').io> | null = null;
+    let unmounted = false;
     import('socket.io-client').then(({ io }) => {
+      if (unmounted) return;
       socket = io(socketUrl);
       socketRefLocal.current = socket;
-      socket.on('connect', () => socket.emit('widget:subscribe', widgetId));
+      socket.on('connect', () => socket!.emit('widget:subscribe', widgetId));
       socket.on('donation:new', (data: { fan_nickname: string; amount: number }) => {
         triggerSpin(data.amount, data.fan_nickname);
       });
@@ -158,7 +160,7 @@ export default function DonationSlots({ widgetId, config }: DonationSlotsProps) 
         }
       });
     }).catch(err => console.error('Socket init failed:', err));
-    return () => { socket?.disconnect(); socketRefLocal.current = null; };
+    return () => { unmounted = true; socket?.disconnect(); socketRefLocal.current = null; };
   }, [widgetId, triggerSpin, minAmount]);
 
   // Clear result after delay

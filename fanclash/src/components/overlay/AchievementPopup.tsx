@@ -49,15 +49,17 @@ export default function AchievementPopup({ widgetId }: AchievementPopupProps) {
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
     if (!socketUrl) return;
 
-    let socket: ReturnType<typeof import('socket.io-client').io>;
+    let socket: ReturnType<typeof import('socket.io-client').io> | null = null;
+    let unmounted = false;
     import('socket.io-client').then(({ io }) => {
+      if (unmounted) return;
       socket = io(socketUrl);
-      socket.on('connect', () => socket.emit('widget:subscribe', widgetId));
+      socket.on('connect', () => socket!.emit('widget:subscribe', widgetId));
       socket.on('achievement:unlocked' as any, (data: { achievement_id: string; fan_nickname: string }) => {
         showAchievement(data.achievement_id, data.fan_nickname);
       });
     });
-    return () => { socket?.disconnect(); };
+    return () => { unmounted = true; socket?.disconnect(); };
   }, [widgetId, showAchievement]);
 
   if (!notification) return null;

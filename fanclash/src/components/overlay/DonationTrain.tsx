@@ -61,11 +61,13 @@ export default function DonationTrain({ widgetId, config }: DonationTrainProps) 
     if (!widgetId) return;
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
     if (!socketUrl) return;
-    let socket: ReturnType<typeof import('socket.io-client').io>;
+    let socket: ReturnType<typeof import('socket.io-client').io> | null = null;
+    let unmounted = false;
     import('socket.io-client').then(({ io }) => {
+      if (unmounted) return;
       socket = io(socketUrl);
       socketRef.current = socket;
-      socket.on('connect', () => socket.emit('widget:subscribe', widgetId));
+      socket.on('connect', () => socket!.emit('widget:subscribe', widgetId));
       socket.on('donation:new', (data: { fan_nickname: string; amount: number }) => {
         triggerDonation(data.amount, data.fan_nickname);
       });
@@ -83,7 +85,7 @@ export default function DonationTrain({ widgetId, config }: DonationTrainProps) 
         }
       });
     }).catch(err => console.error('Socket.IO init failed:', err));
-    return () => { socket?.disconnect(); socketRef.current = null; };
+    return () => { unmounted = true; socket?.disconnect(); socketRef.current = null; };
   }, [widgetId, triggerDonation]);
 
   // Cleanup timers

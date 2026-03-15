@@ -122,10 +122,12 @@ export default function DonationMission({ widgetId, config }: DonationMissionPro
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
     if (!socketUrl) return;
 
-    let socket: ReturnType<typeof import('socket.io-client').io>;
+    let socket: ReturnType<typeof import('socket.io-client').io> | null = null;
+    let unmounted = false;
     import('socket.io-client').then(({ io }) => {
+      if (unmounted) return;
       socket = io(socketUrl);
-      socket.on('connect', () => socket.emit('widget:subscribe', widgetId));
+      socket.on('connect', () => socket!.emit('widget:subscribe', widgetId));
       socket.on('donation:new', (data: { fan_nickname: string; amount: number }) => {
         handleDonation(data.amount, data.fan_nickname);
       });
@@ -149,6 +151,7 @@ export default function DonationMission({ widgetId, config }: DonationMissionPro
       });
     }).catch(err => console.error('Socket.IO initialization failed:', err));
     return () => {
+      unmounted = true;
       socket?.disconnect();
       timeoutIdsRef.current.forEach(id => clearTimeout(id));
       timeoutIdsRef.current.clear();
