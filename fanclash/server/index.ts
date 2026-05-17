@@ -33,13 +33,31 @@ if (!SERVER_SECRET) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Build allowed origin matchers from CORS_ORIGIN.
+// Each entry is either:
+//   - an exact origin (e.g. "https://www.fanclash.asia"), or
+//   - a wildcard pattern (e.g. "https://*.fanclash.asia") matched against the whole origin
+const allowedOriginMatchers = CORS_ORIGIN.split(',')
+  .map(s => s.trim())
+  .filter(Boolean)
+  .map(pattern => {
+    if (pattern.includes('*')) {
+      const re = new RegExp('^' + pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$');
+      return (origin: string) => re.test(origin);
+    }
+    return (origin: string) => origin === pattern;
+  });
+
+const isOriginAllowed = (origin: string) => allowedOriginMatchers.some(fn => fn(origin));
+
 // HTTP server for both Socket.IO and REST endpoints
 const httpServer = createServer((req, res) => {
   // CORS headers - only allow explicitly configured origins
   const origin = req.headers.origin || '';
-  const allowedOrigins = CORS_ORIGIN.split(',').map(s => s.trim());
-  if (origin && allowedOrigins.includes(origin)) {
+  if (origin && isOriginAllowed(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (origin) {
+    console.warn(`[CORS] Blocked origin: ${origin} (CORS_ORIGIN=${CORS_ORIGIN})`);
   }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -95,10 +113,16 @@ const httpServer = createServer((req, res) => {
   res.end();
 });
 
-const corsOrigins = CORS_ORIGIN.split(',').map(s => s.trim());
-
 const io = new Server(httpServer, {
-  cors: { origin: corsOrigins },
+  cors: {
+    origin: (origin, callback) => {
+      // Socket.IO passes undefined for same-origin / server-to-server requests
+      if (!origin) return callback(null, true);
+      if (isOriginAllowed(origin)) return callback(null, origin);
+      console.warn(`[Socket.IO CORS] Blocked origin: ${origin} (CORS_ORIGIN=${CORS_ORIGIN})`);
+      callback(null, false);
+    },
+  },
 });
 
 io.on('connection', (socket) => {
