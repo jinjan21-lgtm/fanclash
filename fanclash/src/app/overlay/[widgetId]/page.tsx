@@ -30,6 +30,20 @@ export default function OverlayPage({ params }: { params: Promise<{ widgetId: st
   const preview = searchParams.get('preview') === 'true';
   const widget = useWidget(widgetId);
 
+  const customCss = widget
+    ? sanitizeCSS((widget.config as Record<string, unknown>)?.customCss as string ?? '')
+    : '';
+
+  // Inject custom CSS via DOM API instead of dangerouslySetInnerHTML.
+  // Must run before any early return — Hook order must be stable across renders.
+  useEffect(() => {
+    if (!customCss) return;
+    const style = document.createElement('style');
+    style.textContent = customCss;
+    document.head.appendChild(style);
+    return () => { document.head.removeChild(style); };
+  }, [customCss]);
+
   if (!widget) return <div className="bg-transparent" />;
 
   const props = { widget, preview };
@@ -58,19 +72,6 @@ export default function OverlayPage({ params }: { params: Promise<{ widgetId: st
       default: return null;
     }
   };
-
-  const customCss = sanitizeCSS(
-    (widget.config as Record<string, unknown>)?.customCss as string ?? ''
-  );
-
-  // Inject custom CSS via DOM API instead of dangerouslySetInnerHTML
-  useEffect(() => {
-    if (!customCss) return;
-    const style = document.createElement('style');
-    style.textContent = customCss;
-    document.head.appendChild(style);
-    return () => { document.head.removeChild(style); };
-  }, [customCss]);
 
   return (
     <ErrorBoundary fallback={<div className="bg-transparent" />}>
